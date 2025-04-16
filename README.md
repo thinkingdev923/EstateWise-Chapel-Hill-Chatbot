@@ -142,7 +142,7 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/hoangsonww/EstateWise-Chapel-Hill-Estate.git
+   git clone https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot.git
    cd estatewise/backend
    ```
 
