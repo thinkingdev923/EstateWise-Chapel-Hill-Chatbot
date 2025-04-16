@@ -286,6 +286,14 @@ const DarkModeToggle: React.FC = () => {
       document.documentElement.classList.contains("dark"),
   );
 
+  useEffect(() => {
+    const newThemeColor = darkMode ? "#262626" : "#faf9f2";
+    const metaThemeColor = document.querySelector("meta[name='theme-color']");
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute("content", newThemeColor);
+    }
+  }, [darkMode]);
+
   const toggleDarkMode = () => {
     const root = document.documentElement;
     if (darkMode) {
