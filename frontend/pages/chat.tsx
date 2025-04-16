@@ -65,51 +65,72 @@ const desktopSidebarVariants = {
 // ----------------------------------------------------------
 const markdownComponents = {
   // Headings
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h1: ({ children, ...props }: any) => (
-    <h1 className="text-2xl font-bold my-4 border-b-2 border-gray-200 pb-2" {...props}>
+    <h1
+      className="text-2xl font-bold my-4 border-b-2 border-gray-200 pb-2"
+      {...props}
+    >
       {children}
     </h1>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h2: ({ children, ...props }: any) => (
-    <h2 className="text-xl font-bold my-3 border-b border-gray-200 pb-1" {...props}>
+    <h2
+      className="text-xl font-bold my-3 border-b border-gray-200 pb-1"
+      {...props}
+    >
       {children}
     </h2>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h3: ({ children, ...props }: any) => (
     <h3 className="text-lg font-bold my-3" {...props}>
       {children}
     </h3>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h4: ({ children, ...props }: any) => (
     <h4 className="text-base font-bold my-2" {...props}>
       {children}
     </h4>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h5: ({ children, ...props }: any) => (
     <h5 className="text-sm font-bold my-2" {...props}>
       {children}
     </h5>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h6: ({ children, ...props }: any) => (
     <h6 className="text-xs font-bold my-2" {...props}>
       {children}
     </h6>
   ),
   // Paragraph
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   p: ({ children, ...props }: any) => (
     <p className="mb-3 leading-relaxed" {...props}>
       {children}
     </p>
   ),
   // Blockquote
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   blockquote: ({ children, ...props }: any) => (
-    <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3" {...props}>
+    <blockquote
+      className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3"
+      {...props}
+    >
       {children}
     </blockquote>
   ),
   // Horizontal Rule
-  hr: ({ ...props }: any) => <hr className="border-t border-gray-300 my-3" {...props} />,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  hr: ({ ...props }: any) => (
+    <hr className="border-t border-gray-300 my-3" {...props} />
+  ),
   // Code Block & Inline Code
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   code: ({ inline, children, ...props }: any) =>
     inline ? (
       <code
@@ -119,77 +140,100 @@ const markdownComponents = {
         {children}
       </code>
     ) : (
-      <pre className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3" {...props}>
+      <pre
+        className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"
+        {...props}
+      >
         <code>{children}</code>
       </pre>
     ),
   // Table elements
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ({ children, ...props }: any) => (
     <div className="overflow-x-auto my-3">
-      <table className="min-w-full border-collapse border border-gray-300 text-sm" {...props}>
+      <table
+        className="min-w-full border-collapse border border-gray-300 text-sm"
+        {...props}
+      >
         {children}
       </table>
     </div>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   thead: ({ children, ...props }: any) => (
     <thead className="bg-gray-100 border-b border-gray-300" {...props}>
-    {children}
+      {children}
     </thead>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tbody: ({ children, ...props }: any) => <tbody {...props}>{children}</tbody>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tr: ({ children, ...props }: any) => (
     <tr className="border-b last:border-0" {...props}>
       {children}
     </tr>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   th: ({ children, ...props }: any) => (
-    <th className="border border-gray-300 px-3 py-2 font-semibold text-left" {...props}>
+    <th
+      className="border border-gray-300 px-3 py-2 font-semibold text-left"
+      {...props}
+    >
       {children}
     </th>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   td: ({ children, ...props }: any) => (
     <td className="border border-gray-300 px-3 py-2 align-top" {...props}>
       {children}
     </td>
   ),
   // Lists
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ul: ({ children, ...props }: any) => (
     <ul className="list-disc list-inside my-3" {...props}>
       {children}
     </ul>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ol: ({ children, ...props }: any) => (
     <ol className="list-decimal list-inside my-3" {...props}>
       {children}
     </ol>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   li: ({ children, ...props }: any) => (
     <li className="my-1" {...props}>
       {children}
     </li>
   ),
   // Images
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   img: ({ src, alt, ...props }: any) => (
     <img className="max-w-full h-auto my-3" src={src} alt={alt} {...props} />
   ),
   // Emphasis and strong (bold)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   em: ({ children, ...props }: any) => (
     <em className="italic" {...props}>
       {children}
     </em>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   strong: ({ children, ...props }: any) => (
     <strong className="font-bold" {...props}>
       {children}
     </strong>
   ),
   // Strikethrough
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   del: ({ children, ...props }: any) => (
     <del className="line-through" {...props}>
       {children}
     </del>
   ),
   // Custom Link
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   a: ({ children, href, ...props }: any) => (
     <a
       href={href}
