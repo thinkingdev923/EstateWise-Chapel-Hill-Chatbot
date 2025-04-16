@@ -431,7 +431,7 @@ const TopBar: React.FC<TopBarProps> = ({
 };
 
 // ----------------------------------------------------------
-// Sidebar Component with Rename, Delete (Dialog), and Search Modal
+// Sidebar Component
 // ----------------------------------------------------------
 type SidebarProps = {
   conversationLoading: boolean;
