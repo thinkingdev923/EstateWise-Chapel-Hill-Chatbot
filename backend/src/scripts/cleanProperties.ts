@@ -1,4 +1,3 @@
-// src/scripts/cleanProperties-single.ts
 import dotenv from "dotenv";
 dotenv.config();
 
