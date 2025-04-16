@@ -282,7 +282,7 @@ const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-lg h-16">
+    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-md h-16">
       <div className="flex items-center gap-2">
         {!sidebarVisible && (
           <button
@@ -323,33 +323,47 @@ const TopBar: React.FC<TopBarProps> = ({
             </Button>
           </>
         ) : (
-          <div className="relative">
-            <button
-              onClick={handleAuthIconClick}
-              className="p-1 cursor-pointer"
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <button
+                onClick={handleAuthIconClick}
+                className="p-1 cursor-pointer"
+              >
+                <UserIcon className="w-5 h-5" />
+              </button>
+              {authMenuOpen && (
+                <div className="absolute right-0 mt-2 w-40 bg-card rounded shadow-lg py-2 z-50">
+                  <Link href="/login">
+                    <div
+                      className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
+                      onClick={() => setAuthMenuOpen(false)}
+                    >
+                      Log In
+                    </div>
+                  </Link>
+                  <Link href="/signup">
+                    <div
+                      className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
+                      onClick={() => setAuthMenuOpen(false)}
+                    >
+                      Sign Up
+                    </div>
+                  </Link>
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => {
+                localStorage.removeItem("estateWiseChat");
+                toast.success("Conversation deleted successfully");
+                window.location.reload();
+              }}
+              variant="outline"
+              className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer ml-2"
             >
-              <UserIcon className="w-5 h-5" />
-            </button>
-            {authMenuOpen && (
-              <div className="absolute right-0 mt-2 w-40 bg-card rounded shadow-lg py-2 z-50">
-                <Link href="/login">
-                  <div
-                    className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
-                    onClick={() => setAuthMenuOpen(false)}
-                  >
-                    Log In
-                  </div>
-                </Link>
-                <Link href="/signup">
-                  <div
-                    className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
-                    onClick={() => setAuthMenuOpen(false)}
-                  >
-                    Sign Up
-                  </div>
-                </Link>
-              </div>
-            )}
+              <Trash2 className="w-5 h-5" />
+              Delete Conversation
+            </Button>
           </div>
         )}
       </div>
@@ -361,6 +375,7 @@ const TopBar: React.FC<TopBarProps> = ({
 // Sidebar Component with Rename, Delete (Dialog), and Search Modal
 // ----------------------------------------------------------
 type SidebarProps = {
+  conversationLoading: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   conversations: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -372,6 +387,7 @@ type SidebarProps = {
 };
 
 const Sidebar: React.FC<SidebarProps> = ({
+  conversationLoading,
   conversations,
   onSelect,
   isAuthed,
@@ -388,8 +404,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [newTitle, setNewTitle] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
-
   const [isMobile, setIsMobile] = useState(false);
+
   useEffect(() => {
     const updateWidth = () => setIsMobile(window.innerWidth < 768);
     updateWidth();
@@ -548,76 +564,84 @@ const Sidebar: React.FC<SidebarProps> = ({
                   </button>
                 </div>
               </div>
-              <div className="flex-1 overflow-y-auto space-y-2">
-                {conversations.length === 0 ? (
-                  <p className="text-center text-sm text-muted-foreground">
-                    {isAuthed
-                      ? "No conversations"
-                      : "Log in to save conversations"}
-                  </p>
+              <div className="flex-1 overflow-y-auto">
+                {conversationLoading ? (
+                  <div className="min-h-full flex items-center justify-center">
+                    <Loader2 className="animate-spin w-8 h-8" />
+                  </div>
+                ) : conversations.length === 0 ? (
+                  <div className="min-h-full flex items-center justify-center">
+                    <p className="text-center text-sm text-muted-foreground">
+                      {isAuthed
+                        ? "No conversations"
+                        : "Log in to save conversations"}
+                    </p>
+                  </div>
                 ) : (
-                  conversations.map((conv) => (
-                    <div
-                      key={conv._id}
-                      className="flex items-center justify-between border-b border-sidebar-border p-2 hover:bg-muted cursor-pointer shadow-sm"
-                      onClick={() => {
-                        onSelect(conv);
-                        toggleSidebar();
-                      }}
-                    >
-                      {/* Title container */}
-                      <div className="flex-1 min-w-0 select-none">
-                        {renamingId === conv._id ? (
-                          <Input
-                            value={newTitle}
-                            onChange={(e) => setNewTitle(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                handleRename(conv._id);
-                              }
-                            }}
-                            autoFocus
-                            className="cursor-text"
-                          />
-                        ) : (
-                          <span className="block truncate">
-                            {conv.title || "Untitled Conversation"}
-                          </span>
-                        )}
-                      </div>
-                      {/* Buttons container */}
-                      <div className="flex items-center gap-3 flex-shrink-0">
-                        {renamingId === conv._id ? (
-                          renderRenameButtons(conv)
-                        ) : (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setRenamingId(conv._id);
-                                setNewTitle(conv.title);
+                  <div className="space-y-2">
+                    {conversations.map((conv) => (
+                      <div
+                        key={conv._id}
+                        className="flex items-center justify-between border-b border-sidebar-border p-2 hover:bg-muted cursor-pointer shadow-sm"
+                        onClick={() => {
+                          onSelect(conv);
+                          toggleSidebar();
+                        }}
+                      >
+                        {/* Title container */}
+                        <div className="flex-1 min-w-0 select-none">
+                          {renamingId === conv._id ? (
+                            <Input
+                              value={newTitle}
+                              onChange={(e) => setNewTitle(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  handleRename(conv._id);
+                                }
                               }}
-                              title="Rename"
-                              className="cursor-pointer hover:text-blue-500"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setDeleteId(conv._id);
-                              }}
-                              title="Delete"
-                              className="cursor-pointer hover:text-red-500"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </>
-                        )}
+                              autoFocus
+                              className="cursor-text"
+                            />
+                          ) : (
+                            <span className="block truncate">
+                              {conv.title || "Untitled Conversation"}
+                            </span>
+                          )}
+                        </div>
+                        {/* Buttons container */}
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          {renamingId === conv._id ? (
+                            renderRenameButtons(conv)
+                          ) : (
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setRenamingId(conv._id);
+                                  setNewTitle(conv.title);
+                                }}
+                                title="Rename"
+                                className="cursor-pointer hover:text-blue-500"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(conv._id);
+                                }}
+                                title="Delete"
+                                className="cursor-pointer hover:text-red-500"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.aside>
@@ -693,9 +717,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   // Desktop version.
   return (
-    <>
+    <div className="shadow-lg">
       <motion.aside
-        className="bg-sidebar text-sidebar-foreground flex flex-col p-4 h-screen shadow-lg shadow-[4px_0px_10px_rgba(0,0,0,0.1)]"
+        className="bg-sidebar text-sidebar-foreground flex flex-col p-4 h-screen shadow-lg"
         variants={desktopSidebarVariants}
         animate={sidebarVisible ? "visible" : "hidden"}
         initial="visible"
@@ -720,10 +744,16 @@ const Sidebar: React.FC<SidebarProps> = ({
           </div>
         </div>
         <div className="flex-1 overflow-y-auto space-y-2">
-          {conversations.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground">
-              {isAuthed ? "No conversations" : "Log in to save conversations"}
-            </p>
+          {conversationLoading ? (
+            <div className="min-h-full flex items-center justify-center">
+              <Loader2 className="animate-spin w-8 h-8" />
+            </div>
+          ) : conversations.length === 0 ? (
+            <div className="min-h-full flex items-center justify-center">
+              <p className="text-center text-sm text-muted-foreground">
+                {isAuthed ? "No conversations" : "Log in to save conversations"}
+              </p>
+            </div>
           ) : (
             conversations.map((conv) => (
               <div
@@ -731,7 +761,6 @@ const Sidebar: React.FC<SidebarProps> = ({
                 className="flex items-center justify-between border-b border-sidebar-border p-2 hover:bg-muted cursor-pointer shadow-sm"
                 onClick={() => {
                   onSelect(conv);
-                  toggleSidebar();
                 }}
               >
                 {/* Title container */}
@@ -823,7 +852,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   onChange={handleSearchChange}
                   className="mb-4 cursor-text"
                 />
-                <div className="max-h-60 overflow-y-auto space-y-2">
+                <div className="max-h-60 overflow-y-auto space-y-2 p-1">
                   {searchLoading ? (
                     <div className="flex items-center justify-center">
                       <Loader2 className="animate-spin w-5 h-5" />
@@ -835,7 +864,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     searchResults.map((conv) => (
                       <div
                         key={conv._id}
-                        className="p-2 bg-muted rounded cursor-pointer hover:bg-muted-foreground shadow-sm"
+                        className="p-2 bg-muted rounded cursor-pointer hover:bg-background shadow-sm hover:shadow-2xl"
                         onClick={() => {
                           onSelect(conv);
                           setShowSearchModal(false);
@@ -860,7 +889,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           )}
         </AnimatePresence>
       </motion.aside>
-    </>
+    </div>
   );
 };
 
@@ -1068,6 +1097,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </p>
           </div>
         )}
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-ignore */}
+        {loading && messages.length === 0 && (
+          <div className="flex flex-1 items-center justify-center">
+            <Loader2 className="animate-spin w-8 h-8" />
+          </div>
+        )}
         <AnimatePresence>
           {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
           {/* @ts-ignore */}
@@ -1174,12 +1210,13 @@ const AnimatedDots: React.FC = () => {
 };
 
 // ----------------------------------------------------------
-// Main ChatPage Layout: Sidebar + Top Bar + ChatWindow in a Flex Container
+// Main ChatPage Layout: Sidebar + Top Bar + ChatWindow
 // ----------------------------------------------------------
 export default function ChatPage() {
   const isAuthed = !!Cookies.get("estatewise_token");
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [conversations, setConversations] = useState<any[]>([]);
+  const [conversationLoading, setConversationLoading] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedConvo, setSelectedConvo] = useState<any>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
@@ -1205,6 +1242,8 @@ export default function ChatPage() {
   };
 
   const refreshConvos = async () => {
+    setConversationLoading(true);
+
     try {
       if (isAuthed) {
         const token = Cookies.get("estatewise_token");
@@ -1224,6 +1263,8 @@ export default function ChatPage() {
     } catch (err) {
       console.error("Error fetching conversations:", err);
       toast.error("Error fetching conversations");
+    } finally {
+      setConversationLoading(false);
     }
   };
 
@@ -1253,6 +1294,7 @@ export default function ChatPage() {
                 initial="visible"
               >
                 <Sidebar
+                  conversationLoading={conversationLoading}
                   conversations={conversations}
                   onSelect={(conv) => setSelectedConvo(conv)}
                   isAuthed={isAuthed}
@@ -1284,6 +1326,7 @@ export default function ChatPage() {
           {/* Mobile sidebar is handled inside the Sidebar component */}
           <div className="md:hidden">
             <Sidebar
+              conversationLoading={conversationLoading}
               conversations={conversations}
               onSelect={(conv) => setSelectedConvo(conv)}
               isAuthed={isAuthed}

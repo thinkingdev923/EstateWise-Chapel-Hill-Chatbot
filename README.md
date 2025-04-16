@@ -1,6 +1,6 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full-stack web application that helps users find their dream property in Chapel Hill and surrounding areas. The app harnesses state‑of‑the‑art AI technology and Retrieval-Augmented Generation (RAG) techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
+**EstateWise** is a full-stack web application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art AI technology and Retrieval-Augmented Generation (RAG) techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
 
 ## Table of Contents
 
@@ -25,12 +25,11 @@
 - [OpenAPI Specification](#openapi-specification)
 - [Contributing](#contributing)
 - [License](#license)
-- [Contact](#contact)
 
 ## Live App
 
 Visit the live app on [Vercel](https://estatewise.vercel.app/) and explore the intelligent estate assistant!  
-The API is available at: [https://estatewise-api.vercel.app/](https://estatewise-api.vercel.app/)
+The API is available at: [https://estatewise-api.vercel.app/](https://estatewise-backend.vercel.app/)
 
 ### Key Technologies
 
@@ -208,30 +207,61 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 
 ## User Interface
 
-EstateWise features a modern, animated, and fully responsive user interface built with Next.js and Material UI.  
-Screenshots:
+EstateWise features a modern, animated, and fully responsive user interface built with Next.js and Shadcn UI, with the help of Tailwind CSS for styling. The UI is designed to be intuitive and user-friendly, ensuring a seamless experience across devices.
 
-- **Landing Page:**
+### Landing Page
 
-  ![Landing Page](img/landing.png)
+<p align="center">
+  <img src="img/landing.png" alt="EstateWise UI" width="100%" />
+</p>
 
-- **Homepage (Light Mode):**
+### Chat Interface - Guest
 
-  ![Homepage Light](img/home.png)
+<p align="center">
+  <img src="img/home-guest.png" alt="EstateWise UI" width="100%" />
+</p>
 
-- **Homepage (Dark Mode):**
+### Chat Interface - Authenticated
 
-  ![Homepage Dark](img/home-dark.png)
+<p align="center">
+  <img src="img/home-authed.png" alt="EstateWise UI" width="100%" />
+</p>
 
-- **Authentication Pages:**
+### Dark Mode: Chat Interface - Guest
 
-  - **Login:** ![Login Page](img/login.png)
-  - **Signup:** ![Signup Page](img/signup.png)
-  - **Reset Password:** ![Reset Password](img/reset-password.png)
+<p align="center">
+  <img src="img/home-guest-dark.png" alt="EstateWise UI" width="100%" />
+</p>
 
-- **Conversation Sidebar and Chat Window:**
+### Dark Mode: Chat Interface - Authenticated
 
-  ![Chat Interface](img/chat-interface.png)
+<p align="center">
+  <img src="img/home-authed-dark.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Login Page
+
+<p align="center">
+  <img src="img/login.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Register Page
+
+<p align="center">
+  <img src="img/register.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Reset Password Page
+
+<p align="center">
+  <img src="img/reset-password.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### 400 Not Found Page
+
+<p align="center">
+  <img src="img/404.png" alt="EstateWise UI" width="100%" />
+</p>
 
 ## API Endpoints
 
@@ -255,6 +285,12 @@ Screenshots:
 
 - **POST** `/api/chat` – Send a chat message and receive an AI-generated response.
 
+More endpoints can be found in the Swagger API documentation. Endpoints may be added or modified as the project evolves.
+
+<p align="center">
+  <img src="img/swagger.png" alt="Swagger API Documentation" width="100%" />
+</p>
+
 ### Swagger API Documentation
 
 Access detailed API docs at the `/docs` endpoint on your deployed backend.
@@ -263,15 +299,15 @@ Access detailed API docs at the `/docs` endpoint on your deployed backend.
 
 ```plaintext
 EstateWise/
-├── client/         # Frontend Next.js application
-│   ├── public/     # Static assets (images, icons, etc.)
-│   ├── src/
-│   │   ├── components/       # Reusable UI components
-│   │   ├── pages/            # Next.js pages (Chat, Login, Signup, etc.)
-│   │   └── styles/           # CSS/SCSS files
+├── frontend/                 # Frontend Next.js application
+│   ├── public/               # Static assets (images, icons, etc.)
+│   ├── components/           # Reusable UI components
+│   ├── pages/                # Next.js pages (Chat, Login, Signup, etc.)
+│   ├── styles/               # CSS/SCSS files
 │   ├── package.json
-│   └── tsconfig.json
-├── server/         # Backend Express application
+│   ├── tsconfig.json
+│   └── ... (other config files, etc.)
+├── server/                   # Backend Express application
 │   ├── src/
 │   │   ├── controllers/      # API controllers and endpoints
 │   │   ├── models/           # Mongoose models
@@ -279,9 +315,12 @@ EstateWise/
 │   │   ├── services/         # Business logic and integrations
 │   │   └── middleware/       # Authentication, error handling, etc.
 │   ├── package.json
-│   └── tsconfig.json
-├── .env              # Environment variables for development
-└── README.md         # This file
+│   ├── tsconfig.json
+│   └── ... (other config files, etc.)
+├── .env                      # Environment variables for development
+├── README.md                 # This file
+├── docker-compose.yml        # Docker configuration for backend and frontend
+└── ... (other config files, etc.)
 ```
 
 ## Dockerization
@@ -317,13 +356,6 @@ Contributions are welcome! Follow these steps:
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-## Contact
-
-- **David Nguyen**
-  - [LinkedIn](https://www.linkedin.com/in/yourprofile/)
-  - [GitHub](https://github.com/yourusername)
-  - [Email](mailto:your-email@example.com)
 
 ---
 

@@ -15,8 +15,11 @@ export default function Document() {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="theme-color" content="#f6f5ef" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="manifest" href="/manifest.json" />
+        <link rel="icon" href="https://estatewise.vercel.app/favicon.ico" />
+        <link
+          rel="manifest"
+          href="https://estatewise.vercel.app/manifest.json"
+        />
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
@@ -32,8 +35,11 @@ export default function Document() {
           property="og:description"
           content="Discover your dream property in Chapel Hill with personalized recommendations from EstateWise."
         />
-        <meta property="og:url" content="https://www.estatewiseapp.com" />
-        <meta property="og:image" content="/android-chrome-512x512.png" />
+        <meta property="og:url" content="https://estatewise.vercel.app/" />
+        <meta
+          property="og:image"
+          content="https://estatewise.vercel.app/android-chrome-512x512.png"
+        />
 
         {/* Twitter */}
         <meta name="twitter:card" content="summary_large_image" />
@@ -45,7 +51,10 @@ export default function Document() {
           name="twitter:description"
           content="Discover your dream property in Chapel Hill with personalized recommendations from EstateWise."
         />
-        <meta name="twitter:image" content="/android-chrome-512x512.png" />
+        <meta
+          name="twitter:image"
+          content="https://estatewise.vercel.app/android-chrome-512x512.png"
+        />
       </Head>
       <body className="antialiased">
         <Main />

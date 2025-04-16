@@ -249,14 +249,14 @@ export default function Home() {
             </AnimatedInView>
             <AnimatedInView delay={0.4}>
               <Link href="/chat">
-                <Button className="rounded-full px-8 py-4 text-lg hover:scale-105 transition-transform">
+                <Button className="rounded-full px-8 py-4 text-lg cursor-pointer">
                   Explore Properties
                 </Button>
               </Link>
             </AnimatedInView>
             <AnimatedInView delay={0.6}>
               <Link href="#features">
-                <Button className="mt-4 rounded-full px-8 py-4 text-lg transition-transform duration-300 hover:translate-y-2">
+                <Button className="mt-4 rounded-full px-8 py-4 text-lg transition-transform duration-300 bg-transparent cursor-pointer">
                   Learn More <ArrowDown className="w-5 h-5 inline-block ml-2" />
                 </Button>
               </Link>
@@ -425,7 +425,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             {faqs.map((faq, index) => (
               <AnimatedInView key={index} delay={0.1}>
-                <Card className="shadow-lg rounded-lg p-6 transition-transform hover:scale-102 border-primary">
+                <Card className="shadow-lg rounded-lg p-6 transition-transform border-primary">
                   <h3 className="text-2xl font-bold mb-2">{faq.question}</h3>
                   <p className="text-muted-foreground">{faq.answer}</p>
                 </Card>

@@ -2,8 +2,8 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
 /**
- * Custom request interface to include user information.
- * This is used to extend the default Express Request object.
+ * Custom request interface that extends the Express Request object
+ * to include user information.
  */
 export interface AuthRequest extends Request {
   user?: any;

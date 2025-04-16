@@ -13,9 +13,9 @@ const options = {
         url: "https://opensource.org/licenses/MIT",
       },
       contact: {
-        name: "EstateWise Support",
+        name: "EstateWise",
         email: "hoangson091104@gmail.com",
-        url: "https://estatewise.com/",
+        url: "https://estatewise.vercel.app/",
       },
     },
     servers: [
@@ -27,7 +27,6 @@ const options = {
         url: "http://localhost:3001",
         description: "Local server",
       },
-      // Add your production server here if needed
     ],
     components: {
       securitySchemes: {

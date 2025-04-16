@@ -162,7 +162,7 @@ router.post("/logout", logout);
  *       500:
  *         description: Server error - Failed to verify email
  */
-router.post("/auth/verify-email", verifyEmail);
+router.post("/verify-email", verifyEmail);
 
 /**
  * @swagger
@@ -205,6 +205,6 @@ router.post("/auth/verify-email", verifyEmail);
  *       500:
  *         description: Server error - Failed to reset password
  */
-router.post("/auth/reset-password", resetPasswordForEmail);
+router.post("/reset-password", resetPasswordForEmail);
 
 export default router;
