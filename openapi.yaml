@@ -1,0 +1,480 @@
+openapi: "3.0.3"
+info:
+  title: "EstateWise API"
+  version: "1.0.0"
+  description: >
+    API documentation for EstateWise chatbot - an AI assistant helping users find their dream homes in Chapel Hill, NC.
+  license:
+    name: "MIT"
+    url: "https://opensource.org/licenses/MIT"
+servers:
+  - url: "https://estatewise-backend.vercel.app/"
+    description: "Production server"
+  - url: "http://localhost:3001"
+    description: "Local server"
+paths:
+  /api/auth/signup:
+    post:
+      summary: "Sign up for a new account"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignupRequest"
+            example:
+              username: "johndoe"
+              email: "johndoe@example.com"
+              password: "yourSecurePassword123"
+      responses:
+        "201":
+          description: "User created successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                token: "string"
+                user:
+                  username: "string"
+                  email: "string"
+        "400":
+          description: "User already exists"
+        "500":
+          description: "Server error - Failed to create user"
+  /api/auth/login:
+    post:
+      summary: "Login to your account"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+            example:
+              email: "johndoe@example.com"
+              password: "yourSecurePassword123"
+      responses:
+        "200":
+          description: "Login successful"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              example:
+                token: "string"
+                user:
+                  username: "string"
+                  email: "string"
+        "400":
+          description: "Invalid credentials"
+        "500":
+          description: "Server error - Failed to login"
+  /api/auth/logout:
+    post:
+      summary: "Log out of your account"
+      tags:
+        - Auth
+      responses:
+        "200":
+          description: "Logout successful; user token is cleared"
+  /api/auth/verify-email:
+    post:
+      summary: "Verify the user's email address"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
+            example:
+              email: "johndoe@example.com"
+      responses:
+        "200":
+          description: "Email verified successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerifyEmailResponse"
+              example:
+                message: "Email verified"
+                email: "user@example.com"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Server error - Failed to verify email"
+  /api/auth/reset-password:
+    post:
+      summary: "Reset the user's password"
+      tags:
+        - Auth
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordRequest"
+            example:
+              email: "johndoe@example.com"
+              newPassword: "newSecurePassword456"
+      responses:
+        "200":
+          description: "Password reset successfully"
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "Password reset successfully"
+        "404":
+          description: "User not found"
+        "500":
+          description: "Server error - Failed to reset password"
+  /api/chat:
+    post:
+      summary: "Send a chat message to EstateWise"
+      tags:
+        - Chat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ChatRequest"
+            example:
+              history:
+                - role: "user"
+                  parts:
+                    - text: "Hello, how can I help you?"
+              message: "I need information on property taxes."
+      responses:
+        "200":
+          description: "Chat response returned successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChatResponse"
+              example:
+                response: "Sure, I can help you with property taxes. Could you provide more details?"
+        "401":
+          description: "Unauthorized - invalid or missing authentication token."
+        "500":
+          description: "Server error - Unable to process chat request."
+  /api/conversations:
+    post:
+      summary: "Create a new conversation"
+      tags:
+        - Conversations
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewConversationRequest"
+            example:
+              title: "My Conversation Title"
+      responses:
+        "201":
+          description: "Conversation created successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+              example:
+                _id: "string"
+                user: "string"
+                title: "string"
+                messages: []
+                createdAt: "2025-04-16T06:45:15.749Z"
+                updatedAt: "2025-04-16T06:45:15.749Z"
+        "401":
+          description: "Unauthorized - User not authenticated."
+        "500":
+          description: "Server error - Failed to create conversation."
+    get:
+      summary: "Retrieve all conversations for the authenticated user"
+      tags:
+        - Conversations
+      responses:
+        "200":
+          description: "A list of conversations for the user."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+              example:
+                - _id: "string"
+                  user: "string"
+                  title: "string"
+                  messages: []
+                  createdAt: "2025-04-16T06:45:15.751Z"
+                  updatedAt: "2025-04-16T06:45:15.751Z"
+        "401":
+          description: "Unauthorized - User not authenticated."
+        "500":
+          description: "Server error - Failed to fetch conversations."
+  /api/conversations/search:
+    get:
+      summary: "Search conversations by title"
+      tags:
+        - Conversations
+      parameters:
+        - in: query
+          name: q
+          schema:
+            type: string
+          required: true
+          description: "Search query to filter conversations by title."
+      responses:
+        "200":
+          description: "A list of conversations matching the search criteria."
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Conversation"
+              example:
+                - _id: "string"
+                  user: "string"
+                  title: "string"
+                  messages: []
+                  createdAt: "2025-04-16T06:45:15.752Z"
+                  updatedAt: "2025-04-16T06:45:15.752Z"
+        "401":
+          description: "Unauthorized - User not authenticated."
+        "500":
+          description: "Search failed due to a server error."
+  /api/conversations/{id}:
+    put:
+      summary: "Update the title of a conversation"
+      tags:
+        - Conversations
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Unique ID of the conversation to update."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConversationRequest"
+            example:
+              title: "Updated Conversation Title"
+      responses:
+        "200":
+          description: "Conversation updated successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Conversation"
+              example:
+                _id: "string"
+                user: "string"
+                title: "string"
+                messages: []
+                createdAt: "2025-04-16T06:45:15.755Z"
+                updatedAt: "2025-04-16T06:45:15.755Z"
+        "401":
+          description: "Unauthorized - User not authenticated."
+        "404":
+          description: "Conversation not found."
+        "500":
+          description: "Server error - Failed to update conversation."
+    delete:
+      summary: "Delete a conversation"
+      tags:
+        - Conversations
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: "Unique ID of the conversation to delete."
+      responses:
+        "200":
+          description: "Conversation deleted successfully."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+              example:
+                message: "Conversation deleted successfully"
+        "401":
+          description: "Unauthorized - User not authenticated."
+components:
+  schemas:
+    SignupRequest:
+      type: object
+      required:
+        - username
+        - email
+        - password
+      properties:
+        username:
+          type: string
+          example: "johndoe"
+        email:
+          type: string
+          format: email
+          example: "johndoe@example.com"
+        password:
+          type: string
+          format: password
+          example: "yourSecurePassword123"
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "johndoe@example.com"
+        password:
+          type: string
+          format: password
+          example: "yourSecurePassword123"
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "string"
+        user:
+          type: object
+          properties:
+            username:
+              type: string
+              example: "string"
+            email:
+              type: string
+              format: email
+              example: "string"
+    VerifyEmailRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          example: "johndoe@example.com"
+    VerifyEmailResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Email verified"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+    ResetPasswordRequest:
+      type: object
+      required:
+        - email
+        - newPassword
+      properties:
+        email:
+          type: string
+          format: email
+          example: "johndoe@example.com"
+        newPassword:
+          type: string
+          format: password
+          example: "newSecurePassword456"
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "Password reset successfully"
+    ChatRequest:
+      type: object
+      required:
+        - history
+        - message
+      properties:
+        history:
+          type: array
+          items:
+            type: object
+            required:
+              - role
+              - parts
+            properties:
+              role:
+                type: string
+                example: "user"
+              parts:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - text
+                  properties:
+                    text:
+                      type: string
+                      example: "Hello, how can I help you?"
+        message:
+          type: string
+          example: "I need information on property taxes."
+    ChatResponse:
+      type: object
+      properties:
+        response:
+          type: string
+          example: "Sure, I can help you with property taxes. Could you provide more details?"
+    NewConversationRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          example: "My Conversation Title"
+    UpdateConversationRequest:
+      type: object
+      required:
+        - title
+      properties:
+        title:
+          type: string
+          example: "Updated Conversation Title"
+    Conversation:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "string"
+        user:
+          type: string
+          example: "string"
+        title:
+          type: string
+          example: "string"
+        messages:
+          type: array
+          items:
+            type: object
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-04-16T06:45:15.749Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2025-04-16T06:45:15.749Z"
