@@ -64,68 +64,52 @@ const desktopSidebarVariants = {
 // ReactMarkdown Custom Components
 // ----------------------------------------------------------
 const markdownComponents = {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Headings
   h1: ({ children, ...props }: any) => (
-    <h1
-      className="text-2xl font-bold my-4 border-b-2 border-gray-200 pb-2"
-      {...props}
-    >
+    <h1 className="text-2xl font-bold my-4 border-b-2 border-gray-200 pb-2" {...props}>
       {children}
     </h1>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h2: ({ children, ...props }: any) => (
-    <h2
-      className="text-xl font-bold my-3 border-b border-gray-200 pb-1"
-      {...props}
-    >
+    <h2 className="text-xl font-bold my-3 border-b border-gray-200 pb-1" {...props}>
       {children}
     </h2>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h3: ({ children, ...props }: any) => (
     <h3 className="text-lg font-bold my-3" {...props}>
       {children}
     </h3>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h4: ({ children, ...props }: any) => (
     <h4 className="text-base font-bold my-2" {...props}>
       {children}
     </h4>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h5: ({ children, ...props }: any) => (
     <h5 className="text-sm font-bold my-2" {...props}>
       {children}
     </h5>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h6: ({ children, ...props }: any) => (
     <h6 className="text-xs font-bold my-2" {...props}>
       {children}
     </h6>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Paragraph
   p: ({ children, ...props }: any) => (
     <p className="mb-3 leading-relaxed" {...props}>
       {children}
     </p>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Blockquote
   blockquote: ({ children, ...props }: any) => (
-    <blockquote
-      className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3"
-      {...props}
-    >
+    <blockquote className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3" {...props}>
       {children}
     </blockquote>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  hr: ({ ...props }: any) => (
-    <hr className="border-t border-gray-300 my-3" {...props} />
-  ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Horizontal Rule
+  hr: ({ ...props }: any) => <hr className="border-t border-gray-300 my-3" {...props} />,
+  // Code Block & Inline Code
   code: ({ inline, children, ...props }: any) =>
     inline ? (
       <code
@@ -135,58 +119,81 @@ const markdownComponents = {
         {children}
       </code>
     ) : (
-      <pre
-        className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"
-        {...props}
-      >
+      <pre className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3" {...props}>
         <code>{children}</code>
       </pre>
     ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Table elements
   table: ({ children, ...props }: any) => (
     <div className="overflow-x-auto my-3">
-      <table
-        className="min-w-full border-collapse border border-gray-300 text-sm"
-        {...props}
-      >
+      <table className="min-w-full border-collapse border border-gray-300 text-sm" {...props}>
         {children}
       </table>
     </div>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   thead: ({ children, ...props }: any) => (
     <thead className="bg-gray-100 border-b border-gray-300" {...props}>
-      {children}
+    {children}
     </thead>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tbody: ({ children, ...props }: any) => <tbody {...props}>{children}</tbody>,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tr: ({ children, ...props }: any) => (
     <tr className="border-b last:border-0" {...props}>
       {children}
     </tr>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   th: ({ children, ...props }: any) => (
-    <th
-      className="border border-gray-300 px-3 py-2 font-semibold text-left"
-      {...props}
-    >
+    <th className="border border-gray-300 px-3 py-2 font-semibold text-left" {...props}>
       {children}
     </th>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   td: ({ children, ...props }: any) => (
     <td className="border border-gray-300 px-3 py-2 align-top" {...props}>
       {children}
     </td>
   ),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // Lists
+  ul: ({ children, ...props }: any) => (
+    <ul className="list-disc list-inside my-3" {...props}>
+      {children}
+    </ul>
+  ),
+  ol: ({ children, ...props }: any) => (
+    <ol className="list-decimal list-inside my-3" {...props}>
+      {children}
+    </ol>
+  ),
+  li: ({ children, ...props }: any) => (
+    <li className="my-1" {...props}>
+      {children}
+    </li>
+  ),
+  // Images
+  img: ({ src, alt, ...props }: any) => (
+    <img className="max-w-full h-auto my-3" src={src} alt={alt} {...props} />
+  ),
+  // Emphasis and strong (bold)
+  em: ({ children, ...props }: any) => (
+    <em className="italic" {...props}>
+      {children}
+    </em>
+  ),
+  strong: ({ children, ...props }: any) => (
+    <strong className="font-bold" {...props}>
+      {children}
+    </strong>
+  ),
+  // Strikethrough
+  del: ({ children, ...props }: any) => (
+    <del className="line-through" {...props}>
+      {children}
+    </del>
+  ),
+  // Custom Link
   a: ({ children, href, ...props }: any) => (
     <a
       href={href}
-      className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium hover:bg-blue-200"
+      className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium hover:bg-blue-200 max-w-full break-words"
       target="_blank"
       rel="noopener noreferrer"
       {...props}
@@ -541,9 +548,9 @@ const Sidebar: React.FC<SidebarProps> = ({
           {sidebarVisible && (
             <motion.aside
               className="bg-sidebar text-sidebar-foreground p-4 flex flex-col overflow-hidden h-screen shadow-lg shadow-[4px_0px_10px_rgba(0,0,0,0.1)] fixed inset-0 z-40"
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0.5, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.3 } }}
+              exit={{ opacity: 0, scale: 0.95 }}
             >
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold select-none">Conversations</h2>
