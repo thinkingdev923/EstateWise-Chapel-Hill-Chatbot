@@ -23,12 +23,16 @@ export interface RawQueryResult {
 }
 
 function sanitizeMetadata(
-  metadata: any
+  metadata: any,
 ): Record<string, string | number | boolean> {
   const result: Record<string, string | number | boolean> = {};
   if (!metadata || typeof metadata !== "object") return result;
   for (const [key, value] of Object.entries(metadata)) {
-    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+    if (
+      typeof value === "string" ||
+      typeof value === "number" ||
+      typeof value === "boolean"
+    ) {
       result[key] = value;
     } else if (Array.isArray(value)) {
       if (value.every((x) => typeof x === "string")) {
@@ -45,7 +49,10 @@ function sanitizeMetadata(
   return result;
 }
 
-export async function queryProperties(query: string, topK = 10): Promise<RawQueryResult[]> {
+export async function queryProperties(
+  query: string,
+  topK = 10,
+): Promise<RawQueryResult[]> {
   console.log(`Generating embedding for query: "${query}"`);
   const embeddingResponse = await model.embedContent(query);
   const embedding = embeddingResponse.embedding.values;
@@ -60,15 +67,20 @@ export async function queryProperties(query: string, topK = 10): Promise<RawQuer
   });
   console.log("Received query response from Pinecone.");
 
-  const results: RawQueryResult[] = (queryResponse.matches || []).map((match: any) => ({
-    id: match.id,
-    score: match.score !== undefined ? match.score : 0,
-    metadata: sanitizeMetadata(match.metadata),
-  }));
+  const results: RawQueryResult[] = (queryResponse.matches || []).map(
+    (match: any) => ({
+      id: match.id,
+      score: match.score !== undefined ? match.score : 0,
+      metadata: sanitizeMetadata(match.metadata),
+    }),
+  );
   return results;
 }
 
-export async function queryPropertiesAsString(query: string, topK = 10): Promise<string> {
+export async function queryPropertiesAsString(
+  query: string,
+  topK = 10,
+): Promise<string> {
   try {
     const results = await queryProperties(query, topK);
     if (results.length === 0) return "No matching properties found.";
@@ -77,7 +89,12 @@ export async function queryPropertiesAsString(query: string, topK = 10): Promise
 
     results.forEach((result) => {
       // Extract and parse the address if available.
-      let addressObj: { streetAddress?: string; city?: string; state?: string; zipcode?: string } = {};
+      let addressObj: {
+        streetAddress?: string;
+        city?: string;
+        state?: string;
+        zipcode?: string;
+      } = {};
       if (result.metadata.address) {
         try {
           addressObj = JSON.parse(result.metadata.address as string);
@@ -93,14 +110,20 @@ export async function queryPropertiesAsString(query: string, topK = 10): Promise
       const price = result.metadata.price ? `$${result.metadata.price}` : "N/A";
       const beds = result.metadata.bedrooms || "N/A";
       const baths = result.metadata.bathrooms || "N/A";
-      const livingArea = result.metadata.livingArea ? `${result.metadata.livingArea} sqft` : "N/A";
+      const livingArea = result.metadata.livingArea
+        ? `${result.metadata.livingArea} sqft`
+        : "N/A";
       const yearBuilt = result.metadata.yearBuilt || "N/A";
       const homeType = result.metadata.homeType || "N/A";
-      const description = result.metadata.description || "No description available.";
+      const description =
+        result.metadata.description || "No description available.";
       const zpid = result.metadata.zpid ? result.metadata.zpid.toString() : "";
-      const zillowLink = zpid ? `https://www.zillow.com/homedetails/${zpid}_zpid/` : "N/A";
+      const zillowLink = zpid
+        ? `https://www.zillow.com/homedetails/${zpid}_zpid/`
+        : "N/A";
 
-      response += `Property at ${street}, ${city}, ${state} ${zipcode}\n` +
+      response +=
+        `Property at ${street}, ${city}, ${state} ${zipcode}\n` +
         `  - Price: ${price}\n` +
         `  - Beds: ${beds}, Baths: ${baths}\n` +
         `  - Living Area: ${livingArea}\n` +

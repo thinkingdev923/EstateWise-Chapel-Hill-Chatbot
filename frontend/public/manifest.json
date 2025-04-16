@@ -1,0 +1,21 @@
+{
+  "name": "EstateWise | Your Intelligent Estate Assistant",
+  "short_name": "EstateWise",
+  "description": "Your Intelligent Estate Assistant providing personalized property recommendations in Chapel Hill.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f6f5ef",
+  "icons": [
+    {
+      "src": "/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

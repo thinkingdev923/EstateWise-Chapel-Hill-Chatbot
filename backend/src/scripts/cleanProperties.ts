@@ -61,7 +61,12 @@ const safeStr = (val: any, fallback = "Unknown"): string => {
 /**
  * Helper for numeric values: convert to a number and (optionally) enforce minimum/maximum.
  */
-const safeNum = (val: any, fallback = 0, min?: number, max?: number): number => {
+const safeNum = (
+  val: any,
+  fallback = 0,
+  min?: number,
+  max?: number,
+): number => {
   const n = Number(val);
   if (isNaN(n)) return fallback;
   if (typeof min === "number" && n < min) return fallback;
@@ -107,9 +112,9 @@ function cleanDocument(doc: any): CleanedProperty {
       zipcode:
         (doc.address && safeStr(doc.address.zipcode, "")) ||
         safeStr(doc.zipcode, "Unknown"),
-      neighborhood: doc.address ? doc.address.neighborhood ?? null : null,
-      community: doc.address ? doc.address.community ?? null : null,
-      subdivision: doc.address ? doc.address.subdivision ?? null : null,
+      neighborhood: doc.address ? (doc.address.neighborhood ?? null) : null,
+      community: doc.address ? (doc.address.community ?? null) : null,
+      subdivision: doc.address ? (doc.address.subdivision ?? null) : null,
     },
     bedrooms: safeNum(doc.bedrooms, 0, 0, 20),
     bathrooms: safeNum(doc.bathrooms, 0, 0, 20),
@@ -152,7 +157,9 @@ async function cleanProperties() {
         console.error(`Error updating document ${doc._id}:`, error);
       }
     }
-    console.log(`Data cleaning completed. Total updated: ${updatedCount} documents.`);
+    console.log(
+      `Data cleaning completed. Total updated: ${updatedCount} documents.`,
+    );
     process.exit(0);
   } catch (err) {
     console.error("Error during cleaning:", err);

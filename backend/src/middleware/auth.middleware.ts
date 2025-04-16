@@ -1,11 +1,28 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
+/**
+ * Custom request interface to include user information.
+ * This is used to extend the default Express Request object.
+ */
 export interface AuthRequest extends Request {
   user?: any;
 }
 
-export const authMiddleware = (req: AuthRequest, res: Response, next: NextFunction) => {
+/**
+ * Middleware to authenticate user based on JWT token.
+ * It checks for the token in cookies or authorization headers.
+ * If valid, it attaches the user information to the request object.
+ *
+ * @param req - The request object
+ * @param res - The response object
+ * @param next - The next middleware function
+ */
+export const authMiddleware = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction,
+) => {
   const token = req.cookies.token || req.headers.authorization?.split(" ")[1];
   if (!token) {
     return next();

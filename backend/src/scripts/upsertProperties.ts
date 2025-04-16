@@ -91,9 +91,9 @@ function cleanDocument(doc: any): CleanedProperty {
       zipcode:
         (doc.address && safeStr(doc.address.zipcode, "")) ||
         safeStr(doc.zipcode, "Unknown"),
-      neighborhood: doc.address ? doc.address.neighborhood ?? null : null,
-      community: doc.address ? doc.address.community ?? null : null,
-      subdivision: doc.address ? doc.address.subdivision ?? null : null,
+      neighborhood: doc.address ? (doc.address.neighborhood ?? null) : null,
+      community: doc.address ? (doc.address.community ?? null) : null,
+      subdivision: doc.address ? (doc.address.subdivision ?? null) : null,
     },
     bedrooms: safeNum(doc.bedrooms, 0, 0, 20),
     bathrooms: safeNum(doc.bathrooms, 0, 0, 20),
@@ -112,7 +112,9 @@ function cleanDocument(doc: any): CleanedProperty {
  * Given a cleaned property document, produce a metadata object where all values are either
  * string, number, boolean, or an array of strings. (Note: we JSON.stringify the address.)
  */
-function createMetadata(cleanDoc: CleanedProperty): Record<string, string | number | boolean> {
+function createMetadata(
+  cleanDoc: CleanedProperty,
+): Record<string, string | number | boolean> {
   return {
     zpid: cleanDoc.zpid,
     city: cleanDoc.city,
@@ -135,7 +137,11 @@ function createMetadata(cleanDoc: CleanedProperty): Record<string, string | numb
 
 async function processFileStreaming(
   fileName: string,
-  vectorBatch: Array<{ id: string; values: number[]; metadata: Record<string, string | number | boolean> }>
+  vectorBatch: Array<{
+    id: string;
+    values: number[];
+    metadata: Record<string, string | number | boolean>;
+  }>,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const filePath = path.join(__dirname, fileName);
@@ -155,23 +161,34 @@ async function processFileStreaming(
           cleanDoc.address.zipcode === "Unknown" ||
           cleanDoc.zpid === 0
         ) {
-          console.warn(`Skipping record with missing fields: zpid=${cleanDoc.zpid}`);
+          console.warn(
+            `Skipping record with missing fields: zpid=${cleanDoc.zpid}`,
+          );
           jsonStream.resume();
           return;
         }
 
         const text = `Property at ${cleanDoc.address.streetAddress}, ${cleanDoc.address.city}, ${cleanDoc.address.state} (${cleanDoc.address.zipcode}). Price: $${cleanDoc.price}. Beds: ${cleanDoc.bedrooms}, Baths: ${cleanDoc.bathrooms}, Built in ${cleanDoc.yearBuilt}. ${cleanDoc.description}`;
 
-        console.log(`Generating embedding for: "${cleanDoc.address.streetAddress}"`);
+        console.log(
+          `Generating embedding for: "${cleanDoc.address.streetAddress}"`,
+        );
         let embedding: number[] = [];
         try {
           const embedResp = await model.embedContent(text);
-          if (!embedResp || !embedResp.embedding || !Array.isArray(embedResp.embedding.values)) {
+          if (
+            !embedResp ||
+            !embedResp.embedding ||
+            !Array.isArray(embedResp.embedding.values)
+          ) {
             throw new Error("Invalid embedding response format.");
           }
           embedding = embedResp.embedding.values;
         } catch (embedError) {
-          console.error(`Error generating embedding for zpid=${cleanDoc.zpid}:`, embedError);
+          console.error(
+            `Error generating embedding for zpid=${cleanDoc.zpid}:`,
+            embedError,
+          );
           jsonStream.resume();
           return;
         }
@@ -226,7 +243,11 @@ async function upsertPropertiesToPinecone() {
       "Zillow-March2025-dataset_part3.json",
     ];
 
-    const vectorBatch: Array<{ id: string; values: number[]; metadata: Record<string, string | number | boolean> }> = [];
+    const vectorBatch: Array<{
+      id: string;
+      values: number[];
+      metadata: Record<string, string | number | boolean>;
+    }> = [];
 
     for (const file of files) {
       console.log(`Processing file: ${file}`);
