@@ -124,7 +124,7 @@ export default function ResetPasswordPage() {
               Reset Password
             </h1>
             <p className="text-sm text-center text-card-foreground">
-              Forgot your password? Don't worry, we got you covered!
+              Forgot your password? Don&apos;t worry, we got you covered!
             </p>
             {!isVerified ? (
               <form onSubmit={handleVerifyEmail} className="space-y-4">

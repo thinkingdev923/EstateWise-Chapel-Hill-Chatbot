@@ -1,11 +1,11 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full-stack web application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art AI technology and Retrieval-Augmented Generation (RAG) techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
+**EstateWise** is a full-stack web application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art **AI technology and Retrieval-Augmented Generation (RAG)** techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
 
 ## Table of Contents
 
 - [Live App](#live-app)
-  - [Key Technologies](#key-technologies)
+  - [Key Technologies](#key-technologies-used)
 - [Features](#features)
 - [Architecture](#architecture)
   - [High-Level Architecture Flow Diagram](#high-level-architecture-flow-diagram)
@@ -31,13 +31,16 @@
 Visit the live app on [Vercel](https://estatewise.vercel.app/) and explore the intelligent estate assistant!  
 The API is available at: [https://estatewise-api.vercel.app/](https://estatewise-backend.vercel.app/)
 
-### Key Technologies
+### Key Technologies Used
 
 ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
 ![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer%20Motion-000000?style=for-the-badge&logo=framer&logoColor=white)
+![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-000000?style=for-the-badge&logo=shadcn/ui&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Pinecone](https://img.shields.io/badge/Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
 ![LangChain](https://img.shields.io/badge/LangChain-000000?style=for-the-badge&logo=langchain&logoColor=white)
@@ -45,6 +48,7 @@ The API is available at: [https://estatewise-api.vercel.app/](https://estatewise
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 
 ## Features
 
@@ -135,8 +139,8 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/yourusername/estatewise.git
-   cd estatewise/server
+   git clone https://github.com/hoangsonww/EstateWise-Chapel-Hill-Estate.git
+   cd estatewise/backend
    ```
 
 2. **Install dependencies:**
@@ -149,13 +153,16 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
    Create a `.env` file in the `server` directory with the following variables (adjust as needed):
 
    ```env
-   PORT=5000
-   MONGODB_URI=mongodb://localhost:27017/estatewise
-   JWT_SECRET=your_jwt_secret_here
-   PINECONE_API_KEY=your_pinecone_api_key_here
-   PINECONE_INDEX_NAME=your_pinecone_index_name_here
-   AI_API_KEY=your_ai_api_key_here
+   PORT=<your_port>
+   MONGO_URI=<your_mongo_uri>
+   JWT_SECRET=<your_jwt_secret>
+   GOOGLE_AI_API_KEY=<your_google_ai_api_key>
+   PINECONE_API_KEY=<your_pinecone_api_key>
+   PINECONE_INDEX=estatewise-index
    ```
+
+   Important: Be sure that you created the Pinecone index with the name `estatewise-index` in your Pinecone account before proceeding. Then,
+   add data to the index using the `pinecone` CLI or API. For security purposes, our properties data is not publicly available in the repository. Please use your own data.
 
 4. **Run the Backend in Development Mode:**
 
@@ -170,7 +177,7 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 1. **Navigate to the client folder:**
 
    ```bash
-   cd ../client
+   cd ../frontend
    ```
 
 2. **Install dependencies:**
