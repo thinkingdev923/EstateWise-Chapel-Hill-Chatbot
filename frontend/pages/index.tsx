@@ -22,6 +22,7 @@ import {
   Smile,
   CheckSquare,
   FileText,
+  GithubIcon,
 } from "lucide-react";
 
 // Dynamically load react-slick to avoid SSR issues
@@ -77,7 +78,7 @@ function AnimatedInView({ children, className = "", delay = 0 }) {
 const sliderSettings = {
   dots: true,
   arrows: true,
-  infinite: true,
+  infinite: false,
   autoplay: true,
   autoplaySpeed: 2500,
   speed: 500,
@@ -113,8 +114,32 @@ const features = [
   {
     title: "Local Expert Insights",
     description:
-      "Receive insider recommendations directly from local real estate experts.",
+      "Receive insider recommendations directly from our chatbot, based on local market trends.",
     icon: <Star className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "User-Friendly Interface",
+    description:
+      "Navigate effortlessly through our intuitive platform designed for your convenience.",
+    icon: <User className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Real-Time Chat",
+    description:
+      "Engage in dynamic conversations with our intelligent chatbot for instant property suggestions.",
+    icon: <Phone className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "24/7 Availability",
+    description:
+      "Access property recommendations anytime, anywhere, at your convenience.",
+    icon: <MapPin className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Seamless Integration",
+    description:
+      "Easily connect with trusted local agents for further assistance and inquiries.",
+    icon: <CheckSquare className="w-16 h-16 text-primary" />,
   },
 ];
 
@@ -137,10 +162,22 @@ const howItWorks = [
     icon: <Phone className="w-16 h-16 text-primary" />,
   },
   {
-    title: "Connect with Agents",
+    title: "Explore Listings",
     description:
-      "Get directly connected with trusted local agents for further details.",
-    icon: <Phone className="w-16 h-16 text-primary" />,
+      "Browse through personalized property listings and get detailed information.",
+    icon: <FileText className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "View Zillow Listings",
+    description:
+      "Click on the provided links to view properties directly on Zillow.",
+    icon: <CheckSquare className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Check Back for Updates",
+    description:
+      "Stay tuned for new listings and updates based on your preferences.",
+    icon: <TrendingUp className="w-16 h-16 text-primary" />,
   },
 ];
 
@@ -163,6 +200,47 @@ const chatAdvantages = [
       "Unlike static listings, enjoy a live chat that adapts to your needs.",
     icon: <FileText className="w-16 h-16 text-primary" />,
   },
+  {
+    title: "Instant Feedback",
+    description:
+      "Receive immediate responses and refine your search in real-time.",
+    icon: <Shield className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "User-Friendly",
+    description: "Navigate effortlessly through our intuitive chat interface.",
+    icon: <MapPin className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "24/7 Availability",
+    description:
+      "Access property recommendations anytime, anywhere, at your convenience.",
+    icon: <Phone className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Seamless Integration",
+    description:
+      "Easily connect with trusted local agents for further assistance and inquiries.",
+    icon: <User className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Expert Insights",
+    description:
+      "Receive insider recommendations directly from our chatbot, based on local market trends.",
+    icon: <Star className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Verified Listings",
+    description:
+      "Browse up-to-date and verified property listings in Chapel Hill.",
+    icon: <CheckSquare className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Real-Time Updates",
+    description:
+      "Stay informed with the latest property listings and market trends.",
+    icon: <TrendingUp className="w-16 h-16 text-primary" />,
+  },
 ];
 
 const testimonials = [
@@ -180,6 +258,21 @@ const testimonials = [
     testimonial:
       "I love the interactive approach. It’s not just browsing listings – it’s a conversation that guides me.",
     author: "— Charlie",
+  },
+  {
+    testimonial:
+      "I appreciate how quickly it responds. It saved me so much time finding the perfect home!",
+    author: "— Diane",
+  },
+  {
+    testimonial:
+      "The personalized recommendations are spot-on. This is the future of home buying!",
+    author: "— Edward",
+  },
+  {
+    testimonial:
+      "A revolutionary approach to real estate. It’s like having a personal advisor at your fingertips.",
+    author: "— Fiona",
   },
 ];
 
@@ -203,6 +296,56 @@ const faqs = [
     question: "How can I access the properties?",
     answer:
       "Our chatbot directly refers you to the property listings on Zillow, where you can explore further details!",
+  },
+  {
+    question: "What if I have more questions?",
+    answer:
+      "Feel free to reach out to ask our chatbot any other questions you may have.",
+  },
+  {
+    question: "Is there a mobile app?",
+    answer:
+      "Currently, we only have a web version, but we are working on a mobile app for a better experience.",
+  },
+  {
+    question: "Is my data safe?",
+    answer:
+      "Absolutely! We prioritize your privacy and ensure that all your data is securely stored and protected.",
+  },
+  {
+    question: "Can I change my preferences later?",
+    answer:
+      "Yes, you can update your preferences anytime through your account settings.",
+  },
+  {
+    question: "Is there a fee to use EstateWise?",
+    answer:
+      "No, EstateWise is completely free to use! We aim to provide you with the best property recommendations without any cost.",
+  },
+  {
+    question: "Can I get recommendations for other areas?",
+    answer:
+      "Currently, we focus on Chapel Hill, but we plan to expand our services to other areas in the future.",
+  },
+  {
+    question: "Do I need to create an account to use the chatbot?",
+    answer:
+      "Creating an account is optional, but it allows you to save your preferences and favorite properties.",
+  },
+  {
+    question: "How does the chatbot learn my preferences?",
+    answer:
+      "The chatbot uses your interactions and feedback to refine its recommendations over time.",
+  },
+  {
+    question: "Can I chat with a real estate agent?",
+    answer:
+      "Yes, you can connect with local agents through our platform for personalized assistance.",
+  },
+  {
+    question: "What if I encounter issues while using the app?",
+    answer:
+      "If you face any issues, please contact our support team, and we will assist you promptly.",
   },
 ];
 
@@ -395,7 +538,7 @@ export default function Home() {
               {testimonials.map((item, index) => (
                 <div key={index} className="px-4">
                   <AnimatedInView>
-                    <Card className="h-64 shadow-lg border-primary">
+                    <Card className="h-39 shadow-lg border-primary">
                       <CardContent className="flex flex-col justify-evenly text-center">
                         <p className="italic">{item.testimonial}</p>
                         <div className="flex items-center justify-center space-x-2">
@@ -425,9 +568,11 @@ export default function Home() {
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
             {faqs.map((faq, index) => (
               <AnimatedInView key={index} delay={0.1}>
-                <Card className="shadow-lg rounded-lg p-6 transition-transform border-primary">
-                  <h3 className="text-2xl font-bold mb-2">{faq.question}</h3>
-                  <p className="text-muted-foreground">{faq.answer}</p>
+                <Card className="shadow-lg rounded-lg p-6 transition-transform border-primary h-full flex flex-col">
+                  <h3 className="text-2xl font-bold mb-0">{faq.question}</h3>
+                  <p className="text-muted-foreground flex-grow">
+                    {faq.answer}
+                  </p>
                 </Card>
               </AnimatedInView>
             ))}
@@ -443,6 +588,13 @@ export default function Home() {
               reserved.
             </p>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
+              <Link
+                href="https://github.com/hoangsonww/EstateWise-Chapel-Hill-Estate"
+                className="flex items-center hover:text-primary transition-colors"
+              >
+                <GithubIcon className="w-4 h-4 mr-1" />
+                <span className="text-sm">GitHub Repository</span>
+              </Link>
               <Link
                 href="/privacy"
                 className="flex items-center hover:text-primary transition-colors"
