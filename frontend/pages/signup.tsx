@@ -7,8 +7,6 @@ import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// Import shadcn UI components (adjust paths as needed)
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -27,6 +25,7 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errorMsg, setErrorMsg] = useState("");
   const router = useRouter();
 

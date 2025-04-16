@@ -26,16 +26,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
@@ -67,6 +64,7 @@ const desktopSidebarVariants = {
 // ReactMarkdown Custom Components
 // ----------------------------------------------------------
 const markdownComponents = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h1: ({ children, ...props }: any) => (
     <h1
       className="text-2xl font-bold my-4 border-b-2 border-gray-200 pb-2"
@@ -75,6 +73,7 @@ const markdownComponents = {
       {children}
     </h1>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h2: ({ children, ...props }: any) => (
     <h2
       className="text-xl font-bold my-3 border-b border-gray-200 pb-1"
@@ -83,31 +82,37 @@ const markdownComponents = {
       {children}
     </h2>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h3: ({ children, ...props }: any) => (
     <h3 className="text-lg font-bold my-3" {...props}>
       {children}
     </h3>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h4: ({ children, ...props }: any) => (
     <h4 className="text-base font-bold my-2" {...props}>
       {children}
     </h4>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h5: ({ children, ...props }: any) => (
     <h5 className="text-sm font-bold my-2" {...props}>
       {children}
     </h5>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h6: ({ children, ...props }: any) => (
     <h6 className="text-xs font-bold my-2" {...props}>
       {children}
     </h6>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   p: ({ children, ...props }: any) => (
     <p className="mb-3 leading-relaxed" {...props}>
       {children}
     </p>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   blockquote: ({ children, ...props }: any) => (
     <blockquote
       className="border-l-4 border-gray-300 pl-4 italic text-gray-700 my-3"
@@ -116,9 +121,11 @@ const markdownComponents = {
       {children}
     </blockquote>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   hr: ({ ...props }: any) => (
     <hr className="border-t border-gray-300 my-3" {...props} />
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   code: ({ inline, children, ...props }: any) =>
     inline ? (
       <code
@@ -135,6 +142,7 @@ const markdownComponents = {
         <code>{children}</code>
       </pre>
     ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ({ children, ...props }: any) => (
     <div className="overflow-x-auto my-3">
       <table
@@ -145,17 +153,21 @@ const markdownComponents = {
       </table>
     </div>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   thead: ({ children, ...props }: any) => (
     <thead className="bg-gray-100 border-b border-gray-300" {...props}>
       {children}
     </thead>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tbody: ({ children, ...props }: any) => <tbody {...props}>{children}</tbody>,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tr: ({ children, ...props }: any) => (
     <tr className="border-b last:border-0" {...props}>
       {children}
     </tr>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   th: ({ children, ...props }: any) => (
     <th
       className="border border-gray-300 px-3 py-2 font-semibold text-left"
@@ -164,11 +176,13 @@ const markdownComponents = {
       {children}
     </th>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   td: ({ children, ...props }: any) => (
     <td className="border border-gray-300 px-3 py-2 align-top" {...props}>
       {children}
     </td>
   ),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   a: ({ children, href, ...props }: any) => (
     <a
       href={href}
@@ -254,6 +268,7 @@ type TopBarProps = {
 };
 
 const TopBar: React.FC<TopBarProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onNewConvo,
   toggleSidebar,
   sidebarVisible,
@@ -346,7 +361,9 @@ const TopBar: React.FC<TopBarProps> = ({
 // Sidebar Component with Rename, Delete (Dialog), and Search Modal
 // ----------------------------------------------------------
 type SidebarProps = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   conversations: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSelect: (conv: any) => void;
   isAuthed: boolean;
   refreshConvos: () => void;
@@ -364,6 +381,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [query, setQuery] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [renamingId, setRenamingId] = useState<string | null>(null);
@@ -391,6 +409,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     setSearchLoading(true);
     searchTimeout.current = setTimeout(async () => {
       try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let results: any[] = [];
         if (isAuthed) {
           const token = Cookies.get("estatewise_token");
@@ -409,6 +428,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           const local = localStorage.getItem("estateWiseConvos");
           if (local) {
             const convos = JSON.parse(local);
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             results = convos.filter((conv: any) =>
               String(conv.title).toLowerCase().includes(value.toLowerCase()),
             );
@@ -449,6 +469,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderRenameButtons = (conv: any) => (
     <div className="flex items-center gap-2">
       <button
@@ -882,9 +903,12 @@ const DeleteConfirmationDialog: React.FC<{
 // ----------------------------------------------------------
 type ChatWindowProps = {
   isAuthed: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   localConvos: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setLocalConvos: (convos: any[]) => void;
   selectedConvoId: string | null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSetSelectedConvo: (conv: any) => void;
 };
 
@@ -897,6 +921,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 }) => {
   // For authenticated users, do not load or store messages to local storage.
   const [messages, setMessages] = useState<ChatMessage>(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     !Cookies.get("estatewise_token") ? getInitialMessages() : [],
   );
@@ -908,6 +933,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   useEffect(() => {
     if (isAuthed && selectedConvoId) {
       const conv = localConvos.find((c) => c._id === selectedConvoId);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       if (conv && conv.messages && conv.messages.length !== messages.length) {
         setMessages(conv.messages);
@@ -923,6 +949,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createNewConversation = async (): Promise<any> => {
     const token = Cookies.get("estatewise_token");
     const res = await fetch(`${API_BASE_URL}/api/conversations`, {
@@ -937,6 +964,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const data = await res.json();
       // Only update local conversations for unauthenticated users.
       if (!Cookies.get("estatewise_token")) {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         setLocalConvos((prev) => [data, ...prev]);
       }
@@ -952,10 +980,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     setLoading(true);
     try {
       const newUserMsg: ChatMessage = { role: "user", text: userInput };
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const updatedMessages = [...messages, newUserMsg];
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       setMessages(updatedMessages);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body: any = { message: userInput };
       if (isAuthed) {
         if (!selectedConvoId) {
@@ -978,8 +1009,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       });
       if (res.ok) {
         const data = await res.json();
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         setMessages((prev) => [
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           ...prev,
           { role: "model", text: data.response },
@@ -995,6 +1028,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             const convData = await convRes.json();
             setLocalConvos(convData);
             const updatedConv = convData.find(
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (conv: any) => conv._id === body.convoId,
             );
             if (updatedConv) onSetSelectedConvo(updatedConv);
@@ -1005,6 +1039,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         toast.error(errData.error || "Error sending message");
       }
       setUserInput("");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       console.error(err);
       toast.error(err.message || "Failed to send message");
@@ -1022,6 +1057,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         initial="hidden"
         animate="visible"
       >
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
         {/* @ts-ignore */}
         {messages.length === 0 && !loading && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
@@ -1033,6 +1069,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           </div>
         )}
         <AnimatePresence>
+          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
           {/* @ts-ignore */}
           {messages.map((msg, idx) => (
             <motion.div
@@ -1141,7 +1178,9 @@ const AnimatedDots: React.FC = () => {
 // ----------------------------------------------------------
 export default function ChatPage() {
   const isAuthed = !!Cookies.get("estatewise_token");
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [conversations, setConversations] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [selectedConvo, setSelectedConvo] = useState<any>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
 

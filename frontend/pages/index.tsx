@@ -27,6 +27,7 @@ import {
 // Dynamically load react-slick to avoid SSR issues
 const Slider = dynamic(() => import("react-slick"), { ssr: false });
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function PrevArrow(props: any) {
   const { onClick } = props;
   return (
@@ -39,6 +40,7 @@ function PrevArrow(props: any) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function NextArrow(props: any) {
   const { onClick } = props;
   return (
@@ -51,6 +53,7 @@ function NextArrow(props: any) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 function AnimatedInView({ children, className = "", delay = 0 }) {
   const ref = useRef(null);

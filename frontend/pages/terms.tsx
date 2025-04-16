@@ -82,19 +82,24 @@ const TermsPage = () => {
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
             components={{
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               h1: ({ node, ...props }) => (
                 <h1 className="text-3xl font-bold my-4" {...props} />
               ),
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               h2: ({ node, ...props }) => (
                 <h2 className="text-2xl font-semibold my-3" {...props} />
               ),
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               h3: ({ node, ...props }) => (
                 <h3 className="text-xl font-semibold my-2" {...props} />
               ),
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
               p: ({ node, ...props }) => (
                 <p className="text-base my-2 leading-relaxed" {...props} />
               ),
-              a: ({ node, ...props }: any) => (
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              a: ({ ...props }: any) => (
                 <a
                   className="inline-block bg-blue-100 text-[#be6b4a] px-2 py-1 rounded-full text-sm font-medium hover:bg-blue-200 transition-colors"
                   target="_blank"

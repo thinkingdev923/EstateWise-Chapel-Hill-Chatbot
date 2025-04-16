@@ -7,8 +7,6 @@ import { useRouter } from "next/router";
 import Cookies from "js-cookie";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-
-// Import shadcn UI components (adjust paths as needed)
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -108,7 +106,7 @@ export default function LoginPage() {
               </Button>
             </form>
             <p className="text-sm text-center mt-2 text-card-foreground">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link href="/signup" className="text-primary underline">
                 Sign Up
               </Link>
