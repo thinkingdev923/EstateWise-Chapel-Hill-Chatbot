@@ -30,7 +30,7 @@ export async function getConversations(token: string): Promise<any[]> {
 export async function renameConversation(
   convId: string,
   title: string,
-  token: string
+  token: string,
 ): Promise<any> {
   const res = await fetch(`${API_BASE_URL}/api/conversations/${convId}`, {
     method: "PUT",
@@ -54,7 +54,7 @@ export async function renameConversation(
  */
 export async function deleteConversation(
   id: string,
-  token: string
+  token: string,
 ): Promise<void> {
   const res = await fetch(`${API_BASE_URL}/api/conversations/${id}`, {
     method: "DELETE",
@@ -72,9 +72,7 @@ export async function deleteConversation(
  * @param token - The authentication token.
  * @returns A promise that resolves with the newly created conversation.
  */
-export async function createNewConversation(
-  token: string
-): Promise<any> {
+export async function createNewConversation(token: string): Promise<any> {
   const res = await fetch(`${API_BASE_URL}/api/conversations`, {
     method: "POST",
     headers: {
@@ -126,7 +124,7 @@ export async function sendMessage(params: {
  */
 export async function searchConversations(
   query: string,
-  token?: string
+  token?: string,
 ): Promise<any[]> {
   const url = `${API_BASE_URL}/api/conversations/search?q=${encodeURIComponent(query)}`;
   const headers: Record<string, string> = {};
