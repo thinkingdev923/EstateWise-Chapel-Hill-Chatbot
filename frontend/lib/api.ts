@@ -7,6 +7,7 @@ export type ChatMessage = { role: "user" | "model"; text: string };
  * @param token - The authentication token.
  * @returns A promise that resolves with the list of conversations.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function getConversations(token: string): Promise<any[]> {
   const res = await fetch(`${API_BASE_URL}/api/conversations`, {
     headers: {
@@ -31,6 +32,7 @@ export async function renameConversation(
   convId: string,
   title: string,
   token: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> {
   const res = await fetch(`${API_BASE_URL}/api/conversations/${convId}`, {
     method: "PUT",
@@ -72,6 +74,7 @@ export async function deleteConversation(
  * @param token - The authentication token.
  * @returns A promise that resolves with the newly created conversation.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function createNewConversation(token: string): Promise<any> {
   const res = await fetch(`${API_BASE_URL}/api/conversations`, {
     method: "POST",
@@ -97,6 +100,7 @@ export async function sendMessage(params: {
   convoId?: string;
   message: string;
   history?: ChatMessage[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 }): Promise<any> {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -125,6 +129,7 @@ export async function sendMessage(params: {
 export async function searchConversations(
   query: string,
   token?: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any[]> {
   const url = `${API_BASE_URL}/api/conversations/search?q=${encodeURIComponent(query)}`;
   const headers: Record<string, string> = {};

@@ -7,8 +7,5 @@
   "settings": {
     "terminal.integrated.shell.linux": "/bin/sh"
   },
-  "extensions": [
-    "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint"
-  ]
+  "extensions": ["esbenp.prettier-vscode", "dbaeumer.vscode-eslint"]
 }
