@@ -28,8 +28,11 @@
 
 ## Live App
 
-Visit the live app on [Vercel](https://estatewise.vercel.app/) and explore the intelligent estate assistant!  
-The API is available at: [https://estatewise-api.vercel.app/](https://estatewise-backend.vercel.app/)
+Visit the live app on **Vercel** at [https://estatewise.vercel.app/](https://estatewise.vercel.app/) and explore the intelligent estate assistant!
+
+The API is available at: [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
+
+Feel free to test the app as a guest or sign up for an account to save your conversations!
 
 ### Key Technologies Used
 
@@ -294,13 +297,15 @@ EstateWise features a modern, animated, and fully responsive user interface buil
 
 More endpoints can be found in the Swagger API documentation. Endpoints may be added or modified as the project evolves.
 
+### Swagger API Documentation
+
+Access detailed API docs at the `/api-docs` endpoint on your deployed backend.
+
 <p align="center">
   <img src="img/swagger.png" alt="Swagger API Documentation" width="100%" />
 </p>
 
-### Swagger API Documentation
-
-Access detailed API docs at the `/docs` endpoint on your deployed backend.
+Live API documentation is available at: [https://estatewise-backend.vercel.app/api-docs](https://estatewise-backend.vercel.app/api-docs)
 
 ## Project Structure
 
