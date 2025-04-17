@@ -70,18 +70,76 @@ const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current || chartRef.current) return;
+  // helper to compute current font color
+  const getFontColor = () => {
+    // prefer tailwind's text-foreground in light, white in dark
+    const isDark = document.documentElement.classList.contains("dark");
+    if (canvasRef.current) {
+      return getComputedStyle(canvasRef.current).color;
+    }
+    return isDark ? "#ffffff" : "#000000";
+  };
 
-    // instantiate once
-    chartRef.current = new Chart(canvasRef.current, spec);
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    // deep clone spec so we don’t mutate the prop
+    const config = JSON.parse(JSON.stringify(spec));
+    config.options = config.options || {};
+    config.options.plugins = config.options.plugins || {};
+
+    // set initial colors
+    const fontColor = getFontColor();
+    // legend labels
+    config.options.plugins.legend = {
+      ...config.options.plugins.legend,
+      labels: {
+        ...(config.options.plugins.legend?.labels || {}),
+        color: fontColor,
+      },
+    };
+    // scales ticks & titles
+    if (config.options.scales) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+      Object.entries(config.options.scales).forEach(([_, scaleOpts]: any) => {
+        scaleOpts.ticks = { ...(scaleOpts.ticks || {}), color: fontColor };
+        scaleOpts.title = { ...(scaleOpts.title || {}), color: fontColor };
+      });
+    }
+
+    // instantiate chart
+    chartRef.current = new Chart(canvasRef.current, config);
+
+    // observe dark-mode class changes to update chart colors
+    const observer = new MutationObserver(() => {
+      if (!chartRef.current) return;
+      const newColor = getFontColor();
+      // update legend labels color
+      const legend = chartRef.current.options.plugins?.legend;
+      if (legend && legend.labels) {
+        legend.labels.color = newColor;
+      }
+      // update scales
+      if (chartRef.current.options.scales) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Object.values(chartRef.current.options.scales).forEach((scale: any) => {
+          if (scale.ticks) scale.ticks.color = newColor;
+          if (scale.title) scale.title.color = newColor;
+        });
+      }
+      chartRef.current.update();
+    });
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
 
     return () => {
-      // destroy on unmount
+      observer.disconnect();
       chartRef.current?.destroy();
       chartRef.current = null;
     };
-  }, []); // <- empty deps: only run on mount/unmount
+  }, [spec]);
 
   return <canvas className="mb-4" ref={canvasRef} />;
 };
@@ -330,33 +388,35 @@ const ClientOnly: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 // ----------------------------------------------------------
-// Dark Mode Toggle Component (smoother background and text-color transitions only)
+// Dark Mode Toggle Component
 // ----------------------------------------------------------
 const DarkModeToggle: React.FC = () => {
-  const [darkMode, setDarkMode] = useState(
-    typeof window !== "undefined" &&
-      document.documentElement.classList.contains("dark"),
-  );
+  // On initial load, read the saved preference (fallback to system or light)
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const saved = localStorage.getItem("dark-mode");
+    if (saved !== null) return saved === "true";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   useEffect(() => {
-    const newThemeColor = darkMode ? "#262626" : "#faf9f2";
-    const metaThemeColor = document.querySelector("meta[name='theme-color']");
-    if (metaThemeColor) {
-      metaThemeColor.setAttribute("content", newThemeColor);
+    const root = document.documentElement;
+    if (darkMode) {
+      root.classList.add("dark");
+      localStorage.setItem("dark-mode", "true");
+    } else {
+      root.classList.remove("dark");
+      localStorage.setItem("dark-mode", "false");
     }
+    const newThemeColor = darkMode ? "#262626" : "#faf9f2";
+    const meta = document.querySelector("meta[name='theme-color']");
+    if (meta) meta.setAttribute("content", newThemeColor);
   }, [darkMode]);
 
   const toggleDarkMode = () => {
-    const root = document.documentElement;
-    if (darkMode) {
-      root.classList.remove("dark");
-      setDarkMode(false);
-      toast.success("Light mode activated");
-    } else {
-      root.classList.add("dark");
-      setDarkMode(true);
-      toast.success("Dark mode activated");
-    }
+    const next = !darkMode;
+    setDarkMode(next);
+    toast.success(next ? "Dark mode activated" : "Light mode activated");
   };
 
   return (
@@ -1146,11 +1206,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!userInput.trim() || loading) return;
     setLoading(true);
 
-    // track if we’re in a brand‐new convo
     let createdNew = false;
 
     try {
-      const newUserMsg: ChatMessage = { role: "user", text: userInput };
+      // capture & clear immediately
+      const textToSend = userInput;
+      setUserInput("");
+
+      // append user message
+      const newUserMsg: ChatMessage = { role: "user", text: textToSend };
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const updatedMessages = [...messages, newUserMsg];
@@ -1159,7 +1223,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       setMessages(updatedMessages);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any = { message: userInput };
+      const body: any = { message: textToSend };
       if (isAuthed) {
         if (!selectedConvoId) {
           const newConv = await createNewConversation();
@@ -1211,7 +1275,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     } catch (err: any) {
       toast.error(err.message || "Failed to send message");
     } finally {
-      setUserInput("");
       setLoading(false);
     }
   };
