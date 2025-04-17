@@ -58,6 +58,7 @@ const solidify = (cfg: ChartConfiguration): ChartConfiguration => {
       ? c.replace(/rgba\(([^,]+,[^,]+,[^,]+),\s*[\d.]+\)/, "rgb($1)")
       : c;
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (clone.data?.datasets ?? []).forEach((ds: any) => {
     if (ds.backgroundColor)
       ds.backgroundColor = Array.isArray(ds.backgroundColor)
@@ -71,6 +72,7 @@ const solidify = (cfg: ChartConfiguration): ChartConfiguration => {
   return clone;
 };
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
@@ -108,6 +110,7 @@ const chartTitles: Record<string, string> = {
 
 /* ------------------------------------------------------------------ */
 export default function ChartsPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [charts, setCharts] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
 
