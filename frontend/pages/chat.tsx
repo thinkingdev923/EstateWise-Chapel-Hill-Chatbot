@@ -168,7 +168,7 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
         <canvas
           ref={canvasRef}
           className="block w-full"
-          style={{ height: "300px" /* or whatever fixed height you prefer */ }}
+          style={{ height: "300px" }}
         />
       </div>
     );
