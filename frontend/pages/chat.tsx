@@ -23,6 +23,7 @@ import {
   Menu,
   ChevronLeft,
   LogOut,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -407,6 +408,11 @@ const TopBar: React.FC<TopBarProps> = ({
         </span>
       </div>
       <div className="flex items-center gap-4 relative">
+        <Link href="/charts" legacyBehavior>
+          <a className="flex items-center gap-1">
+            <BarChart3 className="w-5 h-5" />
+          </a>
+        </Link>
         <DarkModeToggle />
         {isAuthed ? (
           <>

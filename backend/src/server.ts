@@ -8,6 +8,7 @@ import swaggerSpec from "./utils/swagger";
 import authRoutes from "./routes/auth.routes";
 import chatRoutes from "./routes/chat.routes";
 import conversationRoutes from "./routes/conversation.routes";
+import propertyRoutes from "./routes/property.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 
@@ -33,13 +34,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Serve favicon (using __dirname directly as provided)
+// Serve favicon
 app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
 
 // REST API routes
 app.use("/api/auth", authRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/conversations", conversationRoutes);
+app.use("/api/properties", propertyRoutes);
 
 // Serve Swagger JSON definition
 app.get("/swagger.json", (req, res) => {
