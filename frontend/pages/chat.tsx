@@ -64,6 +64,7 @@ const desktopSidebarVariants = {
 // ----------------------------------------------------------
 // ChartBlock Component for rendering Chart.js specs
 // ----------------------------------------------------------
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
