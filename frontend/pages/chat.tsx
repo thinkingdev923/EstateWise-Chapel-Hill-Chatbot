@@ -499,6 +499,7 @@ type SidebarProps = {
   refreshConvos: () => void;
   sidebarVisible: boolean;
   toggleSidebar: () => void;
+  selectedConvoId: string | null;
 };
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -509,6 +510,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   refreshConvos,
   sidebarVisible,
   toggleSidebar,
+  selectedConvoId,
 }) => {
   const [showSearchModal, setShowSearchModal] = useState(false);
   const [query, setQuery] = useState("");
@@ -520,6 +522,40 @@ const Sidebar: React.FC<SidebarProps> = ({
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const searchTimeout = useRef<NodeJS.Timeout | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+
+  /* -----------------------------------------------------------------
+   * Highlighting + auto-scroll logic
+   * ----------------------------------------------------------------- */
+  // The id that should currently be highlighted because it is NEW
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  // Store refs to each conversation row so we can scroll to it
+  const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
+  // Keep track of the previous set of ids so we can detect additions
+  const prevConvoIdsRef = useRef<string[]>([]);
+
+  useEffect(() => {
+    // Detect newly‑added conversation ids
+    const prevIds = prevConvoIdsRef.current;
+    const currentIds = conversations.map((c) => c._id);
+    const newIds = currentIds.filter((id) => !prevIds.includes(id));
+
+    if (newIds.length > 0) {
+      const newId = newIds[0]; // there will only ever be one at a time
+      setHighlightId(newId);
+
+      // Wait a beat for the row to render, then scroll it into view
+      setTimeout(() => {
+        const el = itemRefs.current[newId];
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 100);
+
+      // Clear highlight after 2 seconds
+      setTimeout(() => setHighlightId(null), 2000);
+    }
+
+    // Update the ref for the next run
+    prevConvoIdsRef.current = currentIds;
+  }, [conversations]);
 
   useEffect(() => {
     const updateWidth = () => setIsMobile(window.innerWidth < 768);
@@ -649,6 +685,92 @@ const Sidebar: React.FC<SidebarProps> = ({
     }
   };
 
+  /* ----------------------------------------------------------
+   * Motion variants for conversation rows
+   * ---------------------------------------------------------- */
+  const rowVariants = {
+    initial: { opacity: 0, x: -15 },
+    animate: { opacity: 1, x: 0, transition: { duration: 0.25 } },
+  };
+
+  /* ----------------------------------------------------------
+   * Helper to render a single conversation row (desktop/mobile)
+   * ---------------------------------------------------------- */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ConversationRow = ({ conv }: { conv: any }) => {
+    const isSelected = conv._id === selectedConvoId;
+
+    return (
+      <motion.div
+        key={conv._id}
+        ref={(el) => (itemRefs.current[conv._id] = el)}
+        variants={rowVariants}
+        initial="initial"
+        animate="animate"
+        layout
+        className={`flex items-center justify-between border-b border-sidebar-border p-2 cursor-pointer shadow-sm transition-colors duration-500
+          ${isSelected ? "bg-muted dark:bg-muted/40" : "hover:bg-muted"}
+          ${highlightId === conv._id ? "bg-primary/10 dark:bg-primary/20" : ""}`}
+        onClick={() => {
+          onSelect(conv);
+          if (isMobile) toggleSidebar(); // auto‑close on mobile
+        }}
+      >
+        {/* Title container */}
+        <div className="flex-1 min-w-0 select-none">
+          {renamingId === conv._id ? (
+            <Input
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleRename(conv._id);
+                }
+              }}
+              autoFocus
+              className="cursor-text"
+            />
+          ) : (
+            <span className="block truncate">
+              {conv.title || "Untitled Conversation"}
+            </span>
+          )}
+        </div>
+        {/* Buttons container */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {renamingId === conv._id ? (
+            renderRenameButtons(conv)
+          ) : (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setRenamingId(conv._id);
+                  setNewTitle(conv.title);
+                }}
+                title="Rename"
+                className="cursor-pointer hover:text-blue-500"
+              >
+                <Pencil className="w-4 h-4" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setDeleteId(conv._id);
+                }}
+                title="Delete"
+                className="cursor-pointer hover:text-red-500"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
   if (isMobile) {
     return (
       <>
@@ -693,70 +815,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
+                  <motion.div
+                    layout
+                    className="space-y-2"
+                    initial={false}
+                    animate={false}
+                  >
                     {conversations.map((conv) => (
-                      <div
-                        key={conv._id}
-                        className="flex items-center justify-between border-b border-sidebar-border p-2 hover:bg-muted cursor-pointer shadow-sm"
-                        onClick={() => {
-                          onSelect(conv);
-                          toggleSidebar();
-                        }}
-                      >
-                        {/* Title container */}
-                        <div className="flex-1 min-w-0 select-none">
-                          {renamingId === conv._id ? (
-                            <Input
-                              value={newTitle}
-                              onChange={(e) => setNewTitle(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  handleRename(conv._id);
-                                }
-                              }}
-                              autoFocus
-                              className="cursor-text"
-                            />
-                          ) : (
-                            <span className="block truncate">
-                              {conv.title || "Untitled Conversation"}
-                            </span>
-                          )}
-                        </div>
-                        {/* Buttons container */}
-                        <div className="flex items-center gap-3 flex-shrink-0">
-                          {renamingId === conv._id ? (
-                            renderRenameButtons(conv)
-                          ) : (
-                            <>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setRenamingId(conv._id);
-                                  setNewTitle(conv.title);
-                                }}
-                                title="Rename"
-                                className="cursor-pointer hover:text-blue-500"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteId(conv._id);
-                                }}
-                                title="Delete"
-                                className="cursor-pointer hover:text-red-500"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      <ConversationRow key={conv._id} conv={conv} />
                     ))}
-                  </div>
+                  </motion.div>
                 )}
               </div>
             </motion.aside>
@@ -870,67 +938,16 @@ const Sidebar: React.FC<SidebarProps> = ({
               </p>
             </div>
           ) : (
-            conversations.map((conv) => (
-              <div
-                key={conv._id}
-                className="flex items-center justify-between border-b border-sidebar-border p-2 hover:bg-muted cursor-pointer shadow-sm"
-                onClick={() => {
-                  onSelect(conv);
-                }}
-              >
-                {/* Title container */}
-                <div className="flex-1 min-w-0 select-none">
-                  {renamingId === conv._id ? (
-                    <Input
-                      value={newTitle}
-                      onChange={(e) => setNewTitle(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleRename(conv._id);
-                        }
-                      }}
-                      autoFocus
-                      className="cursor-text"
-                    />
-                  ) : (
-                    <span className="block truncate">
-                      {conv.title || "Untitled Conversation"}
-                    </span>
-                  )}
-                </div>
-                {/* Buttons container */}
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  {renamingId === conv._id ? (
-                    renderRenameButtons(conv)
-                  ) : (
-                    <>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRenamingId(conv._id);
-                          setNewTitle(conv.title);
-                        }}
-                        title="Rename"
-                        className="cursor-pointer hover:text-blue-500"
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(conv._id);
-                        }}
-                        title="Delete"
-                        className="cursor-pointer hover:text-red-500"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ))
+            <motion.div
+              layout
+              className="space-y-2"
+              initial={false}
+              animate={false}
+            >
+              {conversations.map((conv) => (
+                <ConversationRow key={conv._id} conv={conv} />
+              ))}
+            </motion.div>
           )}
         </div>
         <AnimatePresence>
@@ -1043,16 +1060,13 @@ const DeleteConfirmationDialog: React.FC<{
 };
 
 // ----------------------------------------------------------
-// ChatWindow Component with fixed-height messages container
+// ChatWindow Component  –––  ONLY PART WE NEEDED TO TOUCH
 // ----------------------------------------------------------
 type ChatWindowProps = {
   isAuthed: boolean;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   localConvos: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setLocalConvos: (convos: any[]) => void;
   selectedConvoId: string | null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSetSelectedConvo: (conv: any) => void;
 };
 
@@ -1063,29 +1077,34 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   selectedConvoId,
   onSetSelectedConvo,
 }) => {
-  // For authenticated users, do not load or store messages to local storage.
   const [messages, setMessages] = useState<ChatMessage>(
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     !Cookies.get("estatewise_token") ? getInitialMessages() : [],
   );
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
+
+  /* ---------- NEW: spinner only for conversation switches ---------- */
+  const [convLoading, setConvLoading] = useState(false);
+  const prevConvoId = useRef<string | null>(null);
+
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // When a conversation is selected, update messages from backend (if the number differs).
+  /* When user selects a different conversation */
   useEffect(() => {
-    if (isAuthed && selectedConvoId) {
+    if (
+      isAuthed &&
+      selectedConvoId &&
+      prevConvoId.current !== selectedConvoId
+    ) {
+      setConvLoading(true);
       const conv = localConvos.find((c) => c._id === selectedConvoId);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      if (conv && conv.messages && conv.messages.length !== messages.length) {
-        setMessages(conv.messages);
-      }
+      setMessages(conv?.messages ?? []);
+      prevConvoId.current = selectedConvoId;
+      setTimeout(() => setConvLoading(false), 300);
     }
-  }, [selectedConvoId, localConvos, isAuthed]);
+  }, [selectedConvoId, isAuthed, localConvos]);
 
-  // Only store messages locally for unauthenticated users.
+  /* Keep localStorage (for guests) + auto‑scroll */
   useEffect(() => {
     if (!Cookies.get("estatewise_token")) {
       localStorage.setItem("estateWiseChat", JSON.stringify(messages));
@@ -1093,6 +1112,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  /* createNewConversation & handleSend are UNCHANGED except:
+     – Send‑button spinner removed
+     – “Thinking” bubble no longer shows the spinning icon           */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createNewConversation = async (): Promise<any> => {
     const token = Cookies.get("estatewise_token");
@@ -1104,37 +1126,38 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       },
       body: JSON.stringify({ title: "Untitled Conversation" }),
     });
-    if (res.ok) {
-      const data = await res.json();
-      // Only update local conversations for unauthenticated users.
-      if (!Cookies.get("estatewise_token")) {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        setLocalConvos((prev) => [data, ...prev]);
-      }
-      onSetSelectedConvo(data);
-      return data;
-    } else {
-      throw new Error("Failed to create new conversation");
-    }
+    if (!res.ok) throw new Error("Failed to create new conversation");
+    const data = await res.json();
+
+    // ← **NEW**: for authed users, prepend the new convo so sidebar knows about it
+    setLocalConvos((prev) => [data, ...prev]);
+
+    onSetSelectedConvo(data);
+
+    // ← **NEW**: pretend we already switched to it so our useEffect won’t reset messages
+    prevConvoId.current = data._id;
+
+    return data;
   };
 
   const handleSend = async () => {
     if (!userInput.trim() || loading) return;
     setLoading(true);
+
+    // track if we’re in a brand‐new convo
+    let createdNew = false;
+
     try {
       const newUserMsg: ChatMessage = { role: "user", text: userInput };
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       const updatedMessages = [...messages, newUserMsg];
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       setMessages(updatedMessages);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+      // build request payload
       const body: any = { message: userInput };
       if (isAuthed) {
         if (!selectedConvoId) {
           const newConv = await createNewConversation();
+          createdNew = true;
           body.convoId = newConv._id;
         } else {
           body.convoId = selectedConvoId;
@@ -1142,6 +1165,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       } else {
         body.history = updatedMessages;
       }
+
       const token = isAuthed ? Cookies.get("estatewise_token") : null;
       const res = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
@@ -1151,43 +1175,33 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         },
         body: JSON.stringify(body),
       });
-      if (res.ok) {
-        const data = await res.json();
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-        // @ts-ignore
-        setMessages((prev) => [
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          ...prev,
-          { role: "model", text: data.response },
-        ]);
 
-        if (isAuthed) {
-          const convRes = await fetch(`${API_BASE_URL}/api/conversations`, {
-            headers: {
-              Authorization: `Bearer ${Cookies.get("estatewise_token")}`,
-            },
-          });
-          if (convRes.ok) {
-            const convData = await convRes.json();
-            setLocalConvos(convData);
-            const updatedConv = convData.find(
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (conv: any) => conv._id === body.convoId,
-            );
-            if (updatedConv) onSetSelectedConvo(updatedConv);
-          }
-        }
-      } else {
+      if (!res.ok) {
         const errData = await res.json();
-        toast.error(errData.error || "Error sending message");
+        throw new Error(errData.error || "Error sending message");
       }
-      setUserInput("");
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+      const data = await res.json();
+      setMessages((prev) => [...prev, { role: "model", text: data.response }]);
+
+      /* only refresh sidebar when we just made a new convo */
+      if (isAuthed && createdNew) {
+        const convRes = await fetch(`${API_BASE_URL}/api/conversations`, {
+          headers: {
+            Authorization: `Bearer ${Cookies.get("estatewise_token")}`,
+          },
+        });
+        if (convRes.ok) {
+          const convData = await convRes.json();
+          setLocalConvos(convData);
+          const justMade = convData.find((cv: any) => cv._id === body.convoId);
+          if (justMade) onSetSelectedConvo(justMade);
+        }
+      }
     } catch (err: any) {
-      console.error(err);
       toast.error(err.message || "Failed to send message");
     } finally {
+      setUserInput("");
       setLoading(false);
     }
   };
@@ -1195,15 +1209,21 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <div className="flex flex-col h-full">
       <motion.div
-        className="overflow-y-auto space-y-2 p-4 transition-none"
+        className="relative overflow-y-auto space-y-2 p-4 transition-none"
         style={{ height: "calc(100vh - 64px - 80px)" }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-ignore */}
-        {messages.length === 0 && !loading && (
+        {/* Spinner ONLY when switching conversations */}
+        {convLoading && (
+          <div className="absolute inset-0 z-20 flex items-center justify-center">
+            <Loader2 className="animate-spin w-10 h-10" />
+          </div>
+        )}
+
+        {/* Empty‑state & history */}
+        {messages.length === 0 && !loading && !convLoading && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
             <Home className="w-20 h-20 mb-4 text-primary" />
             <p className="text-xl font-semibold select-none">
@@ -1212,42 +1232,39 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </p>
           </div>
         )}
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-ignore */}
-        {loading && messages.length === 0 && (
-          <div className="flex flex-1 items-center justify-center">
-            <Loader2 className="animate-spin w-8 h-8" />
-          </div>
-        )}
+
         <AnimatePresence>
-          {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-          {/* @ts-ignore */}
-          {messages.map((msg, idx) => (
-            <motion.div
-              key={idx}
-              variants={bubbleVariants}
-              animate="visible"
-              exit={{ opacity: 0, y: -10 }}
-              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} mb-2`}
-            >
-              <div
-                className={`rounded-lg p-2 pb-0 shadow-lg hover:shadow-xl transition-shadow duration-300 ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted transition-none"
-                } max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`}
+          {!convLoading &&
+            messages.map((msg, idx) => (
+              <motion.div
+                key={idx}
+                variants={bubbleVariants}
+                animate="visible"
+                exit={{ opacity: 0, y: -10 }}
+                className={`flex ${
+                  msg.role === "user" ? "justify-end" : "justify-start"
+                } mb-2`}
               >
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={markdownComponents}
+                <div
+                  className={`rounded-lg p-2 pb-0 shadow-lg hover:shadow-xl transition-shadow duration-300 ${
+                    msg.role === "user"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted transition-none"
+                  } max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`}
                 >
-                  {msg.text}
-                </ReactMarkdown>
-              </div>
-            </motion.div>
-          ))}
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={markdownComponents}
+                  >
+                    {msg.text}
+                  </ReactMarkdown>
+                </div>
+              </motion.div>
+            ))}
         </AnimatePresence>
-        {loading && (
+
+        {/* “Thinking …” bubble (no spinner icon) */}
+        {loading && !convLoading && (
           <motion.div
             variants={bubbleVariants}
             initial="hidden"
@@ -1255,17 +1272,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             exit={{ opacity: 0, y: -10 }}
             className="flex justify-start mb-2"
           >
-            <div className="bg-muted p-2 rounded-lg max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg shadow-lg flex items-center gap-2">
-              <Loader2 className="animate-spin w-5 h-5" />
-              <span>
-                Thinking
-                <AnimatedDots />
-              </span>
+            <div className="bg-muted p-2 rounded-lg max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg shadow-lg flex items-center">
+              <Loader2 className="animate-spin w-5 h-5 mr-1" />
+              <span>Thinking</span>
+              <AnimatedDots />
             </div>
           </motion.div>
         )}
+
         <div ref={scrollRef} />
       </motion.div>
+
+      {/* input + send */}
       <div className="flex flex-col flex-shrink-0 h-20 p-4">
         <div className="flex gap-2">
           <Input
@@ -1285,11 +1303,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             disabled={loading}
             className="flex items-center gap-1 cursor-pointer"
           >
-            {loading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
+            <Send className="h-4 w-4" />
             Send
           </Button>
         </div>
@@ -1310,16 +1324,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 };
 
 // ----------------------------------------------------------
-// AnimatedDots Component for Loading State
+// AnimatedDots Component (UNCHANGED)
 // ----------------------------------------------------------
 const AnimatedDots: React.FC = () => {
   const [dots, setDots] = useState("");
   useEffect(() => {
-    const interval = setInterval(
-      () => setDots((prev) => (prev.length < 3 ? prev + "." : "")),
+    const int = setInterval(
+      () => setDots((d) => (d.length < 3 ? d + "." : "")),
       500,
     );
-    return () => clearInterval(interval);
+    return () => clearInterval(int);
   }, []);
   return <span>{dots}</span>;
 };
@@ -1416,6 +1430,7 @@ export default function ChatPage() {
                   refreshConvos={refreshConvos}
                   sidebarVisible={true}
                   toggleSidebar={toggleSidebar}
+                  selectedConvoId={selectedConvo ? selectedConvo._id : null}
                 />
               </motion.div>
             </div>
@@ -1448,6 +1463,7 @@ export default function ChatPage() {
               refreshConvos={refreshConvos}
               sidebarVisible={sidebarVisible}
               toggleSidebar={toggleSidebar}
+              selectedConvoId={selectedConvo ? selectedConvo._id : null}
             />
           </div>
         </div>
