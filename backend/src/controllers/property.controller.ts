@@ -3,17 +3,23 @@ import { queryProperties } from "../scripts/queryProperties";
 
 export interface Listing {
   id: string;
+  score: number;
   price: number;
   bedrooms: number;
   bathrooms: number;
   livingArea: number;
   yearBuilt: number;
   homeType: string;
+  homeStatus: string;
+  city: string;
   zipcode?: string;
   [key: string]: any;
 }
 
-// 1. Home type distribution (pie)
+/**
+ * Builds a pie chart config for home type distribution.
+ * @param listings Array of property listings
+ */
 function buildHomeTypeDistribution(listings: Listing[]) {
   const counts: Record<string, number> = {};
   listings.forEach((l) => {
@@ -30,7 +36,10 @@ function buildHomeTypeDistribution(listings: Listing[]) {
   };
 }
 
-// 2. Bedrooms distribution (bar)
+/**
+ * Builds a bar chart config for bedrooms distribution.
+ * @param listings Array of property listings
+ */
 function buildBedroomsDistribution(listings: Listing[]) {
   const counts: Record<string, number> = {};
   listings.forEach((l) => {
@@ -47,7 +56,10 @@ function buildBedroomsDistribution(listings: Listing[]) {
   };
 }
 
-// 3. Bathrooms distribution (bar)
+/**
+ * Builds a bar chart config for bathrooms distribution.
+ * @param listings Array of property listings
+ */
 function buildBathroomsDistribution(listings: Listing[]) {
   const counts: Record<string, number> = {};
   listings.forEach((l) => {
@@ -64,7 +76,10 @@ function buildBathroomsDistribution(listings: Listing[]) {
   };
 }
 
-// 4. Price distribution (histogram-like bar)
+/**
+ * Builds a histogram-like bar chart for price distribution.
+ * @param listings Array of property listings
+ */
 function buildPriceDistribution(listings: Listing[]) {
   const prices = listings.map((l) => l.price).sort((a, b) => a - b);
   if (!prices.length) return null;
@@ -94,7 +109,10 @@ function buildPriceDistribution(listings: Listing[]) {
   };
 }
 
-// 5. Living area distribution (histogram-like bar)
+/**
+ * Builds a histogram-like bar chart for living area distribution.
+ * @param listings Array of property listings
+ */
 function buildLivingAreaDistribution(listings: Listing[]) {
   const areas = listings.map((l) => l.livingArea).sort((a, b) => a - b);
   if (!areas.length) return null;
@@ -124,7 +142,10 @@ function buildLivingAreaDistribution(listings: Listing[]) {
   };
 }
 
-// 6. Year built distribution (bar)
+/**
+ * Builds a bar chart for year built distribution.
+ * @param listings Array of property listings
+ */
 function buildYearBuiltDistribution(listings: Listing[]) {
   const counts: Record<string, number> = {};
   listings.forEach((l) => {
@@ -141,7 +162,10 @@ function buildYearBuiltDistribution(listings: Listing[]) {
   };
 }
 
-// 7. Price vs Living Area (scatter)
+/**
+ * Builds a scatter chart for price vs living area.
+ * @param listings Array of property listings
+ */
 function buildPriceAreaTrend(listings: Listing[]) {
   const pts = listings.map((l) => ({ x: l.livingArea, y: l.price }));
   return {
@@ -157,7 +181,10 @@ function buildPriceAreaTrend(listings: Listing[]) {
   };
 }
 
-// 8. Price vs Year Built (line)
+/**
+ * Builds a line chart for price over year built.
+ * @param listings Array of property listings
+ */
 function buildPriceYearTrend(listings: Listing[]) {
   const sorted = [...listings].sort((a, b) => a.yearBuilt - b.yearBuilt);
   return {
@@ -166,7 +193,7 @@ function buildPriceYearTrend(listings: Listing[]) {
       labels: sorted.map((l) => l.yearBuilt.toString()),
       datasets: [
         {
-          label: "Price over Year Built",
+          label: "Price over Year",
           data: sorted.map((l) => l.price),
           fill: false,
         },
@@ -176,16 +203,19 @@ function buildPriceYearTrend(listings: Listing[]) {
   };
 }
 
-// 9. Price per sqft distribution (bar)
+/**
+ * Builds a bar chart for price per square foot distribution.
+ * @param listings Array of property listings
+ */
 function buildPricePerSqftDistribution(listings: Listing[]) {
   const values = listings
-    .map((l) => +(l.price / l.livingArea || 0).toFixed(2))
+    .map((l) => +(l.price / (l.livingArea || 1)).toFixed(2))
     .sort((a, b) => a - b);
   if (!values.length) return null;
-  const bins = 5,
-    min = values[0],
-    max = values[values.length - 1],
-    width = (max - min) / bins;
+  const bins = 5;
+  const min = values[0],
+    max = values[values.length - 1];
+  const width = (max - min) / bins;
   const counts = Array(bins).fill(0);
   values.forEach((v) => {
     const idx = Math.min(Math.floor((v - min) / width), bins - 1);
@@ -202,7 +232,10 @@ function buildPricePerSqftDistribution(listings: Listing[]) {
   };
 }
 
-// 10. Bedrooms vs Bathrooms (bubble)
+/**
+ * Builds a bubble chart for bedrooms vs bathrooms.
+ * @param listings Array of property listings
+ */
 function buildBedsBathsScatter(listings: Listing[]) {
   const pts = listings.map((l) => ({ x: l.bedrooms, y: l.bathrooms, r: 5 }));
   return {
@@ -212,7 +245,10 @@ function buildBedsBathsScatter(listings: Listing[]) {
   };
 }
 
-// 11. Average price by home type (bar)
+/**
+ * Builds a bar chart for average price by home type.
+ * @param listings Array of property listings
+ */
 function buildAveragePriceByHomeType(listings: Listing[]) {
   const sums: Record<string, number> = {},
     counts: Record<string, number> = {};
@@ -229,7 +265,10 @@ function buildAveragePriceByHomeType(listings: Listing[]) {
   };
 }
 
-// 12. Count by zipcode (bar)
+/**
+ * Builds a bar chart for count by zipcode.
+ * @param listings Array of property listings
+ */
 function buildCountByZipcode(listings: Listing[]) {
   const counts: Record<string, number> = {};
   listings.forEach((l) => {
@@ -247,7 +286,129 @@ function buildCountByZipcode(listings: Listing[]) {
 }
 
 /**
+ * Builds a doughnut chart for home status distribution.
+ * @param listings Array of property listings
+ */
+function buildHomeStatusDistribution(listings: Listing[]) {
+  const counts: Record<string, number> = {};
+  listings.forEach((l) => {
+    const s = l.homeStatus || "Unknown";
+    counts[s] = (counts[s] || 0) + 1;
+  });
+  return {
+    type: "doughnut",
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ label: "Home Status", data: Object.values(counts) }],
+    },
+    options: { responsive: true },
+  };
+}
+
+/**
+ * Builds a bar chart for count by city.
+ * @param listings Array of property listings
+ */
+function buildCountByCity(listings: Listing[]) {
+  const counts: Record<string, number> = {};
+  listings.forEach((l) => {
+    const c = l.city || "Unknown";
+    counts[c] = (counts[c] || 0) + 1;
+  });
+  return {
+    type: "bar",
+    data: {
+      labels: Object.keys(counts),
+      datasets: [{ label: "Count by City", data: Object.values(counts) }],
+    },
+    options: { responsive: true },
+  };
+}
+
+/**
+ * Builds a bar chart for average living area by home type.
+ * @param listings Array of property listings
+ */
+function buildAverageLivingAreaByHomeType(listings: Listing[]) {
+  const sums: Record<string, number> = {},
+    counts: Record<string, number> = {};
+  listings.forEach((l) => {
+    sums[l.homeType] = (sums[l.homeType] || 0) + l.livingArea;
+    counts[l.homeType] = (counts[l.homeType] || 0) + 1;
+  });
+  const labels = Object.keys(sums);
+  const data = labels.map((t) => sums[t] / counts[t]);
+  return {
+    type: "bar",
+    data: { labels, datasets: [{ label: "Avg Living Area", data }] },
+    options: { responsive: true },
+  };
+}
+
+/**
+ * Builds a bar chart for score distribution.
+ * @param listings Array of property listings
+ */
+function buildScoreDistribution(listings: Listing[]) {
+  const buckets: Record<string, number> = {};
+  listings.forEach((l) => {
+    const b = Math.floor(l.score * 10) / 10; // bucket by 0.1
+    const label = `${b.toFixed(1)}-${(b + 0.1).toFixed(1)}`;
+    buckets[label] = (buckets[label] || 0) + 1;
+  });
+  return {
+    type: "bar",
+    data: {
+      labels: Object.keys(buckets),
+      datasets: [{ label: "Score Range", data: Object.values(buckets) }],
+    },
+    options: { responsive: true },
+  };
+}
+
+/**
+ * Builds a scatter chart for price vs score.
+ * @param listings Array of property listings
+ */
+function buildScorePriceScatter(listings: Listing[]) {
+  const pts = listings.map((l) => ({ x: l.score, y: l.price }));
+  return {
+    type: "scatter",
+    data: { datasets: [{ label: "Price vs Score", data: pts }] },
+    options: {
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: "Score" } },
+        y: { title: { display: true, text: "$" } },
+      },
+    },
+  };
+}
+
+/**
+ * Builds a scatter chart for living area vs year built.
+ * @param listings Array of property listings
+ */
+function buildAreaYearScatter(listings: Listing[]) {
+  const pts = listings.map((l) => ({ x: l.yearBuilt, y: l.livingArea }));
+  return {
+    type: "scatter",
+    data: { datasets: [{ label: "Area vs Year", data: pts }] },
+    options: {
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: "Year" } },
+        y: { title: { display: true, text: "Sqft" } },
+      },
+    },
+  };
+}
+
+/**
  * GET /api/properties?q=…&topK=…
+ * Fetch property data, parse metadata, and return listings with chart configurations.
+ * @param req Express request
+ * @param res Express response
  */
 export async function getPropertyData(req: Request, res: Response) {
   try {
@@ -256,15 +417,19 @@ export async function getPropertyData(req: Request, res: Response) {
     const raw = await queryProperties(q, topK);
     const listings: Listing[] = raw.map((r) => {
       const m = r.metadata as any;
+      const addr = JSON.parse(m.address || "{}");
       return {
         id: r.id,
+        score: r.score || 0,
         price: Number(m.price) || 0,
         bedrooms: Number(m.bedrooms) || 0,
         bathrooms: Number(m.bathrooms) || 0,
         livingArea: Number(m.livingArea) || 0,
         yearBuilt: Number(m.yearBuilt) || 0,
         homeType: String(m.homeType || ""),
-        zipcode: String(m.zipcode || ""),
+        homeStatus: String(m.homeStatus || ""),
+        city: String(m.city || ""),
+        zipcode: String(addr.zipcode || ""),
       };
     });
 
@@ -281,6 +446,12 @@ export async function getPropertyData(req: Request, res: Response) {
       bedsBaths: buildBedsBathsScatter(listings),
       avgPriceType: buildAveragePriceByHomeType(listings),
       countByZip: buildCountByZipcode(listings),
+      homeStatus: buildHomeStatusDistribution(listings),
+      countByCity: buildCountByCity(listings),
+      avgAreaType: buildAverageLivingAreaByHomeType(listings),
+      scoreDist: buildScoreDistribution(listings),
+      scorePrice: buildScorePriceScatter(listings),
+      areaYear: buildAreaYearScatter(listings),
     };
 
     res.json({ listings, charts });

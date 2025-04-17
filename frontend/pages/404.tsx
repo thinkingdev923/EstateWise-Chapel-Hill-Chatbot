@@ -65,7 +65,6 @@ export default function NotFoundPage() {
         initial="hidden"
         animate="visible"
       >
-        {/* Animated and Pulsating Title */}
         <motion.h1
           className="text-6xl md:text-8xl font-extrabold mb-4 text-center drop-shadow-lg"
           variants={titleVariants}
@@ -75,7 +74,6 @@ export default function NotFoundPage() {
           404
         </motion.h1>
 
-        {/* Animated Subtext */}
         <motion.p
           variants={subtitleVariants}
           className="text-xl md:text-2xl mb-8 text-center max-w-xl drop-shadow-sm"
@@ -83,7 +81,6 @@ export default function NotFoundPage() {
           Oops! We couldn’t find the page you’re looking for.
         </motion.p>
 
-        {/* Animated Error Illustration */}
         <motion.div
           variants={bounceVariants}
           animate="animate"
@@ -92,7 +89,6 @@ export default function NotFoundPage() {
           <AlertTriangle className="w-16 h-16" />
         </motion.div>
 
-        {/* Call-to-Action Button with Icon */}
         <motion.div variants={buttonVariants} whileHover="hover">
           <Link
             href="/chat"

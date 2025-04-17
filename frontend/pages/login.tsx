@@ -55,8 +55,8 @@ export default function LoginPage() {
         router.push("/chat");
       } else {
         const errData = await res.json();
-        setErrorMsg(errData.message || "Login failed");
-        toast.error(errData.message || "Login failed");
+        setErrorMsg(errData.message || "Login failed - invalid credentials");
+        toast.error(errData.message || "Login failed - invalid credentials");
       }
     } catch (err) {
       console.error(err);

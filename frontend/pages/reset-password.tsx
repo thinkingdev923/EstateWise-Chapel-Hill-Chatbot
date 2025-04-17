@@ -35,7 +35,6 @@ export default function ResetPasswordPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const router = useRouter();
 
-  // Verifies if the user exists for the given email.
   const handleVerifyEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");
@@ -68,7 +67,6 @@ export default function ResetPasswordPage() {
     }
   };
 
-  // Resets the password for the verified email.
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg("");

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, memo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Chart, { ChartConfiguration } from "chart.js/auto";
@@ -15,48 +15,41 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const API_BASE_URL = "https://estatewise-backend.vercel.app";
+const API_BASE_URL = "http://localhost:3001";
 
 // ------------------------------------------------------------------
 // THEME TOGGLE
 // ------------------------------------------------------------------
 const DarkModeToggle: React.FC = () => {
-  // initialize from localStorage (fallback to existing <html> class or light)
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     const saved = localStorage.getItem("dark-mode");
-    if (saved !== null) {
-      return saved === "true";
-    }
+    if (saved !== null) return saved === "true";
     return document.documentElement.classList.contains("dark");
   });
 
-  // apply class, persist and meta-theme-color when darkMode changes
   useEffect(() => {
     const root = document.documentElement;
-    if (darkMode) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-    localStorage.setItem("dark-mode", darkMode.toString());
-
-    const meta = document.querySelector("meta[name='theme-color']");
-    if (meta) {
-      meta.setAttribute("content", darkMode ? "#262626" : "#faf9f2");
-    }
+    // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+    darkMode ? root.classList.add("dark") : root.classList.remove("dark");
+    localStorage.setItem("dark-mode", String(darkMode));
+    document
+      .querySelector("meta[name='theme-color']")
+      ?.setAttribute("content", darkMode ? "#262626" : "#faf9f2");
   }, [darkMode]);
 
-  const toggleDarkMode = () => {
-    const next = !darkMode;
-    setDarkMode(next);
-    toast.success(next ? "Dark mode activated" : "Light mode activated");
+  const toggle = () => {
+    setDarkMode((prev) => {
+      const next = !prev;
+      toast.success(next ? "Dark mode activated" : "Light mode activated");
+      return next;
+    });
   };
 
   return (
     <button
       aria-label="Toggle theme"
-      onClick={toggleDarkMode}
+      onClick={toggle}
       className="rounded-full p-2 transition-colors cursor-pointer"
     >
       {darkMode ? (
@@ -68,59 +61,45 @@ const DarkModeToggle: React.FC = () => {
   );
 };
 
-/* ------------------------------------------------------------------ */
-/*  Chart block – normalises any transparent colours                  */
-/* ------------------------------------------------------------------ */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const solidify = (cfg: ChartConfiguration): ChartConfiguration => {
-  const clone = structuredClone(cfg) as ChartConfiguration;
-  const toSolid = (c: unknown) =>
-    typeof c === "string" && c.startsWith("rgba")
-      ? c.replace(/rgba\(([^,]+,[^,]+,[^,]+),\s*[\d.]+\)/, "rgb($1)")
-      : c;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (clone.data?.datasets ?? []).forEach((ds: any) => {
-    if (ds.backgroundColor)
-      ds.backgroundColor = Array.isArray(ds.backgroundColor)
-        ? ds.backgroundColor.map(toSolid)
-        : toSolid(ds.backgroundColor);
-    if (ds.borderColor)
-      ds.borderColor = Array.isArray(ds.borderColor)
-        ? ds.borderColor.map(toSolid)
-        : toSolid(ds.borderColor);
-  });
-  return clone;
-};
-
 // ------------------------------------------------------------------
-// ChartBlock – solid palette + dynamic light/dark text coloring
+// Helpers
 // ------------------------------------------------------------------
 const PALETTE = [
-  "#1f77b4", // muted blue
-  "#ff7f0e", // safety orange
-  "#2ca02c", // cooked asparagus green
-  "#d62728", // brick red
-  "#9467bd", // muted purple
-  "#8c564b", // chestnut brown
-  "#e377c2", // raspberry yogurt pink
-  "#7f7f7f", // middle gray
-  "#bcbd22", // curry yellow‑green
-  "#17becf", // blue‑teal
+  "#1f77b4",
+  "#ff7f0e",
+  "#2ca02c",
+  "#d62728",
+  "#9467bd",
+  "#8c564b",
+  "#e377c2",
+  "#7f7f7f",
+  "#bcbd22",
+  "#17becf",
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
+const normalizeLabel = (label: string): string =>
+  label
+    .toLowerCase()
+    .split(/[\s_]+/)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+// ------------------------------------------------------------------
+// ChartBlock: create chart once, only update colors on theme change
+// ------------------------------------------------------------------
+const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const chartRef = useRef<Chart | null>(null);
-  const [isDark, setIsDark] = useState(() =>
+  const [isDark, setIsDark] = useState<boolean>(() =>
     document.documentElement.classList.contains("dark"),
   );
+  const [visible, setVisible] = useState<boolean>(false);
 
+  // watch theme class
   useEffect(() => {
-    const mo = new MutationObserver(() => {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    });
+    const mo = new MutationObserver(() =>
+      setIsDark(document.documentElement.classList.contains("dark")),
+    );
     mo.observe(document.documentElement, {
       attributes: true,
       attributeFilter: ["class"],
@@ -128,60 +107,108 @@ const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
     return () => mo.disconnect();
   }, []);
 
-  // repaint on spec or theme change
+  // lazy load
   useEffect(() => {
-    if (!canvasRef.current) return;
-    chartRef.current?.destroy();
+    const node = canvasRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          obs.disconnect();
+        }
+      },
+      { threshold: 0.1 },
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, []);
 
-    // clone spec so we can mutate
-    const cfg: ChartConfiguration = structuredClone(spec);
-    cfg.options = { ...(cfg.options || {}), maintainAspectRatio: false };
+  // initialize chart once
+  useEffect(() => {
+    if (!visible || chartRef.current || !canvasRef.current) return;
 
-    // pick font color
-    const fontColor = isDark ? "#ffffff" : "#000000";
-    Chart.defaults.color = fontColor;
+    // deep clone to avoid mutating original
+    const cfg = structuredClone(spec) as ChartConfiguration;
 
-    // apply text color to legend & axes
-    cfg.options.plugins = cfg.options.plugins || {};
-    cfg.options.plugins.legend = {
-      ...(cfg.options.plugins.legend || {}),
-      labels: { color: fontColor },
-    };
-    if (cfg.options.scales) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      Object.values(cfg.options.scales).forEach((scale: any) => {
-        scale.ticks = { ...(scale.ticks || {}), color: fontColor };
-        scale.title = { ...(scale.title || {}), color: fontColor };
-      });
+    // normalize labels
+    if (cfg.data?.labels) {
+      cfg.data.labels = cfg.data.labels.map((lbl) =>
+        normalizeLabel(String(lbl)),
+      );
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    cfg.data?.datasets?.forEach((ds: any, dsIndex: number) => {
+    cfg.data?.datasets?.forEach((ds: any, idx: number) => {
       if (Array.isArray(ds.data)) {
         ds.backgroundColor = ds.data.map(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (_: any, i: any) => PALETTE[i % PALETTE.length],
+          (_: any, i: number) => PALETTE[i % PALETTE.length],
         );
-        ds.borderColor = ds.data.map(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (_: any, i: any) => PALETTE[i % PALETTE.length],
-        );
+        ds.borderColor = ds.backgroundColor;
       } else {
-        const c = PALETTE[dsIndex % PALETTE.length];
+        const c = PALETTE[idx % PALETTE.length];
         ds.backgroundColor = c;
         ds.borderColor = c;
       }
       ds.borderWidth = ds.borderWidth ?? 1;
     });
 
+    // set legend & axis colors initially
+    const fontColor = isDark ? "#ffffff" : "#000000";
+    Chart.defaults.color = fontColor;
+    cfg.options = {
+      ...(cfg.options || {}),
+      maintainAspectRatio: false,
+      plugins: {
+        ...(cfg.options?.plugins || {}),
+        legend: {
+          ...(cfg.options?.plugins?.legend || {}),
+          labels: { color: fontColor },
+        },
+      },
+    };
+    if (cfg.options.scales) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      Object.entries(cfg.options.scales).forEach(([_, scale]) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const s = scale as any;
+        s.ticks = { ...(s.ticks || {}), color: fontColor };
+        s.title = { ...(s.title || {}), color: fontColor };
+      });
+    }
+
     chartRef.current = new Chart(canvasRef.current, cfg);
-    return () => chartRef.current?.destroy();
-  }, [spec, isDark]);
+  }, [visible, spec, isDark]);
+
+  // on theme change, update only colors
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart) return;
+
+    const fontColor = isDark ? "#ffffff" : "#000000";
+    Chart.defaults.color = fontColor;
+
+    // legend labels
+    if (chart.options.plugins?.legend?.labels) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (chart.options.plugins.legend.labels as any).color = fontColor;
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const scales = (chart.options.scales || {}) as Record<string, any>;
+    Object.values(scales).forEach((s) => {
+      if (s.ticks) s.ticks.color = fontColor;
+      if (s.title) s.title.color = fontColor;
+    });
+
+    chart.update("none");
+  }, [isDark]);
 
   return <canvas ref={canvasRef} className="h-full w-full mb-4" />;
-};
+});
+ChartBlock.displayName = "ChartBlock";
 
-/* ------------------------------------------------------------------ */
 const chartTitles: Record<string, string> = {
   homeType: "Home‑type distribution",
   bedrooms: "Bedroom count",
@@ -191,20 +218,30 @@ const chartTitles: Record<string, string> = {
   yearBuiltDist: "Year‑built distribution",
   priceArea: "Price vs living area",
   priceYear: "Price vs year built",
-  pricePerSqft: "Price per sqft",
   bedsBaths: "Bedrooms vs bathrooms",
   avgPriceType: "Average price by type",
   countByZip: "Listings by zipcode",
+  pricePerSqft: "Price per sqft",
+  homeStatus: "Home status distribution",
+  countByCity: "Listings by city",
+  avgAreaType: "Average living area by type",
+  scoreDist: "Score distribution",
+  scorePrice: "Price vs score",
+  areaYear: "Living area vs year built",
 };
 
-/* ------------------------------------------------------------------ */
+// ------------------------------------------------------------------
+// Main Page
+// ------------------------------------------------------------------
 export default function ChartsPage() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [charts, setCharts] = useState<Record<string, any> | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [charts, setCharts] = useState<Record<
+    string,
+    ChartConfiguration
+  > | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/properties?q=Chapel%20Hill&topK=1000`)
+    fetch(`${API_BASE_URL}/api/properties?q=Chapel%20Hill&topK=1500`)
       .then((r) => r.json())
       .then((d) => setCharts(d.charts))
       .catch(console.error)
@@ -222,35 +259,22 @@ export default function ChartsPage() {
       </Head>
 
       <div className="min-h-screen bg-background text-foreground flex flex-col">
-        {/* ------------------------------------------------------------------ */}
-        {/*  Top bar                                                           */}
-        {/* ------------------------------------------------------------------ */}
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
             <Link href="/chat">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Chat"
-                className="cursor-pointer"
-              >
+              <Button variant="ghost" size="icon" aria-label="Chat">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             </Link>
-
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-primary" />
               <span className="font-extrabold tracking-tight text-lg">
                 Insights Dashboard
               </span>
             </div>
-
             <div className="ml-auto flex items-center gap-2">
               <Link href="/" legacyBehavior>
-                <a
-                  aria-label="Home"
-                  className="hidden sm:inline-flex cursor-pointer mr-2"
-                >
+                <a aria-label="Home" className="hidden sm:inline-flex mr-2">
                   <HomeIcon className="h-5 w-5" />
                 </a>
               </Link>
@@ -259,23 +283,17 @@ export default function ChartsPage() {
           </div>
         </header>
 
-        {/* ------------------------------------------------------------------ */}
-        {/*  Intro                                                             */}
-        {/* ------------------------------------------------------------------ */}
         <section className="mx-auto max-w-4xl px-6 py-10 text-center space-y-3">
           <h1 className="text-3xl md:text-4xl font-bold leading-tight">
-            Chapel Hill Real‑Estate Visualized
+            Chapel Hill Real‑Estate Visualized 📊
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Twelve crisp charts uncover price patterns, bedroom trends, and
+            Eighteen crisp charts uncover price patterns, bedroom trends, and
             neighbourhood popularity, giving you the data‑driven edge in your
             home search.
           </p>
         </section>
 
-        {/* ------------------------------------------------------------------ */}
-        {/*  Charts grid                                                       */}
-        {/* ------------------------------------------------------------------ */}
         <main className="flex-1 px-6 pb-16">
           {loading ? (
             <div className="flex items-center justify-center h-60">

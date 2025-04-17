@@ -75,7 +75,6 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const chartRef = useRef<Chart | null>(null);
 
-    // helper to compute current font color
     const getFontColor = () => {
       const isDark = document.documentElement.classList.contains("dark");
       if (canvasRef.current) {
@@ -84,18 +83,15 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
       return isDark ? "#ffffff" : "#000000";
     };
 
-    // stringify spec so effect only runs when spec really changes
     const specString = JSON.stringify(spec);
 
     useEffect(() => {
       if (!canvasRef.current) return;
 
-      // parse a fresh copy of the spec
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       const config = JSON.parse(specString) as Chart.ChartConfiguration;
 
-      // --- 1) Enable responsiveness and disable fixed aspect ratio ---
       config.options = {
         responsive: true,
         maintainAspectRatio: false,
@@ -106,7 +102,6 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
         },
       };
 
-      // apply current font color
       const fontColor = getFontColor();
       config.options.plugins!.legend = {
         ...(config.options.plugins!.legend || {}),
@@ -124,17 +119,14 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
       }
 
       if (chartRef.current) {
-        // update existing chart in place
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         chartRef.current.config = config;
         chartRef.current.update();
       } else {
-        // create on first render
         chartRef.current = new Chart(canvasRef.current, config);
       }
 
-      // watch for dark/light mode toggles
       const observer = new MutationObserver(() => {
         if (!chartRef.current) return;
         const newColor = getFontColor();
@@ -397,7 +389,6 @@ const markdownComponents = {
 type ChatMessage = { role: "user" | "model"; text: string };
 
 const getInitialMessages = (): ChatMessage[] => {
-  // For unauthenticated users, load from local storage
   if (typeof window !== "undefined" && !Cookies.get("estatewise_token")) {
     const stored = localStorage.getItem("estateWiseChat");
     if (stored) {
@@ -620,11 +611,8 @@ const Sidebar: React.FC<SidebarProps> = ({
   /* -----------------------------------------------------------------
    * Highlighting + auto-scroll logic
    * ----------------------------------------------------------------- */
-  // The id that should currently be highlighted because it is NEW
   const [highlightId, setHighlightId] = useState<string | null>(null);
-  // Store refs to each conversation row so we can scroll to it
   const itemRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
-  // Keep track of the previous set of ids so we can detect additions
   const prevConvoIdsRef = useRef<string[]>([]);
 
   useEffect(() => {
@@ -634,7 +622,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     const newIds = currentIds.filter((id) => !prevIds.includes(id));
 
     if (newIds.length > 0) {
-      const newId = newIds[0]; // there will only ever be one at a time
+      const newId = newIds[0];
       setHighlightId(newId);
 
       // Wait a beat for the row to render, then scroll it into view
@@ -643,8 +631,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
 
-      // Clear highlight after 2 seconds
-      setTimeout(() => setHighlightId(null), 2000);
+      // Clear highlight after 2s
+      setTimeout(() => setHighlightId(null), 0);
     }
 
     // Update the ref for the next run
@@ -788,7 +776,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   /* ----------------------------------------------------------
-   * Helper to render a single conversation row (desktop/mobile)
+   * Helper to render a single conversation row
    * ---------------------------------------------------------- */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ConversationRow = ({ conv }: { conv: any }) => {
@@ -805,11 +793,11 @@ const Sidebar: React.FC<SidebarProps> = ({
         animate="animate"
         layout
         className={`flex items-center justify-between border-b border-sidebar-border p-2 cursor-pointer shadow-sm transition-colors duration-500
-          ${isSelected ? "bg-muted dark:bg-muted/40" : "hover:bg-muted"}
+          ${isSelected ? "bg-muted dark:bg-primary/50" : "hover:bg-muted"}
           ${highlightId === conv._id ? "bg-primary/10 dark:bg-primary/20" : ""}`}
         onClick={() => {
           onSelect(conv);
-          if (isMobile) toggleSidebar(); // auto‑close on mobile
+          if (isMobile) toggleSidebar();
         }}
       >
         {/* Title container */}
@@ -833,7 +821,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             </span>
           )}
         </div>
-        {/* Buttons container */}
+
         <div className="flex items-center gap-3 flex-shrink-0">
           {renamingId === conv._id ? (
             renderRenameButtons(conv)
@@ -994,7 +982,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     );
   }
 
-  // Desktop version.
   return (
     <div className="shadow-lg">
       <motion.aside
@@ -1122,7 +1109,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 };
 
 // ----------------------------------------------------------
-// Delete Confirmation Dialog using shadcn Dialog Components
+// Delete Confirmation Dialog using Shadcn Dialog Components
 // ----------------------------------------------------------
 const DeleteConfirmationDialog: React.FC<{
   open: boolean;
@@ -1156,7 +1143,7 @@ const DeleteConfirmationDialog: React.FC<{
 };
 
 // ----------------------------------------------------------
-// ChatWindow Component  –––  ONLY PART WE NEEDED TO TOUCH
+// ChatWindow Component
 // ----------------------------------------------------------
 type ChatWindowProps = {
   isAuthed: boolean;
@@ -1243,11 +1230,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     let createdNew = false;
 
     try {
-      // capture & clear immediately
       const textToSend = userInput;
       setUserInput("");
-
-      // append user message
       const newUserMsg: ChatMessage = { role: "user", text: textToSend };
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
@@ -1290,7 +1274,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       // @ts-ignore
       setMessages((prev) => [...prev, { role: "model", text: data.response }]);
 
-      /* only refresh sidebar when we just made a new convo */
       if (isAuthed && createdNew) {
         const convRes = await fetch(`${API_BASE_URL}/api/conversations`, {
           headers: {
@@ -1322,7 +1305,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         initial="hidden"
         animate="visible"
       >
-        {/* Spinner ONLY when switching conversations */}
         {convLoading && (
           <div className="absolute inset-0 z-20 flex items-center justify-center">
             <Loader2 className="animate-spin w-10 h-10" />
@@ -1432,7 +1414,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 };
 
 // ----------------------------------------------------------
-// AnimatedDots Component (UNCHANGED)
+// AnimatedDots Component
 // ----------------------------------------------------------
 const AnimatedDots: React.FC = () => {
   const [dots, setDots] = useState("");
@@ -1458,7 +1440,6 @@ export default function ChatPage() {
   const [selectedConvo, setSelectedConvo] = useState<any>(null);
   const [sidebarVisible, setSidebarVisible] = useState(false);
 
-  // Persist sidebar state in local storage.
   useEffect(() => {
     const saved = localStorage.getItem("sidebarVisible");
     if (saved !== null) {
@@ -1561,7 +1542,6 @@ export default function ChatPage() {
               />
             </div>
           </div>
-          {/* Mobile sidebar is handled inside the Sidebar component */}
           <div className="md:hidden">
             <Sidebar
               conversationLoading={conversationLoading}
