@@ -252,7 +252,7 @@ function buildCountByZipcode(listings: Listing[]) {
 export async function getPropertyData(req: Request, res: Response) {
   try {
     const q = String(req.query.q || "");
-    const topK = Number(req.query.topK) || 10;
+    const topK = Number(req.query.topK) || 500;
     const raw = await queryProperties(q, topK);
     const listings: Listing[] = raw.map((r) => {
       const m = r.metadata as any;

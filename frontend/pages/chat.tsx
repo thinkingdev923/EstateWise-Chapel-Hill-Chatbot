@@ -65,84 +65,118 @@ const desktopSidebarVariants = {
 // ----------------------------------------------------------
 // ChartBlock Component for rendering Chart.js specs
 // ----------------------------------------------------------
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const chartRef = useRef<Chart | null>(null);
+interface ChartBlockProps {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  spec: any;
+}
 
-  // helper to compute current font color
-  const getFontColor = () => {
-    // prefer tailwind's text-foreground in light, white in dark
-    const isDark = document.documentElement.classList.contains("dark");
-    if (canvasRef.current) {
-      return getComputedStyle(canvasRef.current).color;
-    }
-    return isDark ? "#ffffff" : "#000000";
-  };
+export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
+  ({ spec }) => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const chartRef = useRef<Chart | null>(null);
 
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // deep clone spec so we don’t mutate the prop
-    const config = JSON.parse(JSON.stringify(spec));
-    config.options = config.options || {};
-    config.options.plugins = config.options.plugins || {};
-
-    // set initial colors
-    const fontColor = getFontColor();
-    // legend labels
-    config.options.plugins.legend = {
-      ...config.options.plugins.legend,
-      labels: {
-        ...(config.options.plugins.legend?.labels || {}),
-        color: fontColor,
-      },
-    };
-    // scales ticks & titles
-    if (config.options.scales) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
-      Object.entries(config.options.scales).forEach(([_, scaleOpts]: any) => {
-        scaleOpts.ticks = { ...(scaleOpts.ticks || {}), color: fontColor };
-        scaleOpts.title = { ...(scaleOpts.title || {}), color: fontColor };
-      });
-    }
-
-    // instantiate chart
-    chartRef.current = new Chart(canvasRef.current, config);
-
-    // observe dark-mode class changes to update chart colors
-    const observer = new MutationObserver(() => {
-      if (!chartRef.current) return;
-      const newColor = getFontColor();
-      // update legend labels color
-      const legend = chartRef.current.options.plugins?.legend;
-      if (legend && legend.labels) {
-        legend.labels.color = newColor;
+    // helper to compute current font color
+    const getFontColor = () => {
+      const isDark = document.documentElement.classList.contains("dark");
+      if (canvasRef.current) {
+        return getComputedStyle(canvasRef.current).color;
       }
-      // update scales
-      if (chartRef.current.options.scales) {
+      return isDark ? "#ffffff" : "#000000";
+    };
+
+    // stringify spec so effect only runs when spec really changes
+    const specString = JSON.stringify(spec);
+
+    useEffect(() => {
+      if (!canvasRef.current) return;
+
+      // parse a fresh copy of the spec
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const config = JSON.parse(specString) as Chart.ChartConfiguration;
+
+      // --- 1) Enable responsiveness and disable fixed aspect ratio ---
+      config.options = {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: { duration: 0 },
+        ...config.options,
+        plugins: {
+          ...(config.options?.plugins || {}),
+        },
+      };
+
+      // apply current font color
+      const fontColor = getFontColor();
+      config.options.plugins!.legend = {
+        ...(config.options.plugins!.legend || {}),
+        labels: {
+          ...(config.options.plugins!.legend?.labels || {}),
+          color: fontColor,
+        },
+      };
+      if (config.options.scales) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Object.values(chartRef.current.options.scales).forEach((scale: any) => {
-          if (scale.ticks) scale.ticks.color = newColor;
-          if (scale.title) scale.title.color = newColor;
+        Object.values(config.options.scales).forEach((scale: any) => {
+          scale.ticks = { ...(scale.ticks || {}), color: fontColor };
+          scale.title = { ...(scale.title || {}), color: fontColor };
         });
       }
-      chartRef.current.update();
-    });
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
 
-    return () => {
-      observer.disconnect();
-      chartRef.current?.destroy();
-      chartRef.current = null;
-    };
-  }, [spec]);
+      if (chartRef.current) {
+        // update existing chart in place
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
+        chartRef.current.config = config;
+        chartRef.current.update();
+      } else {
+        // create on first render
+        chartRef.current = new Chart(canvasRef.current, config);
+      }
 
-  return <canvas className="mb-4" ref={canvasRef} />;
-};
+      // watch for dark/light mode toggles
+      const observer = new MutationObserver(() => {
+        if (!chartRef.current) return;
+        const newColor = getFontColor();
+        const legend = chartRef.current.options.plugins?.legend;
+        if (legend && legend.labels) legend.labels.color = newColor;
+        if (chartRef.current.options.scales) {
+          Object.values(chartRef.current.options.scales!).forEach(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (scale: any) => {
+              if (scale.ticks) scale.ticks.color = newColor;
+              if (scale.title) scale.title.color = newColor;
+            },
+          );
+        }
+        chartRef.current.update();
+      });
+      observer.observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ["class"],
+      });
+
+      return () => {
+        observer.disconnect();
+        chartRef.current?.destroy();
+        chartRef.current = null;
+      };
+    }, [specString]);
+
+    return (
+      <div className="mb-4 w-full max-w-full">
+        <canvas
+          ref={canvasRef}
+          className="block w-full"
+          style={{ height: "300px" /* or whatever fixed height you prefer */ }}
+        />
+      </div>
+    );
+  },
+  (prev, next) => JSON.stringify(prev.spec) === JSON.stringify(next.spec),
+);
+
+ChartBlock.displayName = "ChartBlock";
 
 // ----------------------------------------------------------
 // ReactMarkdown Custom Components

@@ -204,7 +204,7 @@ export default function ChartsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/api/properties?q=Chapel%20Hill&topK=12`)
+    fetch(`${API_BASE_URL}/api/properties?q=Chapel%20Hill&topK=1000`)
       .then((r) => r.json())
       .then((d) => setCharts(d.charts))
       .catch(console.error)
