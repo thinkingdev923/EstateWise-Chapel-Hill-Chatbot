@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const API_BASE_URL = "http://localhost:3001";
+const API_BASE_URL = "https://estatewise-backend.vercel.app";
 
 // ------------------------------------------------------------------
 // THEME TOGGLE
