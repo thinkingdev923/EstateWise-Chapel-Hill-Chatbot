@@ -34,8 +34,9 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import Chart from "chart.js/auto";
 
-const API_BASE_URL = "https://estatewise-backend.vercel.app";
+const API_BASE_URL = "http://localhost:3001";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -58,6 +59,29 @@ const bubbleVariants = {
 const desktopSidebarVariants = {
   visible: { width: "18rem", transition: { duration: 0.6, ease: "easeInOut" } },
   hidden: { width: "0rem", transition: { duration: 0.6, ease: "easeInOut" } },
+};
+
+// ----------------------------------------------------------
+// ChartBlock Component for rendering Chart.js specs
+// ----------------------------------------------------------
+const ChartBlock: React.FC<{ spec: any }> = ({ spec }) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const chartRef = useRef<Chart | null>(null);
+
+  useEffect(() => {
+    if (!canvasRef.current || chartRef.current) return;
+
+    // instantiate once
+    chartRef.current = new Chart(canvasRef.current, spec);
+
+    return () => {
+      // destroy on unmount
+      chartRef.current?.destroy();
+      chartRef.current = null;
+    };
+  }, []); // <- empty deps: only run on mount/unmount
+
+  return <canvas className="mb-4" ref={canvasRef} />;
 };
 
 // ----------------------------------------------------------
@@ -131,22 +155,48 @@ const markdownComponents = {
   ),
   // Code Block & Inline Code
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  code: ({ inline, children, ...props }: any) =>
-    inline ? (
-      <code
-        className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono"
-        {...props}
-      >
-        {children}
-      </code>
-    ) : (
+  code: ({ inline, children, className, ...props }: any) => {
+    const content = String(children).trim();
+
+    // detect our chart-spec code blocks
+    if (!inline && /language-chart-spec/.test(className || "")) {
+      let spec;
+      try {
+        spec = JSON.parse(content);
+      } catch {
+        // fallback to plain code block if JSON invalid
+        return (
+          <pre
+            className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"
+            {...props}
+          >
+            <code>{children}</code>
+          </pre>
+        );
+      }
+      return <ChartBlock spec={spec} />;
+    }
+
+    if (inline) {
+      return (
+        <code
+          className="bg-gray-100 text-gray-800 px-1 py-0.5 rounded text-sm font-mono"
+          {...props}
+        >
+          {children}
+        </code>
+      );
+    }
+
+    return (
       <pre
         className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"
         {...props}
       >
         <code>{children}</code>
       </pre>
-    ),
+    );
+  },
   // Table elements
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table: ({ children, ...props }: any) => (
@@ -191,19 +241,19 @@ const markdownComponents = {
   // Lists
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ul: ({ children, ...props }: any) => (
-    <ul className="list-disc list-inside my-3" {...props}>
+    <ul className="list-disc list-outside pl-4 my-3" {...props}>
       {children}
     </ul>
   ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ol: ({ children, ...props }: any) => (
-    <ol className="list-decimal list-inside my-3" {...props}>
+    <ol className="list-decimal list-outside pl-4 my-3" {...props}>
       {children}
     </ol>
   ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   li: ({ children, ...props }: any) => (
-    <li className="my-1" {...props}>
+    <li className="my-1 marker:mr-2" {...props}>
       {children}
     </li>
   ),
