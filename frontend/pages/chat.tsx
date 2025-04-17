@@ -370,7 +370,7 @@ const DarkModeToggle: React.FC = () => {
 };
 
 // ----------------------------------------------------------
-// Top Bar Component with "New Conversation", Log Out, and responsive sidebar toggling
+// Top Bar Component
 // ----------------------------------------------------------
 type TopBarProps = {
   onNewConvo: () => void;
@@ -435,7 +435,6 @@ const TopBar: React.FC<TopBarProps> = ({
               className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer"
             >
               <LogOut className="w-5 h-5" />
-              Log Out
             </Button>
           </>
         ) : (
