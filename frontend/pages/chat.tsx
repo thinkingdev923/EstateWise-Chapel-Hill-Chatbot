@@ -625,13 +625,11 @@ const Sidebar: React.FC<SidebarProps> = ({
       const newId = newIds[0];
       setHighlightId(newId);
 
-      // Wait a beat for the row to render, then scroll it into view
       setTimeout(() => {
         const el = itemRefs.current[newId];
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
       }, 100);
 
-      // Clear highlight after 2s
       setTimeout(() => setHighlightId(null), 0);
     }
 

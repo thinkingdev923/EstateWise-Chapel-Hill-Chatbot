@@ -95,7 +95,6 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
   );
   const [visible, setVisible] = useState<boolean>(false);
 
-  // watch theme class
   useEffect(() => {
     const mo = new MutationObserver(() =>
       setIsDark(document.documentElement.classList.contains("dark")),
@@ -124,14 +123,11 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
     return () => obs.disconnect();
   }, []);
 
-  // initialize chart once
   useEffect(() => {
     if (!visible || chartRef.current || !canvasRef.current) return;
 
-    // deep clone to avoid mutating original
     const cfg = structuredClone(spec) as ChartConfiguration;
 
-    // normalize labels
     if (cfg.data?.labels) {
       cfg.data.labels = cfg.data.labels.map((lbl) =>
         normalizeLabel(String(lbl)),
@@ -154,7 +150,6 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
       ds.borderWidth = ds.borderWidth ?? 1;
     });
 
-    // set legend & axis colors initially
     const fontColor = isDark ? "#ffffff" : "#000000";
     Chart.defaults.color = fontColor;
     cfg.options = {
@@ -181,7 +176,6 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
     chartRef.current = new Chart(canvasRef.current, cfg);
   }, [visible, spec, isDark]);
 
-  // on theme change, update only colors
   useEffect(() => {
     const chart = chartRef.current;
     if (!chart) return;
@@ -189,7 +183,6 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
     const fontColor = isDark ? "#ffffff" : "#000000";
     Chart.defaults.color = fontColor;
 
-    // legend labels
     if (chart.options.plugins?.legend?.labels) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (chart.options.plugins.legend.labels as any).color = fontColor;
@@ -207,6 +200,7 @@ const ChartBlock: React.FC<{ spec: ChartConfiguration }> = memo(({ spec }) => {
 
   return <canvas ref={canvasRef} className="h-full w-full mb-4" />;
 });
+
 ChartBlock.displayName = "ChartBlock";
 
 const chartTitles: Record<string, string> = {
@@ -262,7 +256,7 @@ export default function ChartsPage() {
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
             <Link href="/chat">
-              <Button variant="ghost" size="icon" aria-label="Chat">
+              <Button variant="ghost" size="icon" aria-label="Chat" className="cursor-pointer">
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             </Link>
