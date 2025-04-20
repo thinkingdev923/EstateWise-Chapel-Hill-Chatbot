@@ -78,6 +78,21 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const chartRef = useRef<Chart | null>(null);
 
+    // helper to strip alpha channel from rgba(...) strings
+    const stripAlpha = (color: any): any => {
+      if (typeof color === "string" && color.startsWith("rgba")) {
+        // convert "rgba(r, g, b, a)" → "rgb(r, g, b)"
+        return color.replace(
+          /rgba\(\s*([0-9]+,\s*[0-9]+,\s*[0-9]+),\s*[\d.]+\s*\)/,
+          "rgb($1)",
+        );
+      }
+      if (Array.isArray(color)) {
+        return color.map(stripAlpha);
+      }
+      return color;
+    };
+
     const getFontColor = () => {
       const isDark = document.documentElement.classList.contains("dark");
       if (canvasRef.current) {
@@ -91,8 +106,18 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
     useEffect(() => {
       if (!canvasRef.current) return;
 
+      // re‑parse the spec so we can safely mutate it
       const config: ChartConfiguration = JSON.parse(specString);
       const fontColor = getFontColor();
+
+      // enforce opaque colors on all datasets
+      if (config.data?.datasets) {
+        config.data.datasets.forEach((ds: any) => {
+          if (ds.backgroundColor)
+            ds.backgroundColor = stripAlpha(ds.backgroundColor);
+          if (ds.borderColor) ds.borderColor = stripAlpha(ds.borderColor);
+        });
+      }
 
       config.options = {
         responsive: true,
@@ -1203,7 +1228,6 @@ const DeleteConfirmationDialog: React.FC<{
   );
 };
 
-
 type ChatWindowProps = {
   isAuthed: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1216,12 +1240,12 @@ type ChatWindowProps = {
 };
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-                                                 isAuthed,
-                                                 localConvos,
-                                                 setLocalConvos,
-                                                 selectedConvoId,
-                                                 onSetSelectedConvo,
-                                               }) => {
+  isAuthed,
+  localConvos,
+  setLocalConvos,
+  selectedConvoId,
+  onSetSelectedConvo,
+}) => {
   const [messages, setMessages] = useState<ChatMessage[]>(
     !Cookies.get("estatewise_token") ? getInitialMessages() : [],
   );
@@ -1435,11 +1459,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
   const lastIdx = messages.length - 1;
 
-  const MessageBubble: React.FC<{ msg: ChatMessage; idx: number; isLast: boolean }> = ({
-                                                                                         msg,
-                                                                                         idx,
-                                                                                         isLast,
-                                                                                       }) => {
+  const MessageBubble: React.FC<{
+    msg: ChatMessage;
+    idx: number;
+    isLast: boolean;
+  }> = ({ msg, idx, isLast }) => {
     const [view, setView] = useState<string>("Combined");
     const [pickerOpen, setPickerOpen] = useState<boolean>(false);
     const pickerRef = useRef<HTMLDivElement>(null);
@@ -1447,7 +1471,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // scroll the dropdown into view when opened
     useEffect(() => {
       if (pickerOpen && pickerRef.current) {
-        pickerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        pickerRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
       }
     }, [pickerOpen]);
 
@@ -1589,12 +1616,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <AnimatePresence>
           {!convLoading &&
             messages.map((m, i) => (
-              <MessageBubble
-                key={i}
-                msg={m}
-                idx={i}
-                isLast={i === lastIdx}
-              />
+              <MessageBubble key={i} msg={m} idx={i} isLast={i === lastIdx} />
             ))}
         </AnimatePresence>
 
