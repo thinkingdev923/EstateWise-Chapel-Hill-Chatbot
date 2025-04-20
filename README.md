@@ -410,7 +410,7 @@ EstateWise/
 
 ## Dockerization
 
-To run the application (OPTIONAL) using Docker:
+To run the application **(OPTIONAL)** using Docker:
 
 1. Ensure you have [Docker](https://www.docker.com/) installed.
 2. In the project root directory, run:
@@ -420,6 +420,8 @@ To run the application (OPTIONAL) using Docker:
    ```
 
 This command builds and starts both the backend and frontend services as defined in the `docker-compose.yml` file.
+
+However, you don't need to run the app using Docker. You can run the backend and frontend separately as described in the **Setup & Installation** section.
 
 ## OpenAPI Specification
 
