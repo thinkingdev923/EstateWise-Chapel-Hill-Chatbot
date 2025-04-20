@@ -29,7 +29,7 @@ export async function chatWithEstateWise(
   // 1) Fetch property context
   const propertyContext: string = await queryPropertiesAsString(message, 200);
 
-  // 2) Base system instruction (exactly as before)
+  // 2) Base system instruction (used for all experts)
   const baseSystemInstruction = `
     You are EstateWise Assistant, an expert real estate concierge for Chapel Hill, NC, USA. You help users find their dream homes by providing personalized property recommendations based on their preferences and needs. You have access to a database of detailed property records, including information about the properties, their locations, and their features.
 
