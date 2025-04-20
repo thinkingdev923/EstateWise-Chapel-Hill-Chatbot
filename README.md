@@ -405,6 +405,9 @@ EstateWise/
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
 ├── docker-compose.yml        # Docker configuration for backend and frontend
+├── Dockerfile                # Dockerfile for backend
+├── openapi.yaml              # OpenAPI specification for API documentation
+├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
 └── ... (other config files, etc.)
 ```
 
