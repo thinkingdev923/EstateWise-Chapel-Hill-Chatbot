@@ -177,18 +177,18 @@ export async function chatWithEstateWise(
 
   // 7) Build merger instruction, including expert weights
   const mergerInstruction = `
-You are the EstateWise Master Agent. You have now received input from four specialized agents.
-Below are their responses along with their relative weights (importance):
-
-${expertResults
-  .map(
-    (r) => `**${r.name}** (weight: ${weights[r.name].toFixed(2)}):
-${r.text}`,
-  )
-  .join("\n\n")}
-
-Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
-`;
+    You are the EstateWise Master Agent. You have now received input from four specialized agents.
+    Below are their responses along with their relative weights (importance):
+    
+    ${expertResults
+      .map(
+        (r) => `**${r.name}** (weight: ${weights[r.name].toFixed(2)}):
+    ${r.text}`,
+      )
+      .join("\n\n")}
+    
+    Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+  `;
 
   // 8) Final, merged call
   const mergerModel = genAI.getGenerativeModel({
