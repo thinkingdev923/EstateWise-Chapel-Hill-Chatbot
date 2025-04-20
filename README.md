@@ -6,8 +6,11 @@
 
 - [Live App](#live-app)
   - [Key Technologies](#key-technologies-used)
+  - [AI Techniques](#ai-techniques)
 - [Features](#features)
 - [Architecture](#architecture)
+  - [Backend](#backend)
+  - [Frontend](#frontend)
   - [High-Level Architecture Flow Diagram](#high-level-architecture-flow-diagram)
 - [Setup & Installation](#setup--installation)
   - [Backend Setup](#backend-setup)
@@ -46,18 +49,48 @@ Feel free to test the app as a guest or sign up for an account to save your conv
 ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-000000?style=for-the-badge&logo=shadcn/ui&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Pinecone](https://img.shields.io/badge/Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
-![LangChain](https://img.shields.io/badge/LangChain-000000?style=for-the-badge&logo=langchain&logoColor=white)
+![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=white)
 ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 
+### AI Techniques
+
+EstateWise utilizes **Retrieval-Augmented Generation (RAG)** techniques to enhance the AI's ability to provide accurate and relevant property recommendations. By integrating with **Pinecone** for vector storage and advanced AI processing, the app can intelligently retrieve and generate responses based on user queries.
+
+Additionally, it also implements **Mixture of Experts (MoE)** techniques to optimize the AI's performance, ensuring that users receive the most relevant and personalized property suggestions.
+
+- Mixture of Experts (MoE) is a technique that allows the model to dynamically select which experts (sub-models) to use for a given input, improving efficiency and performance.
+- It allows the model to leverage multiple specialized sub-models for different tasks, enhancing the overall performance and accuracy of the AI assistant.
+- There is a master model that decides which experts to use based on the input, allowing for a more efficient and effective response generation process.
+
+Also, users can rate the AI's responses, which helps improve the model's performance over time. The feedback loop allows the AI to learn from user interactions and refine its recommendations.
+
+- The feedback loop allows the AI to learn from user interactions and refine its recommendations.
+- If the user is not satisfied with the AI's response, they can give a thumbs down rating, and the backend API will tweak the experts selection process (i.e. the weights of the experts) to improve the model's performance.
+
+In short, **EstateWise** uses the following AI techniques:
+
+- **Retrieval-Augmented Generation (RAG)**: Combines retrieval and generation for accurate responses.
+- **Mixture of Experts (MoE)**: Dynamically selects specialized sub-models for improved performance.
+- **Feedback Loop and Reinforcement Learning**: Users can rate responses, allowing the AI to learn and adapt over time.
+
 ## Features
 
 - **Intelligent Property Recommendations:** Receive personalized property suggestions powered by AI and RAG.
 - **User Authentication:** Sign up, log in, and log out using secure JWT authentication.
 - **Conversation History:** Authenticated users can view, rename, and delete past conversations.
+  - Even if you are not logged in, the app will still save your conversation history locally in the browser.
+- **Search Functionality:** Quickly search through your conversation history to find specific topics or properties.
+- **Rating System:** Rate the AI's responses to help improve its performance over time.
+- **Expert Selection:** The AI uses a mixture of experts to provide the best possible response based on user input.
+  - Users can also select a specific expert's response to view.
+- **Visualizations:** Interactive charts and graphs to visualize property data and trends.
+  - In the chatbot's responses, the AI will directly generate the charts and graphs using the data from the Pinecone index so that users can see the trends and patterns in the data.
+  - The app also has a dedicated page for visualizations, where users can see the generalized data and trends in the properties in the Chapel Hill area.
+- **Animations:** Smooth animations and transitions using Framer Motion for an engaging user experience.
 - **Interactive Chat Interface:** Enjoy a smooth, animated chat experience with markdown-formatted responses.
 - **Responsive Design:** Fully responsive UI optimized for desktop and mobile devices.
 - **Dark/Light Mode:** Toggle between dark and light themes with user preferences saved locally.
@@ -66,14 +99,18 @@ Feel free to test the app as a guest or sign up for an account to save your conv
 
 ## Architecture
 
-EstateWise is built with a modern, full-stack architecture consisting of two major parts:
+**EstateWise** is built with a modern, full-stack architecture consisting of two major parts:
 
 ### Backend
 
 - **Express.js & TypeScript:** A robust backend API that handles authentication, conversation management, and AI chat processing.
 - **MongoDB:** Database for storing user data, conversation histories, and more.
 - **JWT Authentication:** Secure user sessions using JSON Web Tokens.
-- **Integration with AI & RAG:** Communicates with AI APIs and uses LangChain & Pinecone for advanced property recommendation logic.
+- **Integration with AI & RAG:** Communicates with AI APIs and uses **Google Gemini API & Pinecone** for advanced property recommendation logic.
+- **Swagger API Documentation:** Automatically generated API documentation for easy reference and testing.
+- **Docker:** Containerization for easy deployment and scalability.
+- **OpenAPI Specification:** An OpenAPI specification file (`openapi.yaml`) is included in the root directory. You can use Swagger UI or Postman to explore and test the API endpoints.
+- and more...
 
 ### Frontend
 
@@ -81,6 +118,7 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 - **Shadcn UI Components:** For a consistent design system across the app.
 - **Framer Motion:** Provides smooth animations and transitions throughout the user experience.
 - **Dark Mode/Light Mode:** Users can toggle themes with seamless background color transitions.
+- and more...
 
 ### High-Level Architecture Flow Diagram
 
@@ -95,35 +133,46 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
          │    Frontend (Next.js, React)  │
          │ - Responsive UI, Animations   │
          │ - API calls to backend        │
+         │ - User ratings for AI         │
+         │   responses                   │
          └─────────────┬─────────────────┘
                        │
                        │ (REST API Calls)
                        │
                        ▼
          ┌─────────────────────────────┐
-         │   Backend (Express+TS)      │
+         │   Backend (Express + TS)    │
          │ - Auth (JWT, Signup/Login)  │
          │ - Conversation & Chat APIs  │
+         │ - AI processing & RAG       │
+         │ - MongoDB & Pinecone        │
+         │ - Swagger API Docs          │
+         │ - Dockerized for deployment │
          └─────────────┬───────────────┘
                        │
                        │
-           ┌───────────┴────────────┬─────────────┐
-           │                        │             │
-           ▼                        ▼             ▼
-┌─────────────────┐       ┌─────────────────┐  ┌─────────────────────────┐
-│   MongoDB       │       │ Pinecone Vector │  │  (Additional Data:      │
-│ (User Data,     │◄─────►│   Database      │  │  Analytics, Logs, etc.) │
-│  Convo History) │       │ (Knowledge Base)│  └────────────┬────────────┘
-└─────────────────┘       └─────────────────┘               │
-       ▲                                             ┌──────▼───────────┐
-       │                                             │  AI/ML Component │
-       │         (Utilizes stored data & docs)       │ (RAG, LangChain) │
-       ▼                                             └──────────────────┘
+                       │
+           ┌───────────┴────────────┐
+           │                        │
+           ▼                        ▼
+┌─────────────────┐       ┌─────────────────┐
+│   MongoDB       │       │ Pinecone Vector │
+│ (User Data,     │◄─────►│   Database      │
+│  Convo History) │       │ (Knowledge Base)│
+└─────────────────┘       └─────────────────┘
+           ▲
+           │
+           │  (Utilizes stored data & docs)
+           │
+           ▼
          ┌─────────────────────────────┐
          │   Response Processing       │
-         │ - Compile AI answer         │
-         │ - Use NLP & ML models       │
-         │ - Update conversation data  │
+         │ - Uses Google Gemini API    │
+         │ - Mixture of Experts (MoE)  │
+         │ - Generates AI responses    │
+         │ - Combine responses from    │
+         │   experts                   │
+         │ - Feedback loop for rating  │
          └─────────────┬───────────────┘
                        │
                        ▼
@@ -132,6 +181,11 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
          │ - Show chat response        │
          │ - Update UI (conversation)  │
          │ - User authentication flows │
+         │ - Save conversation history │
+         │ - Search and manage         │
+         │   conversations             │
+         │ - User ratings for AI       │
+         │   responses                 │
          └─────────────────────────────┘
 ```
 
@@ -143,7 +197,7 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 
    ```bash
    git clone https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot.git
-   cd estatewise/backend
+   cd EstateWise-Chapel-Hill-Chatbot/backend
    ```
 
 2. **Install dependencies:**
@@ -200,7 +254,17 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
 ## Deployment
 
 - **Backend:** Deploy your backend on your chosen platform (Heroku, Vercel, AWS, etc.) and ensure environment variables are properly set.
+  - Currently, the backend is deployed on Vercel at [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
 - **Frontend:** Deploy the React/Next.js frontend using services like Vercel or Netlify. Update any API endpoints if necessary.
+  - Currently, the frontend is deployed on Vercel at [https://estatewise.vercel.app/](https://estatewise.vercel.app/).
+- **Database:** Ensure your MongoDB instance is accessible from your deployed backend. You can use services like MongoDB Atlas for cloud hosting.
+  - Currently, we are using MongoDB Atlas for the database. It is a cloud-hosted MongoDB service that provides a fully managed database solution.
+- **Pinecone:** Ensure your Pinecone instance is accessible from your deployed backend. You can use the Pinecone CLI or API to manage your index and data.
+  - Currently, we are using Pinecone for vector storage and retrieval. It is a cloud-hosted vector database that provides a fully managed solution for storing and retrieving vectors.
+
+![Vercel](https://img.shields.io/badge/Deployed%20on%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![MongoDB Atlas](https://img.shields.io/badge/Using%20MongoDB%20Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Using%20Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
 
 ## Usage
 
@@ -214,6 +278,14 @@ EstateWise is built with a modern, full-stack architecture consisting of two maj
   Switch between dark and light modes with smooth background transitions.
 - **Search & Management:**  
   Easily search through your conversation history and manage your saved conversations from the sidebar.
+- **Guest Mode:**  
+  Use the app as a guest without creating an account. Conversations will still be saved locally in the browser.
+- **Rating System:**  
+  Rate the AI's responses to help improve its performance over time. If you are not satisfied with the AI's response, you can give a thumbs down rating, and the backend API will tweak the experts selection process (i.e. the weights of the experts) to improve the model's performance.
+- **Expert Selection:**  
+  The AI uses a mixture of experts to provide the best possible response based on user input. Users can also select a specific expert's response to view.
+
+> Note: The expert view feature is ONLY available for new messages. If you load a conversation from either the local storage or the database, the expert view feature will not be available, and only the combined response will be shown.
 
 ## User Interface
 
@@ -294,8 +366,9 @@ EstateWise features a modern, animated, and fully responsive user interface buil
 ### Chat
 
 - **POST** `/api/chat` – Send a chat message and receive an AI-generated response.
+- **POST** `/api/chat/rate` – Rate the AI's response (thumbs up or down).
 
-More endpoints can be found in the Swagger API documentation. Endpoints may be added or modified as the project evolves.
+More endpoints can be found in the Swagger API documentation. Endpoints may be added or modified as the project evolves, so this may not be an exhaustive list of all available endpoints.
 
 ### Swagger API Documentation
 
