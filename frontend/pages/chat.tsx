@@ -1203,6 +1203,7 @@ const DeleteConfirmationDialog: React.FC<{
   );
 };
 
+
 type ChatWindowProps = {
   isAuthed: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1215,19 +1216,19 @@ type ChatWindowProps = {
 };
 
 const ChatWindow: React.FC<ChatWindowProps> = ({
-  isAuthed,
-  localConvos,
-  setLocalConvos,
-  selectedConvoId,
-  onSetSelectedConvo,
-}) => {
+                                                 isAuthed,
+                                                 localConvos,
+                                                 setLocalConvos,
+                                                 selectedConvoId,
+                                                 onSetSelectedConvo,
+                                               }) => {
   const [messages, setMessages] = useState<ChatMessage[]>(
     !Cookies.get("estatewise_token") ? getInitialMessages() : [],
   );
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [convLoading, setConvLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const latestMessageRef = useRef<HTMLDivElement>(null);
   const prevConvoId = useRef<string | null>(null);
 
   /* guest‑side adaptive weights */
@@ -1270,7 +1271,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     if (!Cookies.get("estatewise_token")) {
       localStorage.setItem("estateWiseChat", JSON.stringify(messages));
     }
-    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    latestMessageRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   /* ------------------------------------------------------------------ */
@@ -1380,7 +1381,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       toast.success(
         vote === "up"
           ? "Thanks for the feedback!"
-          : "Got it – we'll try to improve!",
+          : "Got it – we'll try to improve!",
       );
       return;
     }
@@ -1414,7 +1415,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       toast.success(
         vote === "up"
           ? "Thanks for the feedback!"
-          : "Got it – we'll try to improve!",
+          : "Got it – we'll try to improve!",
       );
     } catch {
       toast.error("Could not record feedback");
@@ -1432,10 +1433,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const actualLatestModelIndex =
     latestModelIndex === -1 ? -1 : messages.length - 1 - latestModelIndex;
 
-  const MessageBubble: React.FC<{ msg: ChatMessage; idx: number }> = ({
-    msg,
-    idx,
-  }) => {
+  const lastIdx = messages.length - 1;
+
+  const MessageBubble: React.FC<{ msg: ChatMessage; idx: number; isLast: boolean }> = ({
+                                                                                         msg,
+                                                                                         idx,
+                                                                                         isLast,
+                                                                                       }) => {
     const [view, setView] = useState<string>("Combined");
     const [pickerOpen, setPickerOpen] = useState<boolean>(false);
     const pickerRef = useRef<HTMLDivElement>(null);
@@ -1443,10 +1447,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     // scroll the dropdown into view when opened
     useEffect(() => {
       if (pickerOpen && pickerRef.current) {
-        pickerRef.current.scrollIntoView({
-          behavior: "smooth",
-          block: "nearest",
-        });
+        pickerRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     }, [pickerOpen]);
 
@@ -1462,6 +1463,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     return (
       <motion.div
+        ref={isLast ? latestMessageRef : undefined}
         variants={bubbleVariants}
         animate="visible"
         exit={{ opacity: 0, y: -10 }}
@@ -1586,7 +1588,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         <AnimatePresence>
           {!convLoading &&
-            messages.map((m, i) => <MessageBubble key={i} msg={m} idx={i} />)}
+            messages.map((m, i) => (
+              <MessageBubble
+                key={i}
+                msg={m}
+                idx={i}
+                isLast={i === lastIdx}
+              />
+            ))}
         </AnimatePresence>
 
         {loading && (
@@ -1603,8 +1612,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             </div>
           </motion.div>
         )}
-
-        <div ref={scrollRef} />
       </motion.div>
 
       {/* input */}
