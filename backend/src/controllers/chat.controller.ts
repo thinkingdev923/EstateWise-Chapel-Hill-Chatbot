@@ -88,9 +88,7 @@ export const chat = async (req: AuthRequest, res: Response) => {
       });
     }
 
-    /* -------------------------------------------------------
-     * GUEST BRANCH  – all in memory / localStorage
-     * ----------------------------------------------------- */
+    // Guest users
     const defaultWeights = {
       "Data Analyst": 1,
       "Lifestyle Concierge": 1,
@@ -154,7 +152,6 @@ export const rateConversation = async (req: AuthRequest, res: Response) => {
       const wts: Record<string, number> = { ...expertWeights };
 
       if (Object.keys(wts).length === 0) {
-        // nothing to tweak – just ACK
         return res.json({ success: true });
       }
 
