@@ -103,13 +103,13 @@ export async function chatWithEstateWise(
     {
       name: "Financial Advisor",
       instructions: `
-You are the Financial Advisor. Highlight price trends, mortgage/payment estimates, ROI potential, tax implications, and any financing options. Provide bullet points on cost analysis and include a chart if illustrating financial comparisons.
+        You are the Financial Advisor. Highlight price trends, mortgage/payment estimates, ROI potential, tax implications, and any financing options. Provide bullet points on cost analysis and include a chart if illustrating financial comparisons.
       `.trim(),
     },
     {
       name: "Neighborhood Expert",
       instructions: `
-You are the Neighborhood Expert. Provide insights on safety, demographic trends, noise levels, walkability scores, and future development. Use tables or bullets for clarity; charts only if showing comparative ratings.
+        You are the Neighborhood Expert. Provide insights on safety, demographic trends, noise levels, walkability scores, and future development. Use tables or bullets for clarity; charts only if showing comparative ratings.
       `.trim(),
     },
   ];
