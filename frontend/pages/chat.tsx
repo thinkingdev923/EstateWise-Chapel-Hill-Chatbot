@@ -78,7 +78,7 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const chartRef = useRef<Chart | null>(null);
 
-    // helper to strip alpha channel from rgba(...) strings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const stripAlpha = (color: any): any => {
       if (typeof color === "string" && color.startsWith("rgba")) {
         // convert "rgba(r, g, b, a)" → "rgb(r, g, b)"
@@ -112,6 +112,7 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
 
       // enforce opaque colors on all datasets
       if (config.data?.datasets) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         config.data.datasets.forEach((ds: any) => {
           if (ds.backgroundColor)
             ds.backgroundColor = stripAlpha(ds.backgroundColor);
