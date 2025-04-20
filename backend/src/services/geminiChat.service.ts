@@ -5,19 +5,32 @@ import {
 } from "@google/generative-ai";
 import { queryPropertiesAsString } from "../scripts/queryProperties";
 
+/**
+ * Chat with EstateWise Assistant using Google Gemini AI.
+ * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
+ * to generate more informed responses.
+ *
+ * @param history - The conversation history, including previous messages.
+ * @param message - The new message to send.
+ * @param userContext - Additional context provided by the user.
+ * @param expertWeights - Weights for each expert to influence their responses.
+ */
 export async function chatWithEstateWise(
   history: Array<{ role: string; parts: Array<{ text: string }> }>,
   message: string,
   userContext = "",
-): Promise<string> {
+  expertWeights: Record<string, number> = {},
+): Promise<{ finalText: string; expertViews: Record<string, string> }> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
+  // 1) Fetch property context
   const propertyContext: string = await queryPropertiesAsString(message, 200);
 
-  const systemInstruction = `
+  // 2) Base system instruction (exactly as before)
+  const baseSystemInstruction = `
     You are EstateWise Assistant, an expert real estate concierge for Chapel Hill, NC, USA. You help users find their dream homes by providing personalized property recommendations based on their preferences and needs. You have access to a database of detailed property records, including information about the properties, their locations, and their features.
 
     Below is a current list of detailed property records from our database:
@@ -70,23 +83,61 @@ export async function chatWithEstateWise(
     
     12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed.
 
-    Use the above property data to create engaging, detailed, and actionable recommendations.
     Additional context: ${userContext || "None provided."}
   `;
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
-    systemInstruction: systemInstruction,
+  // 3) Define your experts with very detailed instructions
+  const experts = [
+    {
+      name: "Data Analyst",
+      instructions: `
+You are the Data Analyst. Focus on extracting statistics, distributions, and trends in the property data. Provide breakdowns (avg price, bedroom counts, area distributions) and, when relevant, include a Chart.js code block showing these metrics. Keep language concise and data‑driven.
+      `.trim(),
+    },
+    {
+      name: "Lifestyle Concierge",
+      instructions: `
+You are the Lifestyle Concierge. Emphasize lifestyle fit—nearby schools, parks, restaurants, commute times, and community vibes. Do not overload with raw numbers; frame features in terms of daily living and comfort.
+      `.trim(),
+    },
+    {
+      name: "Financial Advisor",
+      instructions: `
+You are the Financial Advisor. Highlight price trends, mortgage/payment estimates, ROI potential, tax implications, and any financing options. Provide bullet points on cost analysis and include a chart if illustrating financial comparisons.
+      `.trim(),
+    },
+    {
+      name: "Neighborhood Expert",
+      instructions: `
+You are the Neighborhood Expert. Provide insights on safety, demographic trends, noise levels, walkability scores, and future development. Use tables or bullets for clarity; charts only if showing comparative ratings.
+      `.trim(),
+    },
+  ];
+
+  // 4) Normalize weights or default to equal
+  const weights: Record<string, number> = {};
+  let total = 0;
+  experts.forEach((e) => {
+    const w = expertWeights[e.name] ?? 1;
+    weights[e.name] = w;
+    total += w;
+  });
+  if (total <= 0) {
+    experts.forEach((e) => (weights[e.name] = 1));
+    total = experts.length;
+  }
+  Object.keys(weights).forEach((k) => {
+    weights[k] = weights[k] / total;
   });
 
+  // 5) Prepare common generation & safety config
+  const genAI = new GoogleGenerativeAI(apiKey);
   const generationConfig = {
     temperature: 1,
     topP: 0.95,
     topK: 64,
     maxOutputTokens: 8192,
   };
-
   const safetySettings = [
     {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -106,19 +157,57 @@ export async function chatWithEstateWise(
     },
   ];
 
-  history.push({ role: "user", parts: [{ text: message }] });
+  // 6) Run each expert in parallel
+  const expertResults = await Promise.all(
+    experts.map(async (expert) => {
+      const model = genAI.getGenerativeModel({
+        model: "gemini-1.5-flash",
+        systemInstruction: baseSystemInstruction + "\n\n" + expert.instructions,
+      });
+      const chat = model.startChat({
+        generationConfig,
+        safetySettings,
+        history,
+      });
+      const result = await chat.sendMessage(message);
+      const text = result.response.text();
+      return { name: expert.name, text };
+    }),
+  );
 
-  const chatSession = model.startChat({
+  // 7) Build merger instruction, including expert weights
+  const mergerInstruction = `
+You are the EstateWise Master Agent. You have now received input from four specialized agents.
+Below are their responses along with their relative weights (importance):
+
+${expertResults
+  .map(
+    (r) => `**${r.name}** (weight: ${weights[r.name].toFixed(2)}):
+${r.text}`,
+  )
+  .join("\n\n")}
+
+Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+`;
+
+  // 8) Final, merged call
+  const mergerModel = genAI.getGenerativeModel({
+    model: "gemini-1.5-flash",
+    systemInstruction: baseSystemInstruction + "\n\n" + mergerInstruction,
+  });
+  const mergerChat = mergerModel.startChat({
     generationConfig,
     safetySettings,
     history,
   });
+  const finalResult = await mergerChat.sendMessage(message);
+  const finalText = finalResult.response.text();
 
-  const result = await chatSession.sendMessage(message);
-  if (!result.response || !result.response.text()) {
-    throw new Error("Failed to get text response from the AI.");
-  }
+  // 9) Return both the merged text and each expert view so the UI can toggle them
+  const expertViews: Record<string, string> = {};
+  expertResults.forEach((r) => {
+    expertViews[r.name] = r.text;
+  });
 
-  history.push({ role: "model", parts: [{ text: result.response.text() }] });
-  return result.response.text();
+  return { finalText, expertViews };
 }

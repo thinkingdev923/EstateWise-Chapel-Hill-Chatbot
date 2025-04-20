@@ -41,6 +41,11 @@ import mongoose, { Document, Schema } from "mongoose";
  *           description: List of messages that belong to the conversation.
  *           items:
  *             $ref: '#/components/schemas/Message'
+ *         expertWeights:
+ *           type: object
+ *           additionalProperties:
+ *             type: number
+ *           description: Relative weights for each synthetic expert (for MoE).
  *         createdAt:
  *           type: string
  *           format: date-time
@@ -55,8 +60,7 @@ import mongoose, { Document, Schema } from "mongoose";
  */
 
 /**
- * This is the conversation interface.
- * It contains the fields needed for the conversation model.
+ * Represents a single chat message.
  */
 export interface IMessage {
   role: "user" | "model";
@@ -65,20 +69,20 @@ export interface IMessage {
 }
 
 /**
- * This is the conversation interface.
- * It contains the fields needed for the conversation model.
+ * Represents a stored conversation, with optional user and
+ * expert‑weight personalization.
  */
 export interface IConversation extends Document {
   user?: mongoose.Types.ObjectId;
   title: string;
   messages: IMessage[];
+  expertWeights: Record<string, number>;
   createdAt: Date;
   updatedAt: Date;
 }
 
 /**
- * This is the message schema.
- * It contains the fields needed for the message model.
+ * Schema for an individual message.
  */
 const MessageSchema: Schema = new Schema({
   role: { type: String, enum: ["user", "model"], required: true },
@@ -87,14 +91,23 @@ const MessageSchema: Schema = new Schema({
 });
 
 /**
- * This is the conversation schema.
- * It contains the fields needed for the conversation model.
+ * Conversation schema, extended to include a map of expert weights.
  */
 const ConversationSchema: Schema = new Schema(
   {
     user: { type: Schema.Types.ObjectId, ref: "User" },
     title: { type: String, default: "Untitled Conversation" },
     messages: [MessageSchema],
+    expertWeights: {
+      type: Map,
+      of: Number,
+      default: {
+        "Data Analyst": 1,
+        "Lifestyle Concierge": 1,
+        "Financial Advisor": 1,
+        "Neighborhood Expert": 1,
+      },
+    },
   },
   { timestamps: true },
 );

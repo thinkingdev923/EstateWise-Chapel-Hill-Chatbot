@@ -5,76 +5,68 @@ import { chatWithEstateWise } from "../services/geminiChat.service";
 import { AuthRequest } from "../middleware/auth.middleware";
 
 /**
- * Handles chat requests. This function processes the user's message,
- * retrieves or creates a conversation, and interacts with the chat service.
+ * Main chat endpoint – handles both logged‑in and guest users.
+ * Guests send their current expertWeights in the request body;
+ * we echo the *updated* weights back so the FE can stash them
+ * in localStorage for the next turn.
  *
- * @param req - The request object containing the user's message, conversation ID, and history.
- * @param res - The response object to send the chat response back to the client.
+ * @param req - The request object containing the chat message and optional conversation ID.
+ * @param res - The response object to send the chat response.
+ * @return A JSON response containing the chat response, expert views, and conversation ID.
  */
 export const chat = async (req: AuthRequest, res: Response) => {
   try {
-    const { message, convoId, history } = req.body;
-    let conversation: IConversation | null = null;
+    const {
+      message,
+      convoId,
+      history,
+      expertWeights: clientWeights = {},
+    } = req.body;
 
-    console.log(req.user);
-
+    /* authenticated users */
     if (req.user) {
-      // Convert the user ID from token to a Mongoose ObjectId.
       const userId = new mongoose.Types.ObjectId(req.user.id);
 
-      // If a conversation ID is provided, try to load that conversation for this user.
+      let conversation: IConversation | null = null;
       if (convoId) {
         conversation = await Conversation.findOne({
           _id: convoId,
           user: userId,
         });
-        console.log("Loaded conversation:", convoId, conversation);
       }
-
-      console.log("Conversation:", conversation);
-      console.log(req.user);
-      console.log("User ID:", userId);
-
-      // If no conversation was found (or no convoId was provided), create a new one.
       if (!conversation) {
         conversation = new Conversation({
           user: userId,
           title: "Untitled Conversation",
           messages: [],
+          expertWeights: {
+            "Data Analyst": 1,
+            "Lifestyle Concierge": 1,
+            "Financial Advisor": 1,
+            "Neighborhood Expert": 1,
+          },
         });
         await conversation.save();
-        console.log("Created new conversation:", conversation);
       }
-    } else {
-      // For unauthenticated users, we don't persist data and rely on the supplied history.
-      conversation = { messages: history || [] } as IConversation;
-    }
 
-    // Build the history for the Gemini chat service.
-    // For authenticated users, use the conversation's stored messages;
-    // for unauthenticated users, use the provided history.
-    const existingMessages = req.user ? conversation.messages : history || [];
-    const historyForGemini = existingMessages.map((msg: any) => ({
-      role: msg.role,
-      parts: [{ text: msg.text }],
-    }));
+      /* build full history (stored msgs + new one) */
+      const historyForGemini = [
+        ...conversation.messages.map((m) => ({
+          role: m.role,
+          parts: [{ text: m.text }],
+        })),
+        { role: "user", parts: [{ text: message }] },
+      ];
 
-    // Append the new user message.
-    historyForGemini.push({
-      role: "user",
-      parts: [{ text: message }],
-    });
+      /* call MoE (synthetic experts) chat */
+      const { finalText, expertViews } = await chatWithEstateWise(
+        historyForGemini,
+        message,
+        "",
+        conversation.expertWeights,
+      );
 
-    // Get the response from the chat service.
-    const responseText = await chatWithEstateWise(
-      historyForGemini,
-      message,
-      "",
-    );
-    console.log("Chat service response:", responseText);
-
-    if (req.user) {
-      // Append the user message and the bot response to the conversation.
+      /* persist both msgs */
       conversation.messages.push({
         role: "user",
         text: message,
@@ -82,23 +74,135 @@ export const chat = async (req: AuthRequest, res: Response) => {
       });
       conversation.messages.push({
         role: "model",
-        text: responseText,
+        text: finalText,
         timestamp: new Date(),
       });
       conversation.markModified("messages");
-
-      // Save the updated conversation.
       await conversation.save();
-      console.log("Updated conversation messages:", conversation.messages);
+
+      return res.json({
+        response: finalText,
+        expertViews,
+        convoId: conversation._id,
+        expertWeights: conversation.expertWeights,
+      });
     }
 
+    /* -------------------------------------------------------
+     * GUEST BRANCH  – all in memory / localStorage
+     * ----------------------------------------------------- */
+    const defaultWeights = {
+      "Data Analyst": 1,
+      "Lifestyle Concierge": 1,
+      "Financial Advisor": 1,
+      "Neighborhood Expert": 1,
+    };
+    const guestWeights: Record<string, number> = {
+      ...defaultWeights,
+      ...clientWeights,
+    };
+
+    const historyForGemini = [
+      ...(history || []),
+      { role: "user", parts: [{ text: message }] },
+    ];
+
+    const { finalText, expertViews } = await chatWithEstateWise(
+      historyForGemini,
+      message,
+      "",
+      guestWeights,
+    );
+
     return res.json({
-      response: responseText,
-      // Return the conversation ID for authenticated users so the front end uses it for future requests.
-      convoId: req.user ? conversation._id : undefined,
+      response: finalText,
+      expertViews,
+      expertWeights: guestWeights,
     });
-  } catch (error) {
-    console.error("Error processing chat request:", error);
+  } catch (err) {
+    console.error("Error processing chat request:", err);
     return res.status(500).json({ error: "Error processing chat request" });
   }
 };
+
+/**
+ * Thumb‑rating endpoint.
+ * For authenticated users: Update the expertWeights in the DB for the given convoId.
+ * For unauthenticated users: Update the expertWeights in the request body so the UI
+ * can stash them in localStorage for the next turn.
+ *
+ * @param req - The request object containing the conversation ID, rating, and optional expert.
+ * @param res - The response object to send the rating response.
+ * @return A JSON response indicating success and the updated expert weights.
+ */
+export const rateConversation = async (req: AuthRequest, res: Response) => {
+  try {
+    const {
+      convoId,
+      rating,
+      expert,
+      expertWeights = {},
+    } = req.body as {
+      convoId?: string;
+      rating: "up" | "down";
+      expert?: string;
+      expertWeights?: Record<string, number>;
+    };
+
+    // Unauthenticated users
+    if (!req.user) {
+      const wts: Record<string, number> = { ...expertWeights };
+
+      if (Object.keys(wts).length === 0) {
+        // nothing to tweak – just ACK
+        return res.json({ success: true });
+      }
+
+      adjustWeightsInPlace(wts, rating, expert);
+      return res.json({ success: true, expertWeights: wts });
+    }
+
+    // Authenticated users
+    if (!convoId) {
+      return res.status(400).json({ error: "convoId is required" });
+    }
+    const userId = new mongoose.Types.ObjectId(req.user.id);
+    const convo = await Conversation.findOne({ _id: convoId, user: userId });
+    if (!convo) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    adjustWeightsInPlace(convo.expertWeights, rating, expert);
+    await convo.save();
+
+    return res.json({ success: true, expertWeights: convo.expertWeights });
+  } catch (err) {
+    console.error("Error rating conversation:", err);
+    return res.status(500).json({ error: "Error rating conversation" });
+  }
+};
+
+/**
+ * Helper function to adjust weights in place.
+ * This function modifies the weights of the experts based on the rating provided.
+ *
+ * @param wts - The weights of the experts.
+ * @param rating - The rating given by the user, either "up" or "down".
+ * @param expert - The specific expert to adjust the weight for (optional).
+ */
+function adjustWeightsInPlace(
+  wts: Record<string, number>,
+  rating: "up" | "down",
+  expert?: string,
+) {
+  const factor = rating === "up" ? 1.2 : 0.8;
+  if (expert && wts[expert] != null) {
+    wts[expert] *= factor;
+  } else {
+    Object.keys(wts).forEach((k) => (wts[k] *= factor));
+  }
+
+  // renormalize ratings
+  const sum = Object.values(wts).reduce((a, b) => a + b, 0) || 1;
+  Object.keys(wts).forEach((k) => (wts[k] = wts[k] / sum));
+}

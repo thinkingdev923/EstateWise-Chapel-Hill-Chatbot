@@ -256,7 +256,12 @@ export default function ChartsPage() {
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
             <Link href="/chat">
-              <Button variant="ghost" size="icon" aria-label="Chat" className="cursor-pointer">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Chat"
+                className="cursor-pointer"
+              >
                 <ChevronLeft className="h-5 w-5" />
               </Button>
             </Link>

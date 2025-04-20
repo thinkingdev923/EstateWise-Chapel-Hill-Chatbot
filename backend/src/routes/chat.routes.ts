@@ -1,15 +1,69 @@
 import { Router } from "express";
-import { chat } from "../controllers/chat.controller";
+import { chat, rateConversation } from "../controllers/chat.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 
 const router = Router();
 
 /**
  * @swagger
+ * /api/chat/rate:
+ *   post:
+ *     summary: Rate a conversation
+ *     tags:
+ *       - Chat
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       description: Rate a conversation with thumbs up or down.
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - convoId
+ *               - rating
+ *             properties:
+ *               convoId:
+ *                 type: string
+ *                 description: ID of the conversation to rate.
+ *               rating:
+ *                 type: string
+ *                 description: "'up' for thumbs up, 'down' for thumbs down."
+ *                 enum:
+ *                   - up
+ *                   - down
+ *     responses:
+ *       200:
+ *         description: Rating recorded successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 expertWeights:
+ *                   type: object
+ *                   additionalProperties:
+ *                     type: number
+ *       401:
+ *         description: Unauthorized - invalid or missing authentication token.
+ *       404:
+ *         description: Conversation not found.
+ *       500:
+ *         description: Server error - Unable to process rating request.
+ */
+router.post("/rate", rateConversation);
+
+/**
+ * @swagger
  * /api/chat:
  *   post:
  *     summary: Send a chat message to EstateWise
- *     tags: [Chat]
+ *     tags:
+ *       - Chat
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -34,7 +88,7 @@ const router = Router();
  *                   properties:
  *                     role:
  *                       type: string
- *                       description: Role of the message sender (e.g., "user", "assistant").
+ *                       description: Role of the message sender (e.g., user, assistant).
  *                       example: user
  *                     parts:
  *                       type: array
@@ -47,11 +101,11 @@ const router = Router();
  *                           text:
  *                             type: string
  *                             description: The text content of the message part.
- *                             example: "Hello, how can I help you?"
+ *                             example: Hello, how can I help you?
  *               message:
  *                 type: string
  *                 description: The new message content to be sent.
- *                 example: "I need information on property taxes."
+ *                 example: I need information on property taxes.
  *     responses:
  *       200:
  *         description: Chat response returned successfully.
@@ -63,7 +117,15 @@ const router = Router();
  *                 response:
  *                   type: string
  *                   description: The reply message from EstateWise.
- *                   example: "Sure, I can help you with property taxes. Could you provide more details?"
+ *                   example: Sure, I can help you with property taxes. Could you provide more details?
+ *                 expertViews:
+ *                   type: object
+ *                   description: Raw outputs from each expert model (for optional expert‑only view UI).
+ *                   additionalProperties:
+ *                     type: string
+ *                 convoId:
+ *                   type: string
+ *                   description: The conversation ID for authenticated users.
  *       401:
  *         description: Unauthorized - invalid or missing authentication token.
  *       500:

@@ -24,6 +24,9 @@ import {
   ChevronLeft,
   LogOut,
   BarChart3,
+  ThumbsUp,
+  ThumbsDown,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +40,7 @@ import {
 } from "@/components/ui/dialog";
 import Chart from "chart.js/auto";
 
-const API_BASE_URL = "https://estatewise-backend.vercel.app";
+const API_BASE_URL = "http://localhost:3001";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -386,7 +389,11 @@ const markdownComponents = {
 // ----------------------------------------------------------
 // Chat Types and Local Storage Helper
 // ----------------------------------------------------------
-type ChatMessage = { role: "user" | "model"; text: string };
+type ChatMessage = {
+  role: "user" | "model";
+  text: string;
+  expertViews?: Record<string, string>;
+};
 
 const getInitialMessages = (): ChatMessage[] => {
   if (typeof window !== "undefined" && !Cookies.get("estatewise_token")) {
@@ -1140,9 +1147,9 @@ const DeleteConfirmationDialog: React.FC<{
   );
 };
 
-// ----------------------------------------------------------
-// ChatWindow Component
-// ----------------------------------------------------------
+/* ----------------------------------------------------------
+ * ChatWindow Component
+ * -------------------------------------------------------- */
 type ChatWindowProps = {
   isAuthed: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1161,18 +1168,35 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   selectedConvoId,
   onSetSelectedConvo,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage>(
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+  const [messages, setMessages] = useState<ChatMessage[]>(
     !Cookies.get("estatewise_token") ? getInitialMessages() : [],
   );
   const [userInput, setUserInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [convLoading, setConvLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const prevConvoId = useRef<string | null>(null);
 
-  const scrollRef = useRef<HTMLDivElement>(null);
+  /* guest‑side adaptive weights */
+  const [guestWeights, setGuestWeights] = useState<Record<string, number>>(
+    () => {
+      if (typeof window === "undefined") return {};
+      try {
+        return JSON.parse(
+          localStorage.getItem("estateWiseGuestWeights") || "{}",
+        );
+      } catch {
+        return {};
+      }
+    },
+  );
 
+  /* remember whether the latest model message was rated */
+  const [ratingGiven, setRatingGiven] = useState<"up" | "down" | null>(null);
+
+  /* ------------------------------------------------------------------ */
+  /* sync on conversation switch                                         */
+  /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (
       isAuthed &&
@@ -1180,13 +1204,15 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       prevConvoId.current !== selectedConvoId
     ) {
       setConvLoading(true);
-      const conv = localConvos.find((c) => c._id === selectedConvoId);
-      setMessages(conv?.messages ?? []);
+      const found = localConvos.find((c) => c._id === selectedConvoId);
+      setMessages(found?.messages ?? []);
       prevConvoId.current = selectedConvoId;
-      setTimeout(() => setConvLoading(false), 300);
+      setRatingGiven(null);
+      setTimeout(() => setConvLoading(false), 250);
     }
   }, [selectedConvoId, isAuthed, localConvos]);
 
+  /* persist guest history + autoscroll */
   useEffect(() => {
     if (!Cookies.get("estatewise_token")) {
       localStorage.setItem("estateWiseChat", JSON.stringify(messages));
@@ -1194,127 +1220,266 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  /* ------------------------------------------------------------------ */
+  /* helpers                                                             */
+  /* ------------------------------------------------------------------ */
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const createNewConversation = async (): Promise<any> => {
-    const token = Cookies.get("estatewise_token");
     const res = await fetch(`${API_BASE_URL}/api/conversations`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${Cookies.get("estatewise_token")}`,
       },
       body: JSON.stringify({ title: "Untitled Conversation" }),
     });
-    if (!res.ok) throw new Error("Failed to create new conversation");
+    if (!res.ok) throw new Error("Failed to create conversation");
     const data = await res.json();
-
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    setLocalConvos((prev) => [data, ...prev]);
-
+    setLocalConvos((p) => [data, ...p]);
     onSetSelectedConvo(data);
-
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     prevConvoId.current = data._id;
-
     return data;
   };
 
+  /**
+   * Send message to the API and update the chat history.
+   */
   const handleSend = async () => {
     if (!userInput.trim() || loading) return;
     setLoading(true);
 
-    let createdNew = false;
-
     try {
-      const textToSend = userInput;
+      const text = userInput;
       setUserInput("");
-      const newUserMsg: ChatMessage = { role: "user", text: textToSend };
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const updatedMessages = [...messages, newUserMsg];
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      setMessages(updatedMessages);
+      setMessages((m) => [...m, { role: "user", text }]);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const body: any = { message: textToSend };
+      const body: any = { message: text };
       if (isAuthed) {
         if (!selectedConvoId) {
-          const newConv = await createNewConversation();
-          createdNew = true;
-          body.convoId = newConv._id;
-        } else {
-          body.convoId = selectedConvoId;
-        }
+          const c = await createNewConversation();
+          body.convoId = c._id;
+        } else body.convoId = selectedConvoId;
       } else {
-        body.history = updatedMessages;
+        body.history = [...messages, { role: "user", text }];
+        body.expertWeights = guestWeights;
       }
 
-      const token = isAuthed ? Cookies.get("estatewise_token") : null;
       const res = await fetch(`${API_BASE_URL}/api/chat`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          ...(isAuthed && token ? { Authorization: `Bearer ${token}` } : {}),
+          ...(isAuthed
+            ? { Authorization: `Bearer ${Cookies.get("estatewise_token")}` }
+            : {}),
         },
         body: JSON.stringify(body),
       });
-
-      if (!res.ok) {
-        const errData = await res.json();
-        throw new Error(errData.error || "Error sending message");
-      }
+      if (!res.ok) throw new Error((await res.json()).error || "Error");
 
       const data = await res.json();
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      setMessages((prev) => [...prev, { role: "model", text: data.response }]);
 
-      if (isAuthed && createdNew) {
-        const convRes = await fetch(`${API_BASE_URL}/api/conversations`, {
+      setMessages((m) => [
+        ...m,
+        { role: "model", text: data.response, expertViews: data.expertViews },
+      ]);
+      setRatingGiven(null);
+
+      if (!isAuthed && data.expertWeights) {
+        setGuestWeights(data.expertWeights);
+        localStorage.setItem(
+          "estateWiseGuestWeights",
+          JSON.stringify(data.expertWeights),
+        );
+      }
+
+      if (isAuthed && body.convoId && !selectedConvoId) {
+        const r = await fetch(`${API_BASE_URL}/api/conversations`, {
           headers: {
             Authorization: `Bearer ${Cookies.get("estatewise_token")}`,
           },
         });
-        if (convRes.ok) {
-          const convData = await convRes.json();
-          setLocalConvos(convData);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const justMade = convData.find((cv: any) => cv._id === body.convoId);
-          if (justMade) onSetSelectedConvo(justMade);
-        }
+        if (r.ok) setLocalConvos(await r.json());
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (err: any) {
-      toast.error(err.message || "Failed to send message");
+    } catch (error: any) {
+      console.error("Error sending message:", error);
+      toast.error(
+        "Error processing your message - our AI model is overloaded. Please try again later.",
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * Rate the conversation so far with thumbs up or down.
+   * If the user is not logged in, save the weights to local storage.
+   * If the user is logged in, send the rating to the API.
+   * If user rates the thumbs up, backend will keep expert weights as is.
+   * If user rates thumbs down, backend will update expert weights to see if
+   * the user prefers more weights to a different expert.
+   *
+   * @param vote - "up" or "down"
+   */
+  const rateConversation = async (vote: "up" | "down") => {
+    setRatingGiven(vote);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const payload: any = { rating: vote };
+    if (!isAuthed) payload.expertWeights = guestWeights;
+    else if (selectedConvoId) payload.convoId = selectedConvoId;
+
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/chat/rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(isAuthed
+            ? { Authorization: `Bearer ${Cookies.get("estatewise_token")}` }
+            : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error();
+      const j = await res.json();
+      if (!isAuthed && j.expertWeights) {
+        setGuestWeights(j.expertWeights);
+        localStorage.setItem(
+          "estateWiseGuestWeights",
+          JSON.stringify(j.expertWeights),
+        );
+      }
+      toast.success(vote === "up" ? "Thanks for the feedback!" : "Noted!");
+    } catch {
+      toast.error("Could not record feedback");
+    }
+  };
+
+  /* ------------------------------------------------------------
+   * message bubble
+   * ---------------------------------------------------------- */
+  const latestModelIndex = [...messages]
+    .reverse()
+    .findIndex((m) => m.role === "model");
+  const actualLatestModelIndex =
+    latestModelIndex === -1 ? -1 : messages.length - 1 - latestModelIndex;
+
+  const MessageBubble: React.FC<{ msg: ChatMessage; idx: number }> = ({
+    msg,
+    idx,
+  }) => {
+    const [view, setView] = useState<string>("Combined");
+    const text =
+      view === "Combined" || !msg.expertViews
+        ? msg.text
+        : msg.expertViews[view];
+
+    const isLatestModel =
+      idx === actualLatestModelIndex && msg.role === "model";
+
+    const upColor =
+      isLatestModel && ratingGiven === "up"
+        ? "text-green-600"
+        : "hover:text-green-600";
+    const downColor =
+      isLatestModel && ratingGiven === "down"
+        ? "text-red-600"
+        : "hover:text-red-600";
+
+    return (
+      <motion.div
+        variants={bubbleVariants}
+        animate="visible"
+        exit={{ opacity: 0, y: -10 }}
+        className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"} mb-2`}
+      >
+        <div
+          className={`rounded-lg p-2 pb-0 shadow-lg hover:shadow-xl transition-shadow duration-300 ${
+            msg.role === "user"
+              ? "bg-primary text-primary-foreground"
+              : "bg-muted"
+          } max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`}
+        >
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={markdownComponents}
+          >
+            {text}
+          </ReactMarkdown>
+
+          {msg.role === "model" && msg.expertViews && (
+            <div className="flex items-center justify-between mt-1 mb-1">
+              <div className="relative">
+                <button
+                  onClick={() =>
+                    setView((v) => (v === "picker" ? "Combined" : "picker"))
+                  }
+                  className="text-xs flex items-center gap-1 hover:opacity-80"
+                >
+                  View <ChevronDown className="w-3 h-3" />
+                </button>
+                {view === "picker" && (
+                  <div className="absolute z-50 mt-1 bg-card rounded shadow-lg text-sm">
+                    {["Combined", ...Object.keys(msg.expertViews)].map((v) => (
+                      <div
+                        key={v}
+                        onClick={() => setView(v)}
+                        className="px-3 py-1 hover:bg-muted cursor-pointer whitespace-nowrap"
+                      >
+                        {v}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* thumbs */}
+              <div className="flex gap-1">
+                <button
+                  onClick={() => rateConversation("up")}
+                  className={`p-1 ${upColor}`}
+                  title="Thumbs up"
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => rateConversation("down")}
+                  className={`p-1 ${downColor}`}
+                  title="Thumbs down"
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <div className="flex flex-col h-full">
       <motion.div
-        className="relative overflow-y-auto space-y-2 p-4 transition-none"
+        className="relative overflow-y-auto space-y-2 p-4"
         style={{ height: "calc(100vh - 64px - 80px)" }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         {convLoading && (
-          <div className="absolute inset-0 z-20 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="animate-spin w-10 h-10" />
           </div>
         )}
 
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-ignore */}
         {messages.length === 0 && !loading && !convLoading && (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Home className="w-20 h-20 mb-4 text-primary" />
-            <p className="text-xl font-semibold select-none">
+            <p className="text-xl font-semibold">
               Hey {localStorage.getItem("username") || "there"}, send a message
               to start your home finding journey! 🚀
             </p>
@@ -1323,46 +1488,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
         <AnimatePresence>
           {!convLoading &&
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            messages.map((msg, idx) => (
-              <motion.div
-                key={idx}
-                variants={bubbleVariants}
-                animate="visible"
-                exit={{ opacity: 0, y: -10 }}
-                className={`flex ${
-                  msg.role === "user" ? "justify-end" : "justify-start"
-                } mb-2`}
-              >
-                <div
-                  className={`rounded-lg p-2 pb-0 shadow-lg hover:shadow-xl transition-shadow duration-300 ${
-                    msg.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted transition-none"
-                  } max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`}
-                >
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={markdownComponents}
-                  >
-                    {msg.text}
-                  </ReactMarkdown>
-                </div>
-              </motion.div>
-            ))}
+            messages.map((m, i) => <MessageBubble key={i} msg={m} idx={i} />)}
         </AnimatePresence>
 
-        {loading && !convLoading && (
+        {loading && (
           <motion.div
             variants={bubbleVariants}
             initial="hidden"
             animate="visible"
-            exit={{ opacity: 0, y: -10 }}
             className="flex justify-start mb-2"
           >
-            <div className="bg-muted p-2 rounded-lg max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg shadow-lg flex items-center">
-              <Loader2 className="animate-spin w-5 h-5 mr-1" />
+            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-1">
+              <Loader2 className="animate-spin w-5 h-5" />
               <span>Thinking</span>
               <AnimatedDots />
             </div>
@@ -1372,6 +1509,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         <div ref={scrollRef} />
       </motion.div>
 
+      {/* input */}
       <div className="flex flex-col flex-shrink-0 h-20 p-4">
         <div className="flex gap-2">
           <Input
@@ -1384,24 +1522,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 handleSend();
               }
             }}
-            className="flex-1 cursor-text"
+            className="flex-1"
           />
           <Button
             onClick={handleSend}
             disabled={loading}
-            className="flex items-center gap-1 cursor-pointer"
+            className="flex gap-1"
           >
-            <Send className="h-4 w-4" />
-            Send
+            <Send className="h-4 w-4" /> Send
           </Button>
         </div>
         <p className="text-center text-xs mt-1">
           By using this app, you agree to our{" "}
-          <Link href="/terms" className="underline hover:text-gray-700">
+          <Link href="/terms" className="underline">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="underline hover:text-gray-700">
+          <Link href="/privacy" className="underline">
             Privacy Policy
           </Link>
           .
