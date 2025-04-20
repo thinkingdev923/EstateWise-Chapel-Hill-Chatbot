@@ -1424,7 +1424,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                   <>
                     <button
                       onClick={() => setPickerOpen((o) => !o)}
-                      className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50"
+                      className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50 cursor-pointer"
                     >
                       {view === "Combined" ? "Combined (Default)" : view}{" "}
                       <ChevronDown className="w-3 h-3" />

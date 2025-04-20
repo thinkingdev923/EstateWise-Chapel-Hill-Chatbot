@@ -79,7 +79,7 @@ export async function chatWithEstateWise(
      – If you need a “histogram,” use \`"bar"\` with full‑width bars (set \`categoryPercentage\` and \`barPercentage\` to 1).
      – All trend‑lines (e.g. price vs. area) must be \`"line"\`.
 
-    11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed.
+    11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed. And never mention at all in your response that you have an incomplete dataset. Always act as if you have the full dataset.
     
     12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed.
 
@@ -188,6 +188,8 @@ export async function chatWithEstateWise(
       .join("\n\n")}
     
     Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+    
+    Once again, do NOT ask user too many questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
   `;
 
   // 8) Final, merged call
