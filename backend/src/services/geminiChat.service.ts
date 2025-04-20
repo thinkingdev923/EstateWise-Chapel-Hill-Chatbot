@@ -97,7 +97,7 @@ export async function chatWithEstateWise(
     {
       name: "Lifestyle Concierge",
       instructions: `
-You are the Lifestyle Concierge. Emphasize lifestyle fit—nearby schools, parks, restaurants, commute times, and community vibes. Do not overload with raw numbers; frame features in terms of daily living and comfort.
+        You are the Lifestyle Concierge. Emphasize lifestyle fit—nearby schools, parks, restaurants, commute times, and community vibes. Do not overload with raw numbers; frame features in terms of daily living and comfort.
       `.trim(),
     },
     {
