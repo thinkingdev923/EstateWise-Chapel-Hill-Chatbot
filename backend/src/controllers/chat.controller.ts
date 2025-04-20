@@ -100,8 +100,27 @@ export const chat = async (req: AuthRequest, res: Response) => {
       ...clientWeights,
     };
 
+    // Ensure `history` is an array, then normalize each entry to { role, parts: [{ text }] }
+    const rawHistory = Array.isArray(history) ? history : [];
+    const normalizedHistory: Array<{
+      role: string;
+      parts: { text: string }[];
+    }> = rawHistory.map((msg: any) => {
+      if (
+        Array.isArray(msg.parts) &&
+        msg.parts.every((p: any) => typeof p.text === "string")
+      ) {
+        return { role: msg.role, parts: msg.parts };
+      }
+      // fallback: wrap `msg.text` in the required shape
+      return {
+        role: msg.role,
+        parts: [{ text: typeof msg.text === "string" ? msg.text : "" }],
+      };
+    });
+
     const historyForGemini = [
-      ...(history || []),
+      ...normalizedHistory,
       { role: "user", parts: [{ text: message }] },
     ];
 

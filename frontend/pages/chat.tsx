@@ -38,7 +38,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import Chart from "chart.js/auto";
+import Chart, { ChartConfiguration } from "chart.js/auto";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
 
@@ -91,35 +91,53 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
     useEffect(() => {
       if (!canvasRef.current) return;
 
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const config = JSON.parse(specString) as Chart.ChartConfiguration;
+      const config: ChartConfiguration = JSON.parse(specString);
+      const fontColor = getFontColor();
 
       config.options = {
         responsive: true,
         maintainAspectRatio: false,
         animation: { duration: 0 },
-        ...config.options,
+        ...(config.options || {}),
         plugins: {
           ...(config.options?.plugins || {}),
+          legend: {
+            ...(config.options?.plugins?.legend || {}),
+            labels: {
+              ...(config.options?.plugins?.legend?.labels || {}),
+              color: fontColor,
+            },
+          },
+          tooltip: {
+            ...(config.options?.plugins?.tooltip || {}),
+            titleColor: fontColor,
+            bodyColor: fontColor,
+            footerColor: fontColor,
+          },
         },
       };
 
-      const fontColor = getFontColor();
-      config.options.plugins!.legend = {
-        ...(config.options.plugins!.legend || {}),
-        labels: {
-          ...(config.options.plugins!.legend?.labels || {}),
-          color: fontColor,
-        },
-      };
-      if (config.options.scales) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        Object.values(config.options.scales).forEach((scale: any) => {
-          scale.ticks = { ...(scale.ticks || {}), color: fontColor };
-          scale.title = { ...(scale.title || {}), color: fontColor };
-        });
-      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const scales: any = config.options.scales || {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      Object.entries(scales).forEach(([key, axisOrArray]: any) => {
+        console.log(key, axisOrArray);
+        if (Array.isArray(axisOrArray)) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          axisOrArray.forEach((axis: any) => {
+            if (axis.ticks) axis.ticks.color = fontColor;
+            if (axis.title) axis.title.color = fontColor;
+            if (axis.scaleLabel) axis.scaleLabel.color = fontColor;
+          });
+        } else {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const axis = axisOrArray as any;
+          if (axis.ticks) axis.ticks.color = fontColor;
+          if (axis.title) axis.title.color = fontColor;
+          if (axis.scaleLabel) axis.scaleLabel.color = fontColor;
+        }
+      });
+      // ===========================
 
       if (chartRef.current) {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -130,21 +148,40 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
         chartRef.current = new Chart(canvasRef.current, config);
       }
 
+      // watch for dark/light toggle
       const observer = new MutationObserver(() => {
-        if (!chartRef.current) return;
         const newColor = getFontColor();
-        const legend = chartRef.current.options.plugins?.legend;
-        if (legend && legend.labels) legend.labels.color = newColor;
-        if (chartRef.current.options.scales) {
-          Object.values(chartRef.current.options.scales!).forEach(
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (scale: any) => {
-              if (scale.ticks) scale.ticks.color = newColor;
-              if (scale.title) scale.title.color = newColor;
-            },
-          );
+        const chart = chartRef.current!;
+        chart.options.plugins!.legend!.labels!.color = newColor;
+        if (chart.options.plugins!.tooltip) {
+          chart.options.plugins!.tooltip!.titleColor = newColor;
+          chart.options.plugins!.tooltip!.bodyColor = newColor;
+          chart.options.plugins!.tooltip!.footerColor = newColor;
         }
-        chartRef.current.update();
+
+        // reapply to scales again
+        Object.entries(chart.options.scales || {}).forEach(
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          ([key, axisOrArray]: any) => {
+            console.log(key, axisOrArray);
+            if (Array.isArray(axisOrArray)) {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              axisOrArray.forEach((axis: any) => {
+                if (axis.ticks) axis.ticks.color = newColor;
+                if (axis.title) axis.title.color = newColor;
+                if (axis.scaleLabel) axis.scaleLabel.color = newColor;
+              });
+            } else {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const axis = axisOrArray as any;
+              if (axis.ticks) axis.ticks.color = newColor;
+              if (axis.title) axis.title.color = newColor;
+              if (axis.scaleLabel) axis.scaleLabel.color = newColor;
+            }
+          },
+        );
+
+        chart.update();
       });
       observer.observe(document.documentElement, {
         attributes: true,
@@ -156,7 +193,7 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
         chartRef.current?.destroy();
         chartRef.current = null;
       };
-    }, [specString]);
+    }, [specString, getFontColor]);
 
     return (
       <div className="mb-4 w-full max-w-full">
@@ -247,13 +284,31 @@ const markdownComponents = {
   code: ({ inline, children, className, ...props }: any) => {
     const content = String(children).trim();
 
-    // detect our chart-spec code blocks
+    // detect chart-spec code blocks
     if (!inline && /language-chart-spec/.test(className || "")) {
-      let spec;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      let spec: any;
       try {
+        // first, try strict JSON
         spec = JSON.parse(content);
-      } catch {
-        // fallback to plain code block if JSON invalid
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (jsonErr) {
+        // if it looks like there's a function in there, try JS eval
+        if (/function\s*\(/.test(content)) {
+          try {
+            // eslint-disable-next-line no-eval
+            spec = eval("(" + content + ")");
+          } catch (evalErr) {
+            console.error("Failed to eval chart-spec:", evalErr);
+            spec = null;
+          }
+        }
+      }
+
+      if (spec) {
+        return <ChartBlock spec={spec} />;
+      } else {
+        // fallback plain code
         return (
           <pre
             className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"
@@ -263,9 +318,9 @@ const markdownComponents = {
           </pre>
         );
       }
-      return <ChartBlock spec={spec} />;
     }
 
+    // inline code
     if (inline) {
       return (
         <code
@@ -277,6 +332,7 @@ const markdownComponents = {
       );
     }
 
+    // other code blocks
     return (
       <pre
         className="bg-gray-100 text-gray-800 p-2 rounded text-sm font-mono overflow-x-auto my-3"

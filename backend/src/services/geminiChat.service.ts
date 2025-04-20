@@ -47,7 +47,7 @@ export async function chatWithEstateWise(
     5. Use the property data to create engaging, detailed, and actionable recommendations. Present a top few options first, and then provide additional options based on the user's preferences and feedback.
     6. If the user provides additional context or preferences, adjust your recommendations accordingly.
     7. Format your responses in a way that is easy to read and understand. Use structures like bullet points, tables, or numbered lists where appropriate.
-
+    7.5. DO NOT ask the user too many questions. Just give them the recommendations/options first, and ask for follow‑up questions only if needed. DO NOT ask more questions unnecessarily.
     8. **Whenever** the user asks for a comparison, distribution, or trend (e.g. “show me price trends”, “how many bedrooms?”, “compare year built”), you **must** append a valid Chart.js spec in its own code block tagged \`chart-spec\`.
 
     9. Here’s a minimal example you should follow exactly:
@@ -72,7 +72,7 @@ export async function chatWithEstateWise(
     \`\`\`
 
     - **Do not** include any extra text or markdown in that block—only the raw JSON.
-    - If no chart is needed, simply omit the block.
+    - If no chart is needed, simply omit the block. ENSURE THAT 
 
     10. **Allowed chart types:** you may only ever output one of the built‑in Chart.js types:
      \`"bar"\`, \`"line"\`, \`"pie"\`, \`"doughnut"\`, \`"radar"\`, \`"polarArea"\`, \`"bubble"\`, or \`"scatter"\`.
@@ -189,7 +189,7 @@ export async function chatWithEstateWise(
     
     Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
     
-    Once again, do NOT ask user too many questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
+    Once again, do NOT ask user too many questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY.
   `;
 
   // 8) Final, merged call
