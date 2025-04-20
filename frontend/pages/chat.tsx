@@ -1191,11 +1191,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     },
   );
 
-  /* remember whether the latest model message was rated */
-  const [ratingGiven, setRatingGiven] = useState<"up" | "down" | null>(null);
+  /* per-message rating state */
+  const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
 
   /* ------------------------------------------------------------------ */
-  /* sync on conversation switch                                         */
+  /* sync on conversation switch                                        */
   /* ------------------------------------------------------------------ */
   useEffect(() => {
     if (
@@ -1207,7 +1207,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const found = localConvos.find((c) => c._id === selectedConvoId);
       setMessages(found?.messages ?? []);
       prevConvoId.current = selectedConvoId;
-      setRatingGiven(null);
+      setRatings({}); // clear ratings when switching convo
       setTimeout(() => setConvLoading(false), 250);
     }
   }, [selectedConvoId, isAuthed, localConvos]);
@@ -1221,7 +1221,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [messages]);
 
   /* ------------------------------------------------------------------ */
-  /* helpers                                                             */
+  /* helpers                                                            */
   /* ------------------------------------------------------------------ */
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1286,7 +1286,6 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         ...m,
         { role: "model", text: data.response, expertViews: data.expertViews },
       ]);
-      setRatingGiven(null);
 
       if (!isAuthed && data.expertWeights) {
         setGuestWeights(data.expertWeights);
@@ -1316,18 +1315,24 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   };
 
   /**
-   * Rate the conversation so far with thumbs up or down.
-   * If the user is not logged in, save the weights to local storage.
-   * If the user is logged in, send the rating to the API.
-   * If user rates the thumbs up, backend will keep expert weights as is.
-   * If user rates thumbs down, backend will update expert weights to see if
-   * the user prefers more weights to a different expert.
-   *
-   * @param vote - "up" or "down"
+   * Rate a specific model message.
    */
-  const rateConversation = async (vote: "up" | "down") => {
-    setRatingGiven(vote);
+  const rateConversation = async (vote: "up" | "down", idx: number) => {
+    // persist locally
+    setRatings((prev) => ({ ...prev, [idx]: vote }));
 
+    // if no expertViews, just toast and return
+    const msg = messages[idx];
+    if (!msg.expertViews) {
+      toast.success(
+        vote === "up"
+          ? "Thanks for the feedback!"
+          : "Got it – we'll try to improve!",
+      );
+      return;
+    }
+
+    // otherwise call the API
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const payload: any = { rating: vote };
     if (!isAuthed) payload.expertWeights = guestWeights;
@@ -1353,7 +1358,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           JSON.stringify(j.expertWeights),
         );
       }
-      toast.success(vote === "up" ? "Thanks for the feedback!" : "Noted!");
+      toast.success(
+        vote === "up"
+          ? "Thanks for the feedback!"
+          : "Got it – we'll try to improve!",
+      );
     } catch {
       toast.error("Could not record feedback");
     }
@@ -1365,6 +1374,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const latestModelIndex = [...messages]
     .reverse()
     .findIndex((m) => m.role === "model");
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const actualLatestModelIndex =
     latestModelIndex === -1 ? -1 : messages.length - 1 - latestModelIndex;
 
@@ -1373,22 +1384,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     idx,
   }) => {
     const [view, setView] = useState<string>("Combined");
+    const [pickerOpen, setPickerOpen] = useState<boolean>(false);
     const text =
       view === "Combined" || !msg.expertViews
         ? msg.text
         : msg.expertViews[view];
 
-    const isLatestModel =
-      idx === actualLatestModelIndex && msg.role === "model";
-
     const upColor =
-      isLatestModel && ratingGiven === "up"
-        ? "text-green-600"
-        : "hover:text-green-600";
+      ratings[idx] === "up" ? "text-green-600" : "hover:text-green-600";
     const downColor =
-      isLatestModel && ratingGiven === "down"
-        ? "text-red-600"
-        : "hover:text-red-600";
+      ratings[idx] === "down" ? "text-red-600" : "hover:text-red-600";
 
     return (
       <motion.div
@@ -1411,28 +1416,45 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             {text}
           </ReactMarkdown>
 
-          {msg.role === "model" && msg.expertViews && (
+          {msg.role === "model" && (
             <div className="flex items-center justify-between mt-1 mb-1">
-              <div className="relative">
-                <button
-                  onClick={() =>
-                    setView((v) => (v === "picker" ? "Combined" : "picker"))
-                  }
-                  className="text-xs flex items-center gap-1 hover:opacity-80"
-                >
-                  View <ChevronDown className="w-3 h-3" />
-                </button>
-                {view === "picker" && (
-                  <div className="absolute z-50 mt-1 bg-card rounded shadow-lg text-sm">
-                    {["Combined", ...Object.keys(msg.expertViews)].map((v) => (
-                      <div
-                        key={v}
-                        onClick={() => setView(v)}
-                        className="px-3 py-1 hover:bg-muted cursor-pointer whitespace-nowrap"
-                      >
-                        {v}
+              {/* dropdown */}
+              <div className="relative text-xs">
+                {msg.expertViews ? (
+                  <>
+                    <button
+                      onClick={() => setPickerOpen((o) => !o)}
+                      className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50"
+                    >
+                      {view === "Combined" ? "Combined (Default)" : view}{" "}
+                      <ChevronDown className="w-3 h-3" />
+                    </button>
+                    {pickerOpen && (
+                      <div className="absolute left-0 mt-1 min-w-max bg-card border border-border divide-y divide-border rounded-md shadow-md z-50">
+                        {["Combined", ...Object.keys(msg.expertViews)].map(
+                          (opt) => (
+                            <div
+                              key={opt}
+                              onClick={() => {
+                                setView(opt);
+                                setPickerOpen(false);
+                              }}
+                              className={`px-3 py-2 cursor-pointer whitespace-nowrap ${
+                                view === opt
+                                  ? "bg-primary/10 text-foreground"
+                                  : "hover:bg-muted"
+                              }`}
+                            >
+                              {opt === "Combined" ? "Combined (Default)" : opt}
+                            </div>
+                          ),
+                        )}
                       </div>
-                    ))}
+                    )}
+                  </>
+                ) : (
+                  <div className="px-2 py-1 border border-border rounded-md bg-muted text-foreground">
+                    Combined (Default)
                   </div>
                 )}
               </div>
@@ -1440,14 +1462,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               {/* thumbs */}
               <div className="flex gap-1">
                 <button
-                  onClick={() => rateConversation("up")}
+                  onClick={() => rateConversation("up", idx)}
                   className={`p-1 ${upColor}`}
                   title="Thumbs up"
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
                 <button
-                  onClick={() => rateConversation("down")}
+                  onClick={() => rateConversation("down", idx)}
                   className={`p-1 ${downColor}`}
                   title="Thumbs down"
                 >
