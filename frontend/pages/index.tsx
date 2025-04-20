@@ -538,7 +538,7 @@ export default function Home() {
               {testimonials.map((item, index) => (
                 <div key={index} className="px-4">
                   <AnimatedInView>
-                    <Card className="h-39 shadow-lg border-primary">
+                    <Card className="h-35 shadow-lg border-primary">
                       <CardContent className="flex flex-col justify-evenly text-center">
                         <p className="italic">{item.testimonial}</p>
                         <div className="flex items-center justify-center space-x-2">
