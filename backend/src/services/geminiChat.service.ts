@@ -91,7 +91,7 @@ export async function chatWithEstateWise(
     {
       name: "Data Analyst",
       instructions: `
-You are the Data Analyst. Focus on extracting statistics, distributions, and trends in the property data. Provide breakdowns (avg price, bedroom counts, area distributions) and, when relevant, include a Chart.js code block showing these metrics. Keep language concise and data‑driven.
+        You are the Data Analyst. Focus on extracting statistics, distributions, and trends in the property data. Provide breakdowns (avg price, bedroom counts, area distributions) and, when relevant, include a Chart.js code block showing these metrics. Keep language concise and data‑driven.
       `.trim(),
     },
     {
