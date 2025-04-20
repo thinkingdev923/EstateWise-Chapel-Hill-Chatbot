@@ -410,7 +410,7 @@ EstateWise/
 
 ## Dockerization
 
-To run the application using Docker:
+To run the application (OPTIONAL) using Docker:
 
 1. Ensure you have [Docker](https://www.docker.com/) installed.
 2. In the project root directory, run:
