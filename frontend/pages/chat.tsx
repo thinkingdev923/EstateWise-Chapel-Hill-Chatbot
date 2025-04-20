@@ -28,7 +28,7 @@ import {
   ThumbsDown,
   ChevronDown,
   Inbox,
-  LogIn
+  LogIn,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1103,13 +1103,20 @@ const Sidebar: React.FC<SidebarProps> = ({
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-2">
+        <div className="flex-1 overflow-y-auto">
           {conversationLoading ? (
             <div className="min-h-full flex items-center justify-center">
               <Loader2 className="animate-spin w-8 h-8" />
             </div>
           ) : conversations.length === 0 ? (
-            <div className="min-h-full flex items-center justify-center">
+            <div className="min-h-full flex flex-col items-center justify-center space-y-2">
+              {isAuthed ? (
+                // When logged in but no conversations, show an Inbox icon
+                <Inbox className="w-8 h-8 text-muted-foreground" />
+              ) : (
+                // When not authenticated, show a LogIn icon
+                <LogIn className="w-8 h-8 text-muted-foreground" />
+              )}
               <p className="text-center text-sm text-muted-foreground">
                 {isAuthed ? "No conversations" : "Log in to save conversations"}
               </p>

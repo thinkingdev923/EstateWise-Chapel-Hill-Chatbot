@@ -4,11 +4,13 @@ import React, { useEffect, useRef, useState, memo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Chart, { ChartConfiguration } from "chart.js/auto";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sun,
   Moon,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ChevronLeft,
   BarChart3,
   Home as HomeIcon,
