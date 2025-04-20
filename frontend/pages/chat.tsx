@@ -978,7 +978,14 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <Loader2 className="animate-spin w-8 h-8" />
                   </div>
                 ) : conversations.length === 0 ? (
-                  <div className="min-h-full flex items-center justify-center">
+                  <div className="min-h-full flex flex-col items-center justify-center space-y-2">
+                    {isAuthed ? (
+                      // When logged in but no conversations, show an Inbox icon
+                      <Inbox className="w-8 h-8 text-muted-foreground" />
+                    ) : (
+                      // When not authenticated, show a LogIn icon
+                      <LogIn className="w-8 h-8 text-muted-foreground" />
+                    )}
                     <p className="text-center text-sm text-muted-foreground">
                       {isAuthed
                         ? "No conversations"
