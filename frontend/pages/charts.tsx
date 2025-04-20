@@ -50,13 +50,9 @@ const DarkModeToggle: React.FC = () => {
     <button
       aria-label="Toggle theme"
       onClick={toggle}
-      className="rounded-full p-2 transition-colors cursor-pointer"
+      className="rounded-full p-2 transition-colors cursor-pointer hover:text-primary"
     >
-      {darkMode ? (
-        <Sun className="w-5 h-5 text-foreground" />
-      ) : (
-        <Moon className="w-5 h-5 text-foreground" />
-      )}
+      {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
   );
 };
@@ -255,16 +251,16 @@ export default function ChartsPage() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
-            <Link href="/chat">
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label="Chat"
-                className="cursor-pointer"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-            </Link>
+            {/*<Link href="/chat">*/}
+            {/*  <Button*/}
+            {/*    variant="ghost"*/}
+            {/*    size="icon"*/}
+            {/*    aria-label="Chat"*/}
+            {/*    className="cursor-pointer"*/}
+            {/*  >*/}
+            {/*    <ChevronLeft className="h-5 w-5" />*/}
+            {/*  </Button>*/}
+            {/*</Link>*/}
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-primary" />
               <span className="font-extrabold tracking-tight text-lg">
@@ -272,8 +268,11 @@ export default function ChartsPage() {
               </span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Link href="/" legacyBehavior>
-                <a aria-label="Home" className="hidden sm:inline-flex mr-2">
+              <Link href="/chat" legacyBehavior>
+                <a
+                  aria-label="Home"
+                  className="hidden sm:inline-flex mr-2 hover:text-primary"
+                >
                   <HomeIcon className="h-5 w-5" />
                 </a>
               </Link>

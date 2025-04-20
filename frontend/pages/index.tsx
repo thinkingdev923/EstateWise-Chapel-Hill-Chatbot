@@ -587,24 +587,24 @@ export default function Home() {
               <strong className="font-bold">EstateWise</strong>. All rights
               reserved.
             </p>
-            <div className="mt-4 md:mt-0 flex items-center space-x-4">
+            <div className="mt-4 md:mt-0 flex flex-wrap items-center gap-4 justify-center md:justify-start">
               <Link
                 href="https://github.com/hoangsonww/EstateWise-Chapel-Hill-Estate"
-                className="flex items-center hover:text-primary transition-colors"
+                className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
               >
                 <GithubIcon className="w-4 h-4 mr-1" />
                 <span className="text-sm">GitHub Repository</span>
               </Link>
               <Link
                 href="/privacy"
-                className="flex items-center hover:text-primary transition-colors"
+                className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
               >
                 <Shield className="w-4 h-4 mr-1" />
                 <span className="text-sm">Privacy Policy</span>
               </Link>
               <Link
                 href="/terms"
-                className="flex items-center hover:text-primary transition-colors"
+                className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
               >
                 <FileText className="w-4 h-4 mr-1" />
                 <span className="text-sm">Terms of Service</span>

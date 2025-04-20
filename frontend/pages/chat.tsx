@@ -510,7 +510,7 @@ const DarkModeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleDarkMode}
-      className="p-1 cursor-pointer transition-none"
+      className="p-1 cursor-pointer transition-none hover:text-primary"
     >
       {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
@@ -557,7 +557,7 @@ const TopBar: React.FC<TopBarProps> = ({
       </div>
       <div className="flex items-center gap-4 relative">
         <Link href="/charts" legacyBehavior>
-          <a className="flex items-center gap-1">
+          <a className="flex items-center gap-1 hover:text-primary">
             <BarChart3 className="w-5 h-5" />
           </a>
         </Link>
@@ -590,7 +590,7 @@ const TopBar: React.FC<TopBarProps> = ({
             <div className="relative">
               <button
                 onClick={handleAuthIconClick}
-                className="p-1 cursor-pointer"
+                className="p-1 cursor-pointer hover:text-primary"
               >
                 <UserIcon className="w-5 h-5" />
               </button>
@@ -1203,9 +1203,6 @@ const DeleteConfirmationDialog: React.FC<{
   );
 };
 
-/* ----------------------------------------------------------
- * ChatWindow Component
- * -------------------------------------------------------- */
 type ChatWindowProps = {
   isAuthed: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1441,6 +1438,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   }) => {
     const [view, setView] = useState<string>("Combined");
     const [pickerOpen, setPickerOpen] = useState<boolean>(false);
+    const pickerRef = useRef<HTMLDivElement>(null);
+
+    // scroll the dropdown into view when opened
+    useEffect(() => {
+      if (pickerOpen && pickerRef.current) {
+        pickerRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "nearest",
+        });
+      }
+    }, [pickerOpen]);
+
     const text =
       view === "Combined" || !msg.expertViews
         ? msg.text
@@ -1485,28 +1494,39 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                       {view === "Combined" ? "Combined (Default)" : view}{" "}
                       <ChevronDown className="w-3 h-3" />
                     </button>
-                    {pickerOpen && (
-                      <div className="absolute left-0 mt-1 min-w-max bg-card border border-border divide-y divide-border rounded-md shadow-md z-50">
-                        {["Combined", ...Object.keys(msg.expertViews)].map(
-                          (opt) => (
-                            <div
-                              key={opt}
-                              onClick={() => {
-                                setView(opt);
-                                setPickerOpen(false);
-                              }}
-                              className={`px-3 py-2 cursor-pointer whitespace-nowrap ${
-                                view === opt
-                                  ? "bg-primary/10 text-foreground"
-                                  : "hover:bg-muted"
-                              }`}
-                            >
-                              {opt === "Combined" ? "Combined (Default)" : opt}
-                            </div>
-                          ),
-                        )}
-                      </div>
-                    )}
+                    <AnimatePresence>
+                      {pickerOpen && (
+                        <motion.div
+                          ref={pickerRef}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute left-0 mt-1 min-w-max bg-card border border-border divide-y divide-border rounded-md shadow-md z-50"
+                        >
+                          {["Combined", ...Object.keys(msg.expertViews)].map(
+                            (opt) => (
+                              <div
+                                key={opt}
+                                onClick={() => {
+                                  setView(opt);
+                                  setPickerOpen(false);
+                                }}
+                                className={`px-3 py-2 cursor-pointer whitespace-nowrap ${
+                                  view === opt
+                                    ? "bg-primary/10 text-foreground"
+                                    : "hover:bg-muted"
+                                }`}
+                              >
+                                {opt === "Combined"
+                                  ? "Combined (Default)"
+                                  : opt}
+                              </div>
+                            ),
+                          )}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </>
                 ) : (
                   <div className="px-2 py-1 border border-border rounded-md bg-muted text-foreground">
@@ -1519,14 +1539,14 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               <div className="flex gap-1">
                 <button
                   onClick={() => rateConversation("up", idx)}
-                  className={`p-1 ${upColor}`}
+                  className={`p-1 cursor-pointer ${upColor}`}
                   title="Thumbs up"
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => rateConversation("down", idx)}
-                  className={`p-1 ${downColor}`}
+                  className={`p-1 cursor-pointer ${downColor}`}
                   title="Thumbs down"
                 >
                   <ThumbsDown className="w-4 h-4" />

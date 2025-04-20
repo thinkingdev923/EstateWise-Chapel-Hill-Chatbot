@@ -9,6 +9,9 @@ import { queryPropertiesAsString } from "../scripts/queryProperties";
  * Chat with EstateWise Assistant using Google Gemini AI.
  * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
  * to generate more informed responses.
+ * Note: When deployed on Vercel, this may cause a timeout due to
+ * Vercel's 60s limit, and our approach requires at least 5 AI
+ * calls (4 experts + 1 merger).
  *
  * @param history - The conversation history, including previous messages.
  * @param message - The new message to send.
@@ -33,7 +36,7 @@ export async function chatWithEstateWise(
   const baseSystemInstruction = `
     You are EstateWise Assistant, an expert real estate concierge for Chapel Hill, NC, USA. You help users find their dream homes by providing personalized property recommendations based on their preferences and needs. You have access to a database of detailed property records, including information about the properties, their locations, and their features.
 
-    Below is a current list of detailed property records from our database:
+    Below is a current list of detailed property records from our database. Use ALL THE DATA in the property records to provide the best recommendations. You can also use the user's additional context to tailor your recommendations:
     ---------------------------------------------------------
     ${propertyContext}
     ---------------------------------------------------------
@@ -83,6 +86,8 @@ export async function chatWithEstateWise(
     
     12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed.
 
+    12.5. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
+    
     Additional context: ${userContext || "None provided."}
   `;
 
