@@ -43,6 +43,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import Chart, { ChartConfiguration } from "chart.js/auto";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
