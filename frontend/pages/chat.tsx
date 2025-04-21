@@ -43,11 +43,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import {
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
 import Chart, { ChartConfiguration } from "chart.js/auto";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
@@ -1643,31 +1638,22 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
               {/* thumbs btns */}
               <div className="flex gap-1">
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => rateConversation("up", idx)}
-                      className={`p-1 cursor-pointer ${upColor}`}
-                      aria-label="Thumbs up"
-                    >
-                      <ThumbsUp className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Thumbs up</TooltipContent>
-                </Tooltip>
-
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => rateConversation("down", idx)}
-                      className={`p-1 cursor-pointer ${downColor}`}
-                      aria-label="Thumbs down"
-                    >
-                      <ThumbsDown className="w-4 h-4" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent side="top">Thumbs down</TooltipContent>
-                </Tooltip>
+                <button
+                  onClick={() => rateConversation("up", idx)}
+                  className={`p-1 cursor-pointer ${upColor}`}
+                  title="Like the response? Click to let us know!"
+                  aria-label="Thumbs up"
+                >
+                  <ThumbsUp className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => rateConversation("down", idx)}
+                  className={`p-1 cursor-pointer ${downColor}`}
+                  title="Not satisfied? Click to let us know!"
+                  aria-label="Thumbs down"
+                >
+                  <ThumbsDown className="w-4 h-4" />
+                </button>
               </div>
             </div>
           )}
