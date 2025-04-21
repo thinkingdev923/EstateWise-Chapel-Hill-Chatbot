@@ -96,7 +96,7 @@ In short, **EstateWise** uses the following AI techniques:
 - **Dark/Light Mode:** Toggle between dark and light themes with user preferences saved locally.
 - **Search and Management:** Easily search through your conversation history and manage your saved conversations.
 - **Guest Mode:** Use the app as a guest (conversations are not saved).
-- **Data:** The app uses a comprehensive set of data with more than 50,000 properties in the Chapel Hill area, including property details, prices, and more.
+- **Property Data:** The app uses a comprehensive set of data with more than 50,000 properties in the Chapel Hill area, including property details, prices, and more.
   - For security purposes, our properties data is not publicly available in the repository. Please use your own data.
   - However, for you to get a sense of the data, visit the data file hosted on Google Drive at [https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing).
   - There is also a Jupyter notebook (`Initial-Data-Analysis.ipynb`) in the root directory that provides an initial analysis of the data, including visualizations and insights.
