@@ -147,13 +147,17 @@ Feel free to test the app as a guest or sign up for an account to save your conv
 
 ### High-Level Architecture Flow Diagrams
 
-#### Flowchart
+#### AI Architecture Flow Diagram
+
+Here's a high-level architecture flow diagram that shows the AI processing and expert selection process:
 
 <p align="center">
   <img src="img/flowchart.png" alt="High-Level Architecture Flow Diagram" width="100%" />
 </p>
 
-#### Plaintext Flow Diagram
+#### Overall App Architecture Flow Diagram
+
+Below is a high-level diagram that illustrates the flow of the application, including user interactions, frontend and backend components, and data storage:
 
 ```plaintext
          ┌────────────────────────────────┐
