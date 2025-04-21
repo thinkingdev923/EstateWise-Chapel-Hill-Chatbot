@@ -1636,7 +1636,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 )}
               </div>
 
-              {/* thumbs */}
+              {/* thumbs btns */}
               <div className="flex gap-1">
                 <button
                   onClick={() => rateConversation("up", idx)}
