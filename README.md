@@ -1,6 +1,6 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full-stack chatbot application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art **AI technology, Retrieval-Augmented Generation (RAG), Mixture of Experts (MoEs), and kMeans/kNN** techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
+**EstateWise** is a full‑stack chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI orchestration, Retrieval‑Augmented Generation with Pinecone (kNN), k‑Means clustering, and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
 
 ## Table of Contents
 
@@ -58,53 +58,68 @@ Feel free to test the app as a guest or sign up for an account to save your conv
 
 ### AI Techniques
 
-EstateWise utilizes **Retrieval-Augmented Generation (RAG)** techniques to enhance the AI's ability to provide accurate and relevant property recommendations. By integrating with **Pinecone** for vector storage and advanced AI processing, the app can intelligently retrieve and generate responses based on user queries.
+**EstateWise** combines a modern API, real‑time chat, and a responsive UI with a powerful AI stack to deliver hyper‑personalized property recommendations:
 
-Additionally, it also implements **Mixture of Experts (MoE)** techniques to optimize the AI's performance, ensuring that users receive the most relevant and personalized property suggestions.
-
-- Mixture of Experts (MoE) is a technique that allows the model to dynamically select which experts (sub-models) to use for a given input, improving efficiency and performance.
-- It allows the model to leverage multiple specialized sub-models for different tasks, enhancing the overall performance and accuracy of the AI assistant.
-- There is a master model that decides which experts to use based on the input, allowing for a more efficient and effective response generation process.
-
-Also, users can rate the AI's responses, which helps improve the model's performance over time. The feedback loop allows the AI to learn from user interactions and refine its recommendations.
-
-- The feedback loop allows the AI to learn from user interactions and refine its recommendations.
-- If the user is not satisfied with the AI's response, they can give a thumbs down rating, and the backend API will tweak the experts selection process (i.e. the weights of the experts) to improve the model's performance.
-
-It also uses the **Clusters** approach to group similar properties together, allowing the AI to provide more relevant recommendations based on user preferences. Moreover, under the hood, Pinecone queries also use **kMeans & kNN (k-Nearest Neighbors)** techniques to find the most similar properties based on user input.
-
-In short, **EstateWise** uses the following AI techniques:
-
-- **Retrieval-Augmented Generation (RAG)**: Combines retrieval and generation for accurate responses.
-- **Mixture of Experts (MoE)**: Dynamically selects specialized sub-models for improved performance.
-- **Feedback Loop and Reinforcement Learning**: Users can rate responses, allowing the AI to learn and adapt over time.
-- **kNN, kMeans, and Clusters**: Groups similar properties and uses k-Nearest Neighbors for efficient retrieval.
+- **Retrieval‑Augmented Generation (RAG):** Uses Pinecone for kNN‑based vector retrieval, then fuses retrieved data into generated responses.
+- **k‑Means Clustering & kNN:** Automatically groups similar listings and finds closest matches to refine recommendations.
+- **Agentic AI:** Orchestrates tool calls (e.g. `searchProperties`, `clusterProperties`) so the system can autonomously fetch, cluster, and reason over data before handing off to the expert pipeline.
+- **Mixture of Experts (MoE):** Dynamically routes each query through a master model to select specialized sub‑models (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) for maximal relevance.
+- **Feedback Loop & Reinforcement Learning:** Users rate responses; thumbs‑up/down adjust expert weights per conversation, and the system continuously learns to improve accuracy.
 
 ## Features
 
-- **Intelligent Property Recommendations:** Receive personalized property suggestions powered by AI and RAG.
-- **User Authentication:** Sign up, log in, and log out using secure JWT authentication.
-- **Conversation History:** Authenticated users can view, rename, and delete past conversations.
-  - Even if you are not logged in, the app will still save your conversation history locally in the browser.
-- **Search Functionality:** Quickly search through your conversation history to find specific topics or properties.
-- **Rating System:** Rate the AI's responses to help improve its performance over time.
-- **Expert Selection:** The AI uses a mixture of experts to provide the best possible response based on user input.
-  - Users can also select a specific expert's response to view.
-- **Visualizations:** Interactive charts and graphs to visualize property data and trends.
-  - In the chatbot's responses, the AI will directly generate the charts and graphs using the data from the Pinecone index so that users can see the trends and patterns in the data.
-  - The app also has a dedicated page for visualizations, where users can see the generalized data and trends in the properties in the Chapel Hill area.
-- **Clusters & kMeans & kNN:** The AI uses clustering techniques to group similar properties together, allowing for more relevant recommendations based on user preferences.
-  - The app also uses kMeans and kNN techniques to find the most similar properties based on user input.
-- **Animations:** Smooth animations and transitions using Framer Motion for an engaging user experience.
-- **Interactive Chat Interface:** Enjoy a smooth, animated chat experience with markdown-formatted responses.
-- **Responsive Design:** Fully responsive UI optimized for desktop and mobile devices.
-- **Dark/Light Mode:** Toggle between dark and light themes with user preferences saved locally.
-- **Search and Management:** Easily search through your conversation history and manage your saved conversations.
-- **Guest Mode:** Use the app as a guest (conversations are not saved).
-- **Property Data:** The app uses a comprehensive set of data with more than 50,000 properties in the Chapel Hill area, including property details, prices, and more.
-  - For security purposes, our properties data is not publicly available in the repository. Please use your own data.
-  - However, for you to get a sense of the data, visit the data file hosted on Google Drive at [https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing).
-  - There is also a Jupyter notebook (`Initial-Data-Analysis.ipynb`) in the root directory that provides an initial analysis of the data, including visualizations and insights.
+- **Intelligent Property Recommendations**  
+  Get tailored property suggestions powered by AI and Retrieval‑Augmented Generation (RAG).
+
+- **Secure User Authentication**  
+  Sign up, log in, and log out with JWT‑based security.
+
+- **Conversation History**
+
+  - **Authenticated users** can view, rename, and delete past chats.
+  - **Guest users** still have their conversation history saved locally in the browser.
+
+- **Full‑Text Search**  
+  Quickly search your conversation history for keywords, topics, or specific properties.
+
+- **Rating System & Feedback Loop**  
+  Rate each AI response (thumbs up/down) to adjust expert weights and continuously improve recommendations.
+
+- **Mixture‑of‑Experts (MoE) & Manual Expert View**
+
+  - The AI dynamically routes queries through specialized experts (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst).
+  - Optionally switch to any single expert’s view to see their raw recommendation.
+
+- **Interactive Visualizations**
+
+  - In‑chat, the AI generates live Chart.js graphs from Pinecone data so you can instantly see trends and distributions.
+  - A dedicated Visualizations page offers aggregate charts and insights for all Chapel Hill properties.
+
+- **Clustering & Similarity Search**
+
+  - k‑Means clustering groups similar properties for more focused suggestions.
+  - kNN (via Pinecone) finds the closest matches to your query in real time.
+
+- **Smooth Animations**  
+  Engaging transitions and micro‑interactions powered by Framer Motion.
+
+- **Interactive Chat Interface**  
+  Enjoy a fully animated chat experience with Markdown‑formatted responses, collapsible expert views, and inline charts.
+
+- **Responsive, Themeable UI**
+
+  - Optimized for desktop, tablet, and mobile.
+  - Dark and light modes with your preference saved locally.
+
+- **Guest Mode**  
+  Use the app without creating an account—history is stored only in your browser.
+
+- **Comprehensive Property Data**
+  - Over 50,000 Chapel Hill area listings, complete with prices, beds, baths, living area, year built, and more.
+  - For security, this data isn’t included in the repo—please plug in your own.
+  - Peek at our sample dataset here:  
+    [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
+  - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial Jupyter‑powered dive into the data.
 
 ## Architecture
 
@@ -127,6 +142,7 @@ In short, **EstateWise** uses the following AI techniques:
 - **Shadcn UI Components:** For a consistent design system across the app.
 - **Framer Motion:** Provides smooth animations and transitions throughout the user experience.
 - **Dark Mode/Light Mode:** Users can toggle themes with seamless background color transitions.
+- **Chart.js:** For interactive data visualizations and graphs.
 - and more...
 
 ### High-Level Architecture Flow Diagram
@@ -195,6 +211,7 @@ In short, **EstateWise** uses the following AI techniques:
          │   conversations             │
          │ - User ratings for AI       │
          │   responses                 │
+         │ - Visualizations of data    │
          └─────────────────────────────┘
 ```
 
