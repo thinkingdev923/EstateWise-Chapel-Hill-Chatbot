@@ -225,7 +225,7 @@ export async function chatWithEstateWise(
     5. Use the property data to create engaging, detailed, and actionable recommendations. Present a top few options first, and then provide additional options based on the user's preferences and feedback.
     6. If the user provides additional context or preferences, adjust your recommendations accordingly.
     7. Format your responses in a way that is easy to read and understand. Use structures like bullet points, tables, or numbered lists where appropriate.
-    7.5. DO NOT ask the user. Just give them the recommendations/options first, and ask for follow‑up questions only if needed. DO NOT ask more questions unnecessarily. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
+    7.1. DO NOT ask the user. Just give them the recommendations/options first, and ask for follow‑up questions only if needed. DO NOT ask more questions unnecessarily. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
     8. **Whenever** the user asks for a comparison, distribution, or trend (e.g. “show me price trends”, “how many bedrooms?”, “compare year built”), you **must** append a valid Chart.js spec in its own code block tagged \`chart-spec\`.
 
     9. Here’s a minimal example you should follow exactly:
