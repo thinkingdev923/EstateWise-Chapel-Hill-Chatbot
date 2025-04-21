@@ -303,7 +303,7 @@ const faqs = [
   {
     question: "Are the listings verified?",
     answer:
-      "Yes, all listings featured on EstateWise are thoroughly verified and updated regularly.",
+      "Yes, all listings featured on EstateWise are thoroughly verified via Zillow and updated regularly.",
   },
   {
     question: "How does the chatbot work?",
@@ -356,9 +356,9 @@ const faqs = [
       "The chatbot uses your interactions and feedback to refine its recommendations over time.",
   },
   {
-    question: "Can I chat with a real estate agent?",
+    question: "Can I view charts to analyze property trends?",
     answer:
-      "Yes, you can connect with local agents through our platform for personalized assistance.",
+      "Yes! Our chatbot provides interactive visualizations to help you understand local property trends better.",
   },
   {
     question: "What if I encounter issues while using the app?",
