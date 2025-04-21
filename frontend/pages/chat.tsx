@@ -1721,7 +1721,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <Button
             onClick={handleSend}
             disabled={loading}
-            className="flex gap-1"
+            className="flex gap-1 cursor-pointer"
           >
             <Send className="h-4 w-4" /> Send
           </Button>
