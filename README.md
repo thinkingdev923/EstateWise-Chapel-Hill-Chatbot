@@ -11,7 +11,7 @@
 - [Architecture](#architecture)
   - [Backend](#backend)
   - [Frontend](#frontend)
-  - [High-Level Architecture Flow Diagram](#high-level-architecture-flow-diagram)
+  - [High-Level Architecture Flow Diagrams](#high-level-architecture-flow-diagrams)
 - [Setup & Installation](#setup--installation)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
@@ -145,7 +145,15 @@ Feel free to test the app as a guest or sign up for an account to save your conv
 - **Chart.js:** For interactive data visualizations and graphs.
 - and more...
 
-### High-Level Architecture Flow Diagram
+### High-Level Architecture Flow Diagrams
+
+#### Flowchart
+
+<p align="center">
+  <img src="img/flowchart.png" alt="High-Level Architecture Flow Diagram" width="100%" />
+</p>
+
+#### Plaintext Flow Diagram
 
 ```plaintext
          ┌────────────────────────────────┐
@@ -193,11 +201,25 @@ Feel free to test the app as a guest or sign up for an account to save your conv
          ┌─────────────────────────────┐
          │   Response Processing       │
          │ - Uses Google Gemini API    │
-         │ - Mixture of Experts (MoE)  │
-         │ - Generates AI responses    │
+         │ - RAG (kNN) for retrieval   │
+         │ - k-Means clustering for    │
+         │   property recommendations  │
+         │ - Agentic AI for            │
+         │   orchestration             │
+         │ - Expert models (Data       │
+         │   Analyst,                  │
+         │   Lifestyle Concierge,      │
+         │   Financial Advisor,        │
+         │   Neighborhood Expert,      │
+         │   Cluster Analyst)          │
+         │ - Expert selection process  │
+         │   (Mixture of Experts)      │
          │ - Combine responses from    │
          │   experts                   │
          │ - Feedback loop for rating  │
+         │   AI responses              │
+         │ - Reinforcement learning    │
+         │   for expert weights        │
          └─────────────┬───────────────┘
                        │
                        ▼

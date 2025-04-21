@@ -28,7 +28,7 @@ import {
 function kmeans(
   data: number[][],
   k: number,
-  maxIter = 100,
+  maxIter = 50,
 ): { clusters: number[] } {
   const n = data.length;
   if (n === 0 || k <= 0) {
@@ -94,6 +94,23 @@ function kmeans(
 const CLUSTER_COUNT = 4;
 
 /**
+ * Detect if a user message is a simple greeting or small‑talk
+ * that does not require querying Pinecone for property data.
+ *
+ * @param message - the user’s message text
+ * @return true if we can skip data retrieval and clustering
+ */
+function isSimpleQuery(message: string): boolean {
+  const patterns = [
+    /^\s*(hi|hello|hey)\s*[\!\.]*$/i,
+    /^\s*how are you\??\s*$/i,
+    /^\s*good (morning|afternoon|evening)\s*$/i,
+    /^\s*(thanks|thank you)\s*[\!\.]*$/i,
+  ];
+  return patterns.some((re) => re.test(message));
+}
+
+/**
  * Chat with EstateWise Assistant using Google Gemini AI.
  * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
  * to generate more informed responses. Includes a clustering
@@ -102,6 +119,9 @@ const CLUSTER_COUNT = 4;
  * Note: When deployed on Vercel, this may cause a timeout due to
  * Vercel's 60s limit, and our approach requires at least 6 AI
  * calls (6 experts + 1 merger).
+ *
+ * For simple queries (greetings, small‑talk), we skip Pinecone lookups
+ * and clustering entirely and pass directly to the experts.
  *
  * @param history - The conversation history, including previous messages.
  * @param message - The new message to send.
@@ -119,61 +139,73 @@ export async function chatWithEstateWise(
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
-  // 1) Fetch property context and raw results in parallel
-  const [propertyContext, rawResults]: [string, RawQueryResult[]] =
-    await Promise.all([
-      queryPropertiesAsString(message, 100),
-      queryProperties(message, 100),
+  const simple = isSimpleQuery(message);
+
+  // 1) Fetch or skip property context and raw results
+  let propertyContext = "";
+  let rawResults: RawQueryResult[] = [];
+  if (!simple) {
+    [propertyContext, rawResults] = await Promise.all([
+      queryPropertiesAsString(message, 50),
+      queryProperties(message, 50),
     ]);
-
-  // 1.5.a) Extract numeric feature vectors from metadata
-  const featureVectors: number[][] = rawResults.map((r) => {
-    const m = r.metadata;
-    const price =
-      typeof m.price === "number"
-        ? m.price
-        : parseFloat(String(m.price).replace(/[^0-9.-]+/g, "")) || 0;
-    const bedrooms = Number(m.bedrooms) || 0;
-    const bathrooms = Number(m.bathrooms) || 0;
-    const livingArea =
-      typeof m.livingArea === "string"
-        ? parseFloat(m.livingArea.replace(/[^0-9.]/g, "")) || 0
-        : Number(m.livingArea) || 0;
-    const yearBuilt = Number(m.yearBuilt) || 0;
-    return [price, bedrooms, bathrooms, livingArea, yearBuilt];
-  });
-
-  // 1.5.b) Normalize feature vectors
-  const dims = featureVectors[0]?.length ?? 0;
-  const mins = Array(dims).fill(Infinity);
-  const maxs = Array(dims).fill(-Infinity);
-  for (const vec of featureVectors) {
-    vec.forEach((val, i) => {
-      if (val < mins[i]) mins[i] = val;
-      if (val > maxs[i]) maxs[i] = val;
-    });
   }
-  const normalized = featureVectors.map((vec) =>
-    vec.map((val, i) =>
-      maxs[i] === mins[i] ? 0 : (val - mins[i]) / (maxs[i] - mins[i]),
-    ),
-  );
 
-  // 1.5.c) Perform K-Means clustering into CLUSTER_COUNT clusters
-  const { clusters: clusterAssignments } = kmeans(normalized, CLUSTER_COUNT);
+  // 1.5) Only compute clustering if we fetched data
+  let combinedPropertyContext: string;
+  if (!simple) {
+    // 1.5.a) Extract numeric feature vectors from metadata
+    const featureVectors: number[][] = rawResults.map((r) => {
+      const m = r.metadata;
+      const price =
+        typeof m.price === "number"
+          ? m.price
+          : parseFloat(String(m.price).replace(/[^0-9.-]+/g, "")) || 0;
+      const bedrooms = Number(m.bedrooms) || 0;
+      const bathrooms = Number(m.bathrooms) || 0;
+      const livingArea =
+        typeof m.livingArea === "string"
+          ? parseFloat(m.livingArea.replace(/[^0-9.]/g, "")) || 0
+          : Number(m.livingArea) || 0;
+      const yearBuilt = Number(m.yearBuilt) || 0;
+      return [price, bedrooms, bathrooms, livingArea, yearBuilt];
+    });
 
-  // 1.5.d) Build a textual representation of cluster assignments
-  const clusterContext = rawResults
-    .map((r, i) => `- Property ID ${r.id}: cluster ${clusterAssignments[i]}`)
-    .join("\n");
+    // 1.5.b) Normalize feature vectors
+    const dims = featureVectors[0]?.length ?? 0;
+    const mins = Array(dims).fill(Infinity);
+    const maxs = Array(dims).fill(-Infinity);
+    for (const vec of featureVectors) {
+      vec.forEach((val, i) => {
+        if (val < mins[i]) mins[i] = val;
+        if (val > maxs[i]) maxs[i] = val;
+      });
+    }
+    const normalized = featureVectors.map((vec) =>
+      vec.map((val, i) =>
+        maxs[i] === mins[i] ? 0 : (val - mins[i]) / (maxs[i] - mins[i]),
+      ),
+    );
 
-  // 1.5.e) Combine property list and cluster info
-  const combinedPropertyContext = `
-    ${propertyContext}
-    
-    Cluster Assignments:
-    ${clusterContext}
-    `.trim();
+    // 1.5.c) Perform K-Means clustering into CLUSTER_COUNT clusters
+    const { clusters: clusterAssignments } = kmeans(normalized, CLUSTER_COUNT);
+
+    // 1.5.d) Build a textual representation of cluster assignments
+    const clusterContext = rawResults
+      .map((r, i) => `- Property ID ${r.id}: cluster ${clusterAssignments[i]}`)
+      .join("\n");
+
+    // 1.5.e) Combine property list and cluster info
+    combinedPropertyContext = `
+      ${propertyContext}
+      
+      Cluster Assignments:
+      ${clusterContext}
+      `.trim();
+  } else {
+    // for simple queries, no context needed
+    combinedPropertyContext = "";
+  }
 
   // 2) Base system instruction (used for all experts)
   const baseSystemInstruction = `
@@ -231,7 +263,7 @@ export async function chatWithEstateWise(
 
     12.5. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
     
-    12.9. For simpler questions, you may skip the expert system and just respond directly. But for complex questions, you must use the expert system to provide a more comprehensive answer.
+    12.9. Please limit your response so that it is not too verbose. And you must ensure that you don't take too long to answer. You must respond quickly and efficiently, without unnecessary delays.
     
     Additional context: ${userContext || "None provided."}
   `;
