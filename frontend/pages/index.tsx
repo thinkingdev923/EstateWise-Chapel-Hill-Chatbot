@@ -136,10 +136,16 @@ const features = [
     icon: <MapPin className="w-16 h-16 text-primary" />,
   },
   {
-    title: "Seamless Integration",
+    title: "Feedback Loop",
     description:
-      "Easily connect with trusted local agents for further assistance and inquiries.",
+      "Our chatbot learns from your interactions and feedback to refine its recommendations over time.",
     icon: <CheckSquare className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Intelligent Visualizations",
+    description:
+      "Experience interactive visualizations that enhance your property search.",
+    icon: <FileText className="w-16 h-16 text-primary" />,
   },
 ];
 
@@ -179,6 +185,12 @@ const howItWorks = [
       "Stay tuned for new listings and updates based on your preferences.",
     icon: <TrendingUp className="w-16 h-16 text-primary" />,
   },
+  {
+    title: "Give Feedback",
+    description:
+      "Help us improve by providing feedback on your experience and preferences.",
+    icon: <Smile className="w-16 h-16 text-primary" />,
+  }
 ];
 
 const chatAdvantages = [
