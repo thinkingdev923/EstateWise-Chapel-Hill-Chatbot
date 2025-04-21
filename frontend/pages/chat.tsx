@@ -29,6 +29,9 @@ import {
   ChevronDown,
   Inbox,
   LogIn,
+  Settings,
+  Cpu,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1305,6 +1308,36 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   }, [selectedConvoId, isAuthed, localConvos]);
 
+  const loadingPhases = [
+    { text: "Understanding Your Query", Icon: Search,    spin: false },
+    { text: "Processing Your Request", Icon: Settings,  spin: true  },
+    { text: "Reasoning & Thinking",    Icon: Cpu,       spin: false },
+    { text: "Generating a Response",   Icon: Zap,       spin: false },
+  ];
+  const [phaseIdx, setPhaseIdx] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    if (loading) {
+      const rotate = (idx: number) => {
+        if (!active || idx >= loadingPhases.length - 1) return;
+        const delay = 800 + Math.random() * 700;
+        setTimeout(() => {
+          if (!active) return;
+          const next = idx + 1;
+          setPhaseIdx(next);
+          rotate(next);
+        }, delay);
+      };
+      rotate(phaseIdx);
+    } else {
+      setPhaseIdx(0);
+    }
+    return () => {
+      active = false;
+    };
+  }, [loading]);
+
   /* persist guest history + autoscroll */
   useEffect(() => {
     if (!Cookies.get("estatewise_token")) {
@@ -1642,10 +1675,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             animate="visible"
             className="flex justify-start mb-2"
           >
-            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-1">
-              <Loader2 className="animate-spin w-5 h-5" />
-              <span>Thinking</span>
-              <AnimatedDots />
+            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+              {(() => {
+                const { Icon, spin } = loadingPhases[phaseIdx];
+                return React.createElement(Icon, {
+                  className: `w-5 h-5 ${spin ? "animate-spin" : "animate-pulse"}`,
+                });
+              })()}
+              <span className="font-medium">
+        {loadingPhases[phaseIdx].text}
+      </span>
             </div>
           </motion.div>
         )}
