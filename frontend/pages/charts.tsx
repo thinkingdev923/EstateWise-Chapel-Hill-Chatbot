@@ -288,9 +288,9 @@ export default function ChartsPage() {
             Chapel Hill Real‑Estate Visualized 📊
           </h1>
           <p className="text-muted-foreground max-w-xl mx-auto">
-            Eighteen crisp charts uncover price patterns, bedroom trends, and
-            neighbourhood popularity, giving you the data‑driven edge in your
-            home search.
+            Eighteen crisp charts that uncover general price patterns, bedroom
+            trends, and neighborhood popularity, giving you the data‑driven edge
+            in your home search.
           </p>
         </section>
 

@@ -305,6 +305,8 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 
    The frontend should be running at [http://localhost:3000](http://localhost:3000).
 
+> Note: As you develop, before committing, we recommend running the linter and formatter to ensure code quality with `npm run format`. This will format your code according to the project's ESLint and Prettier configurations.
+
 ## Deployment
 
 - **Backend:** Deploy your backend on your chosen platform (Heroku, Vercel, AWS, etc.) and ensure environment variables are properly set.
