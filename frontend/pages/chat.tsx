@@ -1638,22 +1638,31 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
               {/* thumbs btns */}
               <div className="flex gap-1">
-                <button
-                  onClick={() => rateConversation("up", idx)}
-                  className={`p-1 cursor-pointer ${upColor}`}
-                  title="Thumbs up"
-                  aria-label="Thumbs up"
-                >
-                  <ThumbsUp className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => rateConversation("down", idx)}
-                  className={`p-1 cursor-pointer ${downColor}`}
-                  title="Thumbs down"
-                  aria-label="Thumbs down"
-                >
-                  <ThumbsDown className="w-4 h-4" />
-                </button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => rateConversation("up", idx)}
+                      className={`p-1 cursor-pointer ${upColor}`}
+                      aria-label="Thumbs up"
+                    >
+                      <ThumbsUp className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Thumbs up</TooltipContent>
+                </Tooltip>
+
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      onClick={() => rateConversation("down", idx)}
+                      className={`p-1 cursor-pointer ${downColor}`}
+                      aria-label="Thumbs down"
+                    >
+                      <ThumbsDown className="w-4 h-4" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top">Thumbs down</TooltipContent>
+                </Tooltip>
               </div>
             </div>
           )}
