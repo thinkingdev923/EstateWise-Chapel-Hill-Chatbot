@@ -1732,7 +1732,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="/privacy" className="underline">
+          <Link href="/privacy" className="underline hover:text-primary">
             Privacy Policy
           </Link>
           .
