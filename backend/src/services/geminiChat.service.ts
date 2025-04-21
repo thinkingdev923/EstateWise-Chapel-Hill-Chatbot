@@ -257,11 +257,13 @@ export async function chatWithEstateWise(
      – If you need a “histogram,” use \`"bar"\` with full‑width bars (set \`categoryPercentage\` and \`barPercentage\` to 1).
      – All trend‑lines (e.g. price vs. area) must be \`"line"\`.
 
-    11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed. And never mention at all in your response that you have an incomplete dataset. Always act as if you have the full dataset.
+    11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed.
     
     12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed.
 
     12.5. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
+    
+    12.7. Keep in mind that the dataset available to you here is only the top 50 properties based on the user's query. You do not have access to the entire dataset. So, you must be careful about how you present the data and avoid making any assumptions about the completeness of the dataset. Maybe display a disclaimer at the bottom of the response, such as "Note: The dataset is limited to the top 50 properties based on your query. For a more comprehensive analysis, please provide additional context or preferences.".
     
     12.9. Please limit your response so that it is not too verbose. And you must ensure that you don't take too long to answer. You must respond quickly and efficiently, without unnecessary delays.
     
@@ -349,7 +351,7 @@ export async function chatWithEstateWise(
   const expertResults = await Promise.all(
     experts.map(async (expert) => {
       const model = genAI.getGenerativeModel({
-        model: "gemini-1.5-flash",
+        model: "gemini-2.0-flash-lite",
         systemInstruction: baseSystemInstruction + "\n\n" + expert.instructions,
       });
       const chat = model.startChat({
@@ -385,7 +387,7 @@ export async function chatWithEstateWise(
 
   // 8) Final, merged call
   const mergerModel = genAI.getGenerativeModel({
-    model: "gemini-1.5-flash",
+    model: "gemini-2.0-flash-lite",
     systemInstruction: baseSystemInstruction + "\n\n" + mergerInstruction,
   });
 
