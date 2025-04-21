@@ -1,6 +1,6 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full-stack chatbot application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art **AI technology and Retrieval-Augmented Generation (RAG)** techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
+**EstateWise** is a full-stack chatbot application that helps users find their dream property in **Chapel Hill, NC** and surrounding areas. The app harnesses state‑of‑the‑art **AI technology, Retrieval-Augmented Generation (RAG), Mixture of Experts (MoEs), and kMeans/kNN** techniques to deliver personalized property recommendations based on user preferences. Whether you sign in to save your conversation history or continue as a guest, EstateWise offers a sleek, responsive interface with smooth animations and a modern design.
 
 ## Table of Contents
 
@@ -71,11 +71,14 @@ Also, users can rate the AI's responses, which helps improve the model's perform
 - The feedback loop allows the AI to learn from user interactions and refine its recommendations.
 - If the user is not satisfied with the AI's response, they can give a thumbs down rating, and the backend API will tweak the experts selection process (i.e. the weights of the experts) to improve the model's performance.
 
+It also uses the **Clusters** approach to group similar properties together, allowing the AI to provide more relevant recommendations based on user preferences. Moreover, under the hood, Pinecone queries also use **kMeans & kNN (k-Nearest Neighbors)** techniques to find the most similar properties based on user input.
+
 In short, **EstateWise** uses the following AI techniques:
 
 - **Retrieval-Augmented Generation (RAG)**: Combines retrieval and generation for accurate responses.
 - **Mixture of Experts (MoE)**: Dynamically selects specialized sub-models for improved performance.
 - **Feedback Loop and Reinforcement Learning**: Users can rate responses, allowing the AI to learn and adapt over time.
+- **kNN, kMeans, and Clusters**: Groups similar properties and uses k-Nearest Neighbors for efficient retrieval.
 
 ## Features
 
@@ -90,6 +93,8 @@ In short, **EstateWise** uses the following AI techniques:
 - **Visualizations:** Interactive charts and graphs to visualize property data and trends.
   - In the chatbot's responses, the AI will directly generate the charts and graphs using the data from the Pinecone index so that users can see the trends and patterns in the data.
   - The app also has a dedicated page for visualizations, where users can see the generalized data and trends in the properties in the Chapel Hill area.
+- **Clusters & kMeans & kNN:** The AI uses clustering techniques to group similar properties together, allowing for more relevant recommendations based on user preferences.
+  - The app also uses kMeans and kNN techniques to find the most similar properties based on user input.
 - **Animations:** Smooth animations and transitions using Framer Motion for an engaging user experience.
 - **Interactive Chat Interface:** Enjoy a smooth, animated chat experience with markdown-formatted responses.
 - **Responsive Design:** Fully responsive UI optimized for desktop and mobile devices.

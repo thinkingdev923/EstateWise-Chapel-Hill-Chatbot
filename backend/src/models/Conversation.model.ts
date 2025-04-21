@@ -106,6 +106,7 @@ const ConversationSchema: Schema = new Schema(
         "Lifestyle Concierge": 1,
         "Financial Advisor": 1,
         "Neighborhood Expert": 1,
+        "Cluster Analyst": 1,
       },
     },
   },

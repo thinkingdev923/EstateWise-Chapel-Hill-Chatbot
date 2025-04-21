@@ -44,6 +44,7 @@ export const chat = async (req: AuthRequest, res: Response) => {
             "Lifestyle Concierge": 1,
             "Financial Advisor": 1,
             "Neighborhood Expert": 1,
+            "Cluster Analyst": 1,
           },
         });
         await conversation.save();
@@ -94,6 +95,7 @@ export const chat = async (req: AuthRequest, res: Response) => {
       "Lifestyle Concierge": 1,
       "Financial Advisor": 1,
       "Neighborhood Expert": 1,
+      "Cluster Analyst": 1,
     };
     const guestWeights: Record<string, number> = {
       ...defaultWeights,
@@ -200,7 +202,8 @@ export const rateConversation = async (req: AuthRequest, res: Response) => {
 
 /**
  * Helper function to adjust weights in place.
- * This function modifies the weights of the experts based on the rating provided.
+ * This function modifies the weights of the experts based on the rating provided,
+ * but never changes the weight of "Cluster Analyst".
  *
  * @param wts - The weights of the experts.
  * @param rating - The rating given by the user, either "up" or "down".
@@ -212,13 +215,36 @@ function adjustWeightsInPlace(
   expert?: string,
 ) {
   const factor = rating === "up" ? 1.2 : 0.8;
-  if (expert && wts[expert] != null) {
-    wts[expert] *= factor;
+  const CLUSTER_KEY = "Cluster Analyst";
+  const clusterWeight = wts[CLUSTER_KEY] ?? 0;
+
+  if (expert) {
+    // Only adjust if it's not the cluster analyst
+    if (expert !== CLUSTER_KEY && wts[expert] != null) {
+      wts[expert] *= factor;
+    }
   } else {
-    Object.keys(wts).forEach((k) => (wts[k] *= factor));
+    // Adjust all except cluster analyst
+    Object.keys(wts).forEach((k) => {
+      if (k !== CLUSTER_KEY) {
+        wts[k] *= factor;
+      }
+    });
   }
 
-  // renormalize ratings
-  const sum = Object.values(wts).reduce((a, b) => a + b, 0) || 1;
-  Object.keys(wts).forEach((k) => (wts[k] = wts[k] / sum));
+  // Renormalize so sum(wts) = 1 and cluster weight remains fixed
+  const sumOthers =
+    Object.entries(wts)
+      .filter(([k]) => k !== CLUSTER_KEY)
+      .reduce((sum, [, v]) => sum + v, 0) || 1;
+  const remaining = 1 - clusterWeight;
+
+  Object.keys(wts).forEach((k) => {
+    if (k !== CLUSTER_KEY) {
+      wts[k] = (wts[k] / sumOthers) * remaining;
+    }
+  });
+
+  // Restore cluster analyst's original weight
+  wts[CLUSTER_KEY] = clusterWeight;
 }

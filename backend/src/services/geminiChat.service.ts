@@ -3,15 +3,105 @@ import {
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
-import { queryPropertiesAsString } from "../scripts/queryProperties";
+import {
+  queryPropertiesAsString,
+  queryProperties,
+  RawQueryResult,
+} from "../scripts/queryProperties";
+
+/**
+ * Function to perform K-Means clustering on a set of data points. It
+ * assigns each data point to one of k clusters based on the
+ * Euclidean distance to the cluster centroids.
+ *
+ * It will return the cluster assignments for each data point.
+ *
+ * Under the hood, Pinecone queries also use kNN. So, by using both
+ * kNN and K-Means in our code, we can achieve a more efficient and
+ * effective clustering process.
+ *
+ * @param data - 2D array of data points (each point is an array of numbers)
+ * @param k - number of clusters
+ * @param maxIter - maximum number of iterations for convergence
+ * @return - object containing the cluster assignments for each data point
+ */
+function kmeans(
+  data: number[][],
+  k: number,
+  maxIter = 100,
+): { clusters: number[] } {
+  const n = data.length;
+  if (n === 0 || k <= 0) {
+    return { clusters: [] };
+  }
+  const dims = data[0].length;
+  // initialize centroids picking first k points (or fewer if n < k)
+  let centroids = data.slice(0, Math.min(k, n)).map((v) => v.slice());
+  // if n < k, pad centroids by repeating last
+  while (centroids.length < k) {
+    centroids.push(data[data.length - 1].slice());
+  }
+  const assignments = new Array(n).fill(0);
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    let changed = false;
+    // assignment step
+    for (let i = 0; i < n; i++) {
+      let minDist = Infinity;
+      let cluster = 0;
+      for (let c = 0; c < k; c++) {
+        let dist = 0;
+        for (let d = 0; d < dims; d++) {
+          const diff = data[i][d] - centroids[c][d];
+          dist += diff * diff;
+        }
+        if (dist < minDist) {
+          minDist = dist;
+          cluster = c;
+        }
+      }
+      if (assignments[i] !== cluster) {
+        assignments[i] = cluster;
+        changed = true;
+      }
+    }
+    // if no assignment changed, we've converged
+    if (!changed) break;
+    // update step
+    const sums = Array(k)
+      .fill(0)
+      .map(() => Array(dims).fill(0));
+    const counts = Array(k).fill(0);
+    for (let i = 0; i < n; i++) {
+      const c = assignments[i];
+      counts[c]++;
+      for (let d = 0; d < dims; d++) {
+        sums[c][d] += data[i][d];
+      }
+    }
+    for (let c = 0; c < k; c++) {
+      if (counts[c] > 0) {
+        for (let d = 0; d < dims; d++) {
+          centroids[c][d] = sums[c][d] / counts[c];
+        }
+      }
+    }
+  }
+
+  return { clusters: assignments };
+}
+
+const CLUSTER_COUNT = 4;
 
 /**
  * Chat with EstateWise Assistant using Google Gemini AI.
  * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
- * to generate more informed responses.
+ * to generate more informed responses. Includes a clustering
+ * algorithm to group properties based on their features.
+ *
  * Note: When deployed on Vercel, this may cause a timeout due to
- * Vercel's 60s limit, and our approach requires at least 5 AI
- * calls (4 experts + 1 merger).
+ * Vercel's 60s limit, and our approach requires at least 6 AI
+ * calls (6 experts + 1 merger).
  *
  * @param history - The conversation history, including previous messages.
  * @param message - The new message to send.
@@ -29,8 +119,61 @@ export async function chatWithEstateWise(
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
-  // 1) Fetch property context
-  const propertyContext: string = await queryPropertiesAsString(message, 100);
+  // 1) Fetch property context and raw results in parallel
+  const [propertyContext, rawResults]: [string, RawQueryResult[]] =
+    await Promise.all([
+      queryPropertiesAsString(message, 100),
+      queryProperties(message, 100),
+    ]);
+
+  // 1.5.a) Extract numeric feature vectors from metadata
+  const featureVectors: number[][] = rawResults.map((r) => {
+    const m = r.metadata;
+    const price =
+      typeof m.price === "number"
+        ? m.price
+        : parseFloat(String(m.price).replace(/[^0-9.-]+/g, "")) || 0;
+    const bedrooms = Number(m.bedrooms) || 0;
+    const bathrooms = Number(m.bathrooms) || 0;
+    const livingArea =
+      typeof m.livingArea === "string"
+        ? parseFloat(m.livingArea.replace(/[^0-9.]/g, "")) || 0
+        : Number(m.livingArea) || 0;
+    const yearBuilt = Number(m.yearBuilt) || 0;
+    return [price, bedrooms, bathrooms, livingArea, yearBuilt];
+  });
+
+  // 1.5.b) Normalize feature vectors
+  const dims = featureVectors[0]?.length ?? 0;
+  const mins = Array(dims).fill(Infinity);
+  const maxs = Array(dims).fill(-Infinity);
+  for (const vec of featureVectors) {
+    vec.forEach((val, i) => {
+      if (val < mins[i]) mins[i] = val;
+      if (val > maxs[i]) maxs[i] = val;
+    });
+  }
+  const normalized = featureVectors.map((vec) =>
+    vec.map((val, i) =>
+      maxs[i] === mins[i] ? 0 : (val - mins[i]) / (maxs[i] - mins[i]),
+    ),
+  );
+
+  // 1.5.c) Perform K-Means clustering into CLUSTER_COUNT clusters
+  const { clusters: clusterAssignments } = kmeans(normalized, CLUSTER_COUNT);
+
+  // 1.5.d) Build a textual representation of cluster assignments
+  const clusterContext = rawResults
+    .map((r, i) => `- Property ID ${r.id}: cluster ${clusterAssignments[i]}`)
+    .join("\n");
+
+  // 1.5.e) Combine property list and cluster info
+  const combinedPropertyContext = `
+    ${propertyContext}
+    
+    Cluster Assignments:
+    ${clusterContext}
+    `.trim();
 
   // 2) Base system instruction (used for all experts)
   const baseSystemInstruction = `
@@ -38,7 +181,7 @@ export async function chatWithEstateWise(
 
     Below is a current list of detailed property records from our database. Use ALL THE DATA in the property records to provide the best recommendations. You can also use the user's additional context to tailor your recommendations:
     ---------------------------------------------------------
-    ${propertyContext}
+    ${combinedPropertyContext}
     ---------------------------------------------------------
 
     When recommending properties, please do the following:
@@ -88,6 +231,8 @@ export async function chatWithEstateWise(
 
     12.5. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
     
+    12.9. For simpler questions, you may skip the expert system and just respond directly. But for complex questions, you must use the expert system to provide a more comprehensive answer.
+    
     Additional context: ${userContext || "None provided."}
   `;
 
@@ -115,6 +260,12 @@ export async function chatWithEstateWise(
       name: "Neighborhood Expert",
       instructions: `
         You are the Neighborhood Expert. Provide insights on safety, demographic trends, noise levels, walkability scores, and future development. Use tables or bullets for clarity; charts only if showing comparative ratings.
+      `.trim(),
+    },
+    {
+      name: "Cluster Analyst",
+      instructions: `
+        You are the Cluster Analyst. You have clustered the available homes into ${CLUSTER_COUNT} groups based on features (price, beds, baths, living area, year built). Generate a Chart.js \`scatter\` spec (in a \`chart-spec\` code block) plotting living area (x-axis) vs. price (y-axis), with each cluster as a separate dataset, and title each dataset "Cluster {index}". Then, summarize in bullet points the key characteristics of each cluster (e.g., "Cluster 0: mostly high-price, large homes").
       `.trim(),
     },
   ];
@@ -182,7 +333,10 @@ export async function chatWithEstateWise(
 
   // 7) Build merger instruction, including expert weights
   const mergerInstruction = `
-    You are the EstateWise Master Agent. You have now received input from four specialized agents.
+    You are the EstateWise Master Agent. You have now received input from five specialized agents.
+    
+    Use their responses to create a **cohesive** and **concise** recommendation for the user. Focus on answering the user's queries in a natural and conversational manner, while also ensuring that the response is informative and engaging.
+    
     Below are their responses along with their relative weights (importance):
     
     ${expertResults
@@ -192,7 +346,7 @@ export async function chatWithEstateWise(
       )
       .join("\n\n")}
     
-    Now, **synthesize** these four expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+    Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
     
     Once again, just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
   `;
@@ -202,11 +356,13 @@ export async function chatWithEstateWise(
     model: "gemini-1.5-flash",
     systemInstruction: baseSystemInstruction + "\n\n" + mergerInstruction,
   });
+
   const mergerChat = mergerModel.startChat({
     generationConfig,
     safetySettings,
     history,
   });
+
   const finalResult = await mergerChat.sendMessage(message);
   const finalText = finalResult.response.text();
 
