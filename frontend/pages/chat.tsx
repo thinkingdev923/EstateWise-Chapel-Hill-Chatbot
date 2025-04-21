@@ -1283,7 +1283,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   );
 
   /* per-message rating state */
-  const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
+  const [ratings, setRatings] = useState<Record<number, "up" | "down">>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      return JSON.parse(localStorage.getItem("msgRatings") || "{}");
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("msgRatings", JSON.stringify(ratings));
+  }, [ratings]);
 
   /* ------------------------------------------------------------------ */
   /* sync on conversation switch                                        */
@@ -1456,8 +1467,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
    * Rate a specific model message.
    */
   const rateConversation = async (vote: "up" | "down", idx: number) => {
-    // persist locally
-    setRatings((prev) => ({ ...prev, [idx]: vote }));
+    // persists ratings
+    const newRatings = { ...ratings, [idx]: vote };
+    setRatings(newRatings);
 
     // if no expertViews, just toast and return
     const msg = messages[idx];
