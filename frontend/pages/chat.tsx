@@ -141,9 +141,9 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
           },
           tooltip: {
             ...(config.options?.plugins?.tooltip || {}),
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
       };
@@ -184,11 +184,6 @@ export const ChartBlock: React.FC<ChartBlockProps> = React.memo(
         const newColor = getFontColor();
         const chart = chartRef.current!;
         chart.options.plugins!.legend!.labels!.color = newColor;
-        if (chart.options.plugins!.tooltip) {
-          chart.options.plugins!.tooltip!.titleColor = newColor;
-          chart.options.plugins!.tooltip!.bodyColor = newColor;
-          chart.options.plugins!.tooltip!.footerColor = newColor;
-        }
 
         // reapply to scales again
         Object.entries(chart.options.scales || {}).forEach(
