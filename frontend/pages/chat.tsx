@@ -1642,6 +1642,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                   onClick={() => rateConversation("up", idx)}
                   className={`p-1 cursor-pointer ${upColor}`}
                   title="Thumbs up"
+                  aria-label="Thumbs up"
                 >
                   <ThumbsUp className="w-4 h-4" />
                 </button>
@@ -1649,6 +1650,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                   onClick={() => rateConversation("down", idx)}
                   className={`p-1 cursor-pointer ${downColor}`}
                   title="Thumbs down"
+                  aria-label="Thumbs down"
                 >
                   <ThumbsDown className="w-4 h-4" />
                 </button>
