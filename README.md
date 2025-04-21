@@ -115,10 +115,11 @@ Feel free to test the app as a guest or sign up for an account to save your conv
   Use the app without creating an account—history is stored only in your browser.
 
 - **Comprehensive Property Data**
-  - Over 50,000 Chapel Hill area listings, complete with prices, beds, baths, living area, year built, and more.
+  - **Over 50,000** Chapel Hill area listings, complete with prices, beds, baths, living area, year built, and more.
   - For security, this data isn’t included in the repo—please plug in your own.
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
+  - After cleaning, **30,772 properties** remain in the database, available for the chatbot to use.
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial Jupyter‑powered dive into the data.
   - Explore `EstateWise-CLI-Chatbot.ipynb` in the repo root for a Jupyter‑powered CLI chatbot that can be used to test the Gemini chatbot.
 
