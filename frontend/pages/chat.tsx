@@ -1390,8 +1390,25 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           body.convoId = c._id;
         } else body.convoId = selectedConvoId;
       } else {
-        body.history = [...messages, { role: "user", text }];
+        // We're facing issues where the guest's conversation gets too long
+        // This overloads the backend (Vercel limits the payload size), so
+        // perhaps we only want to send as much as we can to the backend
+        const MAX_PAYLOAD_SIZE = 102_400;
+        // start with the full history
+        const fullHistory = [...messages, { role: "user", text }];
+        body.history = [...fullHistory];
         body.expertWeights = guestWeights;
+
+        // now ensure JSON.stringify(body) is under limit
+        let serialized = JSON.stringify(body);
+        while (
+          serialized.length > MAX_PAYLOAD_SIZE &&
+          body.history.length > 1
+        ) {
+          // drop the oldest message
+          body.history.shift();
+          serialized = JSON.stringify(body);
+        }
       }
 
       const res = await fetch(`${API_BASE_URL}/api/chat`, {
@@ -1675,15 +1692,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             animate="visible"
             className="flex justify-start mb-2"
           >
-            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
+            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-2">
               {(() => {
                 const { Icon, spin } = loadingPhases[phaseIdx];
                 return React.createElement(Icon, {
                   className: `w-5 h-5 ${spin ? "animate-spin" : "animate-pulse"}`,
                 });
               })()}
-              <span className="font-medium">
+              <span className="font-medium animate-pulse">
                 {loadingPhases[phaseIdx].text}
+                <AnimatedDots resetKey={phaseIdx} />
               </span>
             </div>
           </motion.div>
@@ -1732,15 +1750,16 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 // ----------------------------------------------------------
 // AnimatedDots Component
 // ----------------------------------------------------------
-const AnimatedDots: React.FC = () => {
+const AnimatedDots: React.FC<{ resetKey: number }> = ({ resetKey }) => {
   const [dots, setDots] = useState("");
   useEffect(() => {
-    const int = setInterval(
-      () => setDots((d) => (d.length < 3 ? d + "." : "")),
-      500,
-    );
-    return () => clearInterval(int);
-  }, []);
+    // restart dots when resetKey changes
+    setDots("");
+    const interval = setInterval(() => {
+      setDots((prev) => (prev.length < 3 ? prev + "." : ""));
+    }, 500);
+    return () => clearInterval(interval);
+  }, [resetKey]);
   return <span>{dots}</span>;
 };
 

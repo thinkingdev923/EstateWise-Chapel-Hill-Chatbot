@@ -1,0 +1,47 @@
+# ————— Node / package files —————
+node_modules/
+.pnp.*
+.pnp.js
+.lock-wscript
+
+# ————— Build output —————
+.next/
+out/
+dist/
+coverage/
+
+# ————— Env & secrets —————
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.secret
+
+# ————— Logs —————
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# ————— IDE / Editor —————
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# ————— OS junk —————
+.DS_Store
+Thumbs.db
+*.swp
+
+# ————— Tests & configs —————
+jest.config.js
+jest.setup.js
+*.spec.*
+*.test.*
+/tests/
+
+# ————— Misc —————
+*.tgz
+docker-compose*.yml
+Dockerfile

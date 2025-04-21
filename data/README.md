@@ -1,7 +1,7 @@
 # Data Directory - EstateWise App
 
 This directory contains the data analysis files and scripts used by our team
-to understand the data available to us before building the app. 
+to understand the data available to us before building the app.
 
 You can safely ignore/delete this directory in your local copy of the repository
 as it is not needed for the app to run. However, if you are interested in
@@ -26,7 +26,7 @@ understanding the data.
 ## Bottom Line (TL;DR)
 
 This directory is not needed for the app to run, but it may be useful for
-understanding the data and how we processed it. If you are interested in 
+understanding the data and how we processed it. If you are interested in
 understanding the data, feel free to explore the files and scripts in this
 directory. If you are not interested in the data, you can safely ignore/delete
 this directory in your local copy of the repository.

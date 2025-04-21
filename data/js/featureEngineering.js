@@ -1,6 +1,6 @@
 export function computeFeatures(records) {
   const currentYear = new Date().getFullYear();
-  return records.map(r => {
+  return records.map((r) => {
     const price = r.price;
     const area = r.livingArea || 1;
     const yearBuilt = r.yearBuilt || currentYear;
