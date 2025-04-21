@@ -120,6 +120,7 @@ Feel free to test the app as a guest or sign up for an account to save your conv
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial Jupyter‑powered dive into the data.
+  - Explore `EstateWise-CLI-Chatbot.ipynb` in the repo root for a Jupyter‑powered CLI chatbot that can be used to test the Gemini chatbot.
 
 ## Architecture
 
@@ -459,6 +460,7 @@ EstateWise/
 ├── docker-compose.yml        # Docker configuration for backend and frontend
 ├── Dockerfile                # Dockerfile for backend
 ├── openapi.yaml              # OpenAPI specification for API documentation
+├── EstateWise-CLI-Chatbot.ipynb # Jupyter notebook for CLI chatbot
 ├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
 └── ... (other config files, etc.)
 ```
