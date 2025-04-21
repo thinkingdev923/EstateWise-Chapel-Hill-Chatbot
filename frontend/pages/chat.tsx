@@ -1728,7 +1728,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         </div>
         <p className="text-center text-xs mt-1">
           By using this app, you agree to our{" "}
-          <Link href="/terms" className="underline">
+          <Link href="/terms" className="underline hover:text-primary">
             Terms of Service
           </Link>{" "}
           and{" "}
