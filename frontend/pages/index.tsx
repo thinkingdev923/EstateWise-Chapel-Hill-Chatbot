@@ -112,12 +112,6 @@ const features = [
     icon: <Shield className="w-16 h-16 text-primary" />,
   },
   {
-    title: "Local Expert Insights",
-    description:
-      "Receive insider recommendations directly from our chatbot, based on local market trends.",
-    icon: <Star className="w-16 h-16 text-primary" />,
-  },
-  {
     title: "User-Friendly Interface",
     description:
       "Navigate effortlessly through our intuitive platform designed for your convenience.",
@@ -146,6 +140,12 @@ const features = [
     description:
       "Experience interactive visualizations that enhance your property search.",
     icon: <FileText className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "Local Expert Insights",
+    description:
+      "Receive insider recommendations directly from our chatbot, based on local market trends.",
+    icon: <Star className="w-16 h-16 text-primary" />,
   },
 ];
 
@@ -190,6 +190,12 @@ const howItWorks = [
     description:
       "Help us improve by providing feedback on your experience and preferences.",
     icon: <Smile className="w-16 h-16 text-primary" />,
+  },
+  {
+    title: "View Visualizations",
+    description:
+      "Experience interactive visualizations that enhance your property search.",
+    icon: <Star className="w-16 h-16 text-primary" />,
   }
 ];
 
