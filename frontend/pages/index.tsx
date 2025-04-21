@@ -196,7 +196,13 @@ const howItWorks = [
     description:
       "Experience interactive visualizations that enhance your property search.",
     icon: <Star className="w-16 h-16 text-primary" />,
-  }
+  },
+  {
+    title: "Connect with Local Agents",
+    description:
+      "Easily connect with trusted local agents via Zillow for further assistance and inquiries.",
+    icon: <Phone className="w-16 h-16 text-primary" />,
+  },
 ];
 
 const chatAdvantages = [
@@ -291,6 +297,11 @@ const testimonials = [
     testimonial:
       "A revolutionary approach to real estate. It’s like having a personal advisor at your fingertips.",
     author: "— Fiona",
+  },
+  {
+    testimonial:
+      "The chatbot is incredibly intuitive. I felt like I was chatting with a friend who knows the market well.",
+    author: "— George",
   },
 ];
 
