@@ -31,7 +31,7 @@ import {
   LogIn,
   Settings,
   Cpu,
-  Zap
+  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1309,10 +1309,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   }, [selectedConvoId, isAuthed, localConvos]);
 
   const loadingPhases = [
-    { text: "Understanding Your Query", Icon: Search,    spin: false },
-    { text: "Processing Your Request", Icon: Settings,  spin: true  },
-    { text: "Reasoning & Thinking",    Icon: Cpu,       spin: false },
-    { text: "Generating a Response",   Icon: Zap,       spin: false },
+    { text: "Understanding Your Query", Icon: Search, spin: false },
+    { text: "Processing Your Request", Icon: Settings, spin: true },
+    { text: "Reasoning & Thinking", Icon: Cpu, spin: false },
+    { text: "Generating a Response", Icon: Zap, spin: false },
   ];
   const [phaseIdx, setPhaseIdx] = useState(0);
 
@@ -1683,8 +1683,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 });
               })()}
               <span className="font-medium">
-        {loadingPhases[phaseIdx].text}
-      </span>
+                {loadingPhases[phaseIdx].text}
+              </span>
             </div>
           </motion.div>
         )}
