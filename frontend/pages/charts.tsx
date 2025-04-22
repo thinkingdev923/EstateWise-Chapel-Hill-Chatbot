@@ -277,6 +277,16 @@ export default function ChartsPage() {
       </Head>
 
       <div className="min-h-screen bg-background text-foreground flex flex-col">
+        <style jsx global>{`
+          html {
+            scroll-behavior: smooth;
+          }
+
+          html,
+          body {
+            overscroll-behavior: none;
+          }
+        `}</style>
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
             <div className="flex items-center gap-2">

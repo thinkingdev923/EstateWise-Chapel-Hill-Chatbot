@@ -78,6 +78,16 @@ const TermsPage = () => {
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
+        <style jsx global>{`
+          html {
+            scroll-behavior: smooth;
+          }
+
+          html,
+          body {
+            overscroll-behavior: none;
+          }
+        `}</style>
         <Card className="max-w-3xl w-full p-6">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}

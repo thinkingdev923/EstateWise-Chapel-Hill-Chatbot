@@ -1920,6 +1920,16 @@ export default function ChatPage() {
       </Head>
       <ClientOnly>
         <div className="min-h-screen flex dark:bg-background dark:text-foreground relative">
+          <style jsx global>{`
+            html {
+              scroll-behavior: smooth;
+            }
+
+            html,
+            body {
+              overscroll-behavior: none;
+            }
+          `}</style>
           {/* Desktop sidebar and content container */}
           <div className="flex flex-1">
             {/* Sidebar (desktop only) */}

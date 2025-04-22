@@ -398,6 +398,11 @@ export default function Home() {
           html {
             scroll-behavior: smooth;
           }
+
+          html,
+          body {
+            overscroll-behavior: none;
+          }
         `}</style>
 
         {/* Full Screen Hero Section */}

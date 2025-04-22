@@ -111,6 +111,16 @@ export default function ResetPasswordPage() {
         <meta name="description" content="Reset your password for EstateWise" />
       </Head>
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 px-4">
+        <style jsx global>{`
+          html {
+            scroll-behavior: smooth;
+          }
+
+          html,
+          body {
+            overscroll-behavior: none;
+          }
+        `}</style>
         <motion.div
           variants={formVariants}
           initial="hidden"
