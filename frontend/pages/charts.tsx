@@ -306,7 +306,7 @@ export default function ChartsPage() {
               {Object.entries(charts).map(([key, spec]) => (
                 <Card
                   key={key}
-                  className="bg-card border border-border rounded-2xl shadow-sm"
+                  className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-200"
                 >
                   <CardHeader className="pb-2 flex-row items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-primary" />
