@@ -147,6 +147,8 @@ export default function ResetPasswordPage() {
                   type="submit"
                   className="w-full py-2 mt-4 cursor-pointer"
                   disabled={isVerifying}
+                  aria-label="Verify Email"
+                  title="Verify Email"
                 >
                   {isVerifying ? (
                     <>
@@ -199,6 +201,7 @@ export default function ResetPasswordPage() {
                       onClick={() => setShowNewPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                       aria-label="Toggle new password visibility"
+                      title="Toggle new password visibility"
                     >
                       {showNewPassword ? (
                         <EyeOff className="w-5 h-5 text-gray-600" />
@@ -230,6 +233,7 @@ export default function ResetPasswordPage() {
                       onClick={() => setShowConfirmPassword((prev) => !prev)}
                       className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                       aria-label="Toggle confirm new password visibility"
+                      title="Toggle confirm new password visibility"
                     >
                       {showConfirmPassword ? (
                         <EyeOff className="w-5 h-5 text-gray-600" />
@@ -243,6 +247,8 @@ export default function ResetPasswordPage() {
                   type="submit"
                   className="w-full py-2 mt-4 cursor-pointer"
                   disabled={isResetting}
+                  aria-label="Reset Password"
+                  title="Reset Password"
                 >
                   {isResetting ? (
                     <>
@@ -274,7 +280,11 @@ export default function ResetPasswordPage() {
             )}
             <p className="text-sm text-center mt-4 text-card-foreground">
               Remembered your password?{" "}
-              <Link href="/login" className="text-primary underline">
+              <Link
+                href="/login"
+                className="text-primary underline"
+                title="Log In"
+              >
                 Log In
               </Link>
             </p>

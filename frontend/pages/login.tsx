@@ -127,6 +127,7 @@ export default function LoginPage() {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                     aria-label="Toggle password visibility"
+                    title="Toggle password visibility"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5 text-gray-600" />
@@ -140,6 +141,8 @@ export default function LoginPage() {
                 type="submit"
                 className="w-full mt-4 cursor-pointer"
                 disabled={isLoading}
+                title="Log In"
+                aria-label="Log In"
               >
                 {isLoading ? (
                   <>
@@ -170,13 +173,21 @@ export default function LoginPage() {
             </form>
             <p className="text-sm text-center mt-2 text-card-foreground">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-primary underline">
+              <Link
+                href="/signup"
+                className="text-primary underline"
+                title="Sign Up"
+              >
                 Sign Up
               </Link>
             </p>
             <p className="text-sm text-center mt-0 text-card-foreground">
               Forgot your password?{" "}
-              <Link href="/reset-password" className="text-primary underline">
+              <Link
+                href="/reset-password"
+                className="text-primary underline"
+                title="Reset Password"
+              >
                 Reset Password
               </Link>
             </p>

@@ -159,6 +159,7 @@ export default function SignUpPage() {
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                     aria-label="Toggle password visibility"
+                    title="Toggle password visibility"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5 text-gray-600" />
@@ -190,6 +191,7 @@ export default function SignUpPage() {
                     onClick={() => setShowConfirmPassword((prev) => !prev)}
                     className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                     aria-label="Toggle confirm password visibility"
+                    title="Toggle confirm password visibility"
                   >
                     {showConfirmPassword ? (
                       <EyeOff className="w-5 h-5 text-gray-600" />
@@ -233,13 +235,21 @@ export default function SignUpPage() {
             </form>
             <p className="text-sm text-center mt-2 text-card-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="text-primary underline">
+              <Link
+                href="/login"
+                className="text-primary underline"
+                title="Log In"
+              >
                 Log In
               </Link>
             </p>
             <p className="text-sm text-center mt-0 text-card-foreground">
               Forgot your password?{" "}
-              <Link href="/reset-password" className="text-primary underline">
+              <Link
+                href="/reset-password"
+                className="text-primary underline"
+                title="Reset Password"
+              >
                 Reset Password
               </Link>
             </p>

@@ -537,6 +537,8 @@ const DarkModeToggle: React.FC = () => {
     <button
       onClick={toggleDarkMode}
       className="p-1 cursor-pointer transition-none hover:text-primary"
+      aria-label="Toggle Dark Mode"
+      title="Toggle Dark Mode"
     >
       {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
@@ -573,6 +575,8 @@ const TopBar: React.FC<TopBarProps> = ({
           <button
             onClick={toggleSidebar}
             className="p-2 cursor-pointer hover:bg-muted rounded duration-200"
+            aria-label="Toggle Sidebar"
+            title="Toggle Sidebar"
           >
             <Menu className="w-6 h-6" />
           </button>
@@ -583,7 +587,10 @@ const TopBar: React.FC<TopBarProps> = ({
       </div>
       <div className="flex items-center gap-4 relative">
         <Link href="/charts" legacyBehavior>
-          <a className="flex items-center gap-1 hover:text-primary">
+          <a
+            className="flex items-center gap-1 hover:text-primary"
+            title="Charts"
+          >
             <BarChart3 className="w-5 h-5" />
           </a>
         </Link>
@@ -594,6 +601,7 @@ const TopBar: React.FC<TopBarProps> = ({
               onClick={() => window.location.reload()}
               variant="outline"
               className="flex items-center gap-1 transition-none cursor-pointer"
+              title="New Conversation"
             >
               <PlusCircle className="w-5 h-5" />
               New Conversation
@@ -607,6 +615,7 @@ const TopBar: React.FC<TopBarProps> = ({
                 window.location.reload();
               }}
               className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer"
+              title="Log Out"
             >
               <LogOut className="w-5 h-5" />
             </Button>
@@ -617,6 +626,8 @@ const TopBar: React.FC<TopBarProps> = ({
               <button
                 onClick={handleAuthIconClick}
                 className="p-1 cursor-pointer hover:text-primary"
+                aria-label="User Menu"
+                title="User Menu"
               >
                 <UserIcon className="w-5 h-5" />
               </button>
@@ -626,6 +637,8 @@ const TopBar: React.FC<TopBarProps> = ({
                     <div
                       className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
                       onClick={() => setAuthMenuOpen(false)}
+                      title="Log In"
+                      aria-label="Log In"
                     >
                       Log In
                     </div>
@@ -634,6 +647,8 @@ const TopBar: React.FC<TopBarProps> = ({
                     <div
                       className="px-4 py-2 hover:bg-muted cursor-pointer select-none"
                       onClick={() => setAuthMenuOpen(false)}
+                      title="Sign Up"
+                      aria-label="Sign Up"
                     >
                       Sign Up
                     </div>
@@ -649,6 +664,8 @@ const TopBar: React.FC<TopBarProps> = ({
               }}
               variant="outline"
               className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer ml-2"
+              title="Delete Conversation"
+              aria-label="Delete Conversation"
             >
               <Trash2 className="w-5 h-5" />
               Delete Conversation
@@ -922,6 +939,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 title="Rename"
                 className="cursor-pointer hover:text-blue-500"
+                aria-label="Rename Conversation"
               >
                 <Pencil className="w-4 h-4" />
               </button>
@@ -932,6 +950,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 }}
                 title="Delete"
                 className="cursor-pointer hover:text-red-500"
+                aria-label="Delete Conversation"
               >
                 <Trash2 className="w-4 h-4" />
               </button>
@@ -960,6 +979,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <button
                       onClick={() => setShowSearchModal(true)}
                       className="p-1 cursor-pointer hover:bg-muted rounded"
+                      title="Search Conversations"
+                      aria-label="Search Conversations"
                     >
                       <Search className="w-5 h-5" />
                     </button>
@@ -967,6 +988,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={toggleSidebar}
                     className="p-1 cursor-pointer hover:bg-muted rounded"
+                    title="Close Sidebar"
+                    aria-label="Close Sidebar"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1026,6 +1049,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                   onClick={() => setShowSearchModal(false)}
                   className="text-primary font-bold cursor-pointer"
+                  title="Close Search Modal"
+                  aria-label="Close Search Modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -1089,6 +1114,8 @@ const Sidebar: React.FC<SidebarProps> = ({
               <button
                 onClick={() => setShowSearchModal(true)}
                 className="p-1 cursor-pointer hover:bg-muted rounded"
+                title="Search Conversations"
+                aria-label="Search Conversations"
               >
                 <Search className="w-5 h-5" />
               </button>
@@ -1096,6 +1123,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={toggleSidebar}
               className="p-1 cursor-pointer hover:bg-muted rounded"
+              title="Close Sidebar"
+              aria-label="Close Sidebar"
             >
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -1156,6 +1185,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     onClick={() => setShowSearchModal(false)}
                     className="text-primary font-bold cursor-pointer"
+                    title="Close Search Modal"
+                    aria-label="Close Search Modal"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -1229,10 +1260,17 @@ const DeleteConfirmationDialog: React.FC<{
             variant="outline"
             className="cursor-pointer"
             onClick={onCancel}
+            aria-label="Cancel Delete"
+            title="Cancel Delete"
           >
             Cancel
           </Button>
-          <Button className="cursor-pointer" onClick={onConfirm}>
+          <Button
+            className="cursor-pointer"
+            onClick={onConfirm}
+            aria-label="Confirm Delete"
+            title="Confirm Delete"
+          >
             Delete
           </Button>
         </DialogFooter>
@@ -1591,6 +1629,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     <button
                       onClick={() => setPickerOpen((o) => !o)}
                       className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50 cursor-pointer"
+                      title="Select Expert View"
+                      aria-label="Select Expert View"
                     >
                       {view === "Combined" ? "Combined (Default)" : view}{" "}
                       <ChevronDown className="w-3 h-3" />
@@ -1736,6 +1776,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             onClick={handleSend}
             disabled={loading}
             className="flex gap-1 cursor-pointer"
+            title="Send message"
           >
             <Send className="h-4 w-4" /> Send
           </Button>

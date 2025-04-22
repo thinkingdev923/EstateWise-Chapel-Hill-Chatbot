@@ -122,6 +122,8 @@ const PrivacyPage = () => {
               <Button
                 variant="outline"
                 className="flex items-center gap-2 cursor-pointer"
+                aria-label="Back to Chat"
+                title="Back to Chat"
               >
                 <ChevronLeft className="w-4 h-4" />
                 <span>Back to Chat</span>

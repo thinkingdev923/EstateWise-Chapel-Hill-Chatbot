@@ -53,6 +53,7 @@ const DarkModeToggle: React.FC = () => {
       aria-label="Toggle theme"
       onClick={toggle}
       className="rounded-full p-2 transition-colors cursor-pointer hover:text-primary"
+      title="Toggle theme"
     >
       {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
     </button>
@@ -270,10 +271,11 @@ export default function ChartsPage() {
               </span>
             </div>
             <div className="ml-auto flex items-center gap-2">
-              <Link href="/chat" legacyBehavior>
+              <Link href="/chat" legacyBehavior title="Back to Chat">
                 <a
                   aria-label="Home"
                   className="mr-2 hover:text-primary"
+                  title="Back to Chat"
                 >
                   <HomeIcon className="h-5 w-5" />
                 </a>
@@ -323,6 +325,18 @@ export default function ChartsPage() {
               Couldn’t load chart data — please try again later.
             </p>
           )}
+          <div className="w-full flex justify-center mt-8">
+            <Button
+              variant="default"
+              className="cursor-pointer"
+              title="Back to Chat"
+            >
+              <Link href="/chat" className="flex items-center gap-2">
+                <ChevronLeft className="w-4 h-4" />
+                <span>Back to Chat</span>
+              </Link>
+            </Button>
+          </div>
         </main>
       </div>
     </>

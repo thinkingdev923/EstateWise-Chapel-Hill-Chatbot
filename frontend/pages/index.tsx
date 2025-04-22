@@ -35,6 +35,8 @@ function PrevArrow(props: any) {
     <button
       onClick={onClick}
       className="absolute left-0 top-1/2 z-10 transform -translate-y-1/2 bg-white text-primary p-2 rounded-full shadow hover:scale-105 cursor-pointer"
+      aria-label="Previous"
+      type="button"
     >
       <ChevronLeft className="w-6 h-6" />
     </button>
@@ -48,6 +50,8 @@ function NextArrow(props: any) {
     <button
       onClick={onClick}
       className="absolute right-0 top-1/2 z-10 transform -translate-y-1/2 bg-white text-primary p-2 rounded-full shadow hover:scale-105 cursor-pointer"
+      aria-label="Next"
+      type="button"
     >
       <ChevronRight className="w-6 h-6" />
     </button>
@@ -421,14 +425,22 @@ export default function Home() {
             </AnimatedInView>
             <AnimatedInView delay={0.4}>
               <Link href="/chat">
-                <Button className="rounded-full px-8 py-4 text-lg cursor-pointer">
+                <Button
+                  className="rounded-full px-8 py-4 text-lg cursor-pointer"
+                  aria-label="Start Chat"
+                  title="Start Chat"
+                >
                   Explore Properties
                 </Button>
               </Link>
             </AnimatedInView>
             <AnimatedInView delay={0.6}>
               <Link href="#features">
-                <Button className="mt-4 rounded-full px-8 py-4 text-lg transition-transform duration-300 bg-transparent cursor-pointer">
+                <Button
+                  className="mt-4 rounded-full px-8 py-4 text-lg transition-transform duration-300 bg-transparent cursor-pointer"
+                  aria-label="Learn More"
+                  title="Learn More"
+                >
                   Learn More <ArrowDown className="w-5 h-5 inline-block ml-2" />
                 </Button>
               </Link>
@@ -620,6 +632,8 @@ export default function Home() {
               <Link
                 href="https://github.com/hoangsonww/EstateWise-Chapel-Hill-Estate"
                 className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
+                aria-label="GitHub Repository"
+                title="GitHub Repository"
               >
                 <GithubIcon className="w-4 h-4 mr-1" />
                 <span className="text-sm">GitHub Repository</span>
@@ -627,6 +641,8 @@ export default function Home() {
               <Link
                 href="/privacy"
                 className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
+                aria-label="Privacy Policy"
+                title="Privacy Policy"
               >
                 <Shield className="w-4 h-4 mr-1" />
                 <span className="text-sm">Privacy Policy</span>
@@ -634,6 +650,8 @@ export default function Home() {
               <Link
                 href="/terms"
                 className="flex items-center whitespace-nowrap hover:text-primary transition-colors"
+                aria-label="Terms of Service"
+                title="Terms of Service"
               >
                 <FileText className="w-4 h-4 mr-1" />
                 <span className="text-sm">Terms of Service</span>
