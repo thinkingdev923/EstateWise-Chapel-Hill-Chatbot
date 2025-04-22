@@ -326,14 +326,10 @@ export default function ChartsPage() {
             </p>
           )}
           <div className="w-full flex justify-center mt-8">
-            <Button
-              variant="default"
-              className="cursor-pointer"
-              title="Back to Chat"
-            >
+            <Button asChild variant="default" title="Back to Chat">
               <Link href="/chat" className="flex items-center gap-2">
                 <ChevronLeft className="w-4 h-4" />
-                <span>Back to Chat</span>
+                Back to Chat
               </Link>
             </Button>
           </div>
