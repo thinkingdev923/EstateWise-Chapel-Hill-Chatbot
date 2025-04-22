@@ -32,6 +32,7 @@ import {
   Settings,
   Cpu,
   Zap,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -833,7 +834,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         title="Save"
         className="cursor-pointer hover:text-green-500"
       >
-        <X className="w-4 h-4 rotate-45" />
+        <Check className="w-4 h-4" />
       </button>
       <button
         onClick={(e) => {
@@ -896,7 +897,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         initial="initial"
         animate="animate"
         layout
-        className={`flex items-center justify-between border-b border-sidebar-border p-2 cursor-pointer shadow-sm transition-colors duration-500
+        className={`flex items-center justify-between border-b border-sidebar-border p-2 cursor-pointer shadow-sm transition-colors duration-500 m-2 rounded-md dark:rounded-bl-none dark:rounded-br-none
           ${isSelected ? "bg-muted dark:bg-primary/50" : "hover:bg-muted"}
           ${highlightId === conv._id ? "bg-primary/10 dark:bg-primary/20" : ""}`}
         onClick={() => {
