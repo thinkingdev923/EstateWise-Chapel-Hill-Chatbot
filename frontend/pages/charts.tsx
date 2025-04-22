@@ -4,16 +4,14 @@ import React, { useEffect, useRef, useState, memo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Chart, { ChartConfiguration } from "chart.js/auto";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Sun,
   Moon,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   ChevronLeft,
   BarChart3,
-  Home as HomeIcon,
+  MessageCircleMore,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -277,7 +275,7 @@ export default function ChartsPage() {
                   className="mr-2 hover:text-primary"
                   title="Back to Chat"
                 >
-                  <HomeIcon className="h-5 w-5" />
+                  <MessageCircleMore className="h-5 w-5" />
                 </a>
               </Link>
               <DarkModeToggle />

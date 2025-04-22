@@ -43,6 +43,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog";
 import Chart, { ChartConfiguration } from "chart.js/auto";
 
@@ -894,7 +895,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         // @ts-ignore
         ref={(el) => (itemRefs.current[conv._id] = el)}
         variants={rowVariants}
-        initial="initial"
+        initial={highlightId === conv._id ? "initial" : false}
         animate="animate"
         layout
         className={`flex items-center justify-between border-b border-sidebar-border p-2 cursor-pointer shadow-sm transition-colors duration-500 m-2 rounded-md dark:rounded-bl-none dark:rounded-br-none
@@ -1249,9 +1250,21 @@ const DeleteConfirmationDialog: React.FC<{
 }> = ({ open, onConfirm, onCancel }) => {
   return (
     <Dialog open={open} onOpenChange={onCancel}>
-      <DialogContent>
+      <DialogContent className="[&>button]:hidden">
+        <DialogClose asChild>
+          <button
+            aria-label="Close"
+            title="Close"
+            className="absolute top-3 right-3 text-foreground hover:opacity-80"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </DialogClose>
+
         <DialogHeader>
-          <DialogTitle>Confirm Delete</DialogTitle>
+          <DialogTitle>
+            <span className="text-foreground">Confirm Delete</span>
+          </DialogTitle>
           <DialogDescription>
             Are you sure you want to delete this conversation?
           </DialogDescription>
@@ -1259,7 +1272,7 @@ const DeleteConfirmationDialog: React.FC<{
         <DialogFooter>
           <Button
             variant="outline"
-            className="cursor-pointer"
+            className="cursor-pointer text-foreground"
             onClick={onCancel}
             aria-label="Cancel Delete"
             title="Cancel Delete"
