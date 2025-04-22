@@ -2,7 +2,7 @@
 
 EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC and surrounding areas. This document provides a deep dive into every component—from raw data ingestion to AI orchestration, delivery via a React/Next.js front‑end, and end‑to‑end deployment.
 
-![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) ![stream-json](https://img.shields.io/badge/stream--json-007ACC) ![Pinecone](https://img.shields.io/badge/Pinecone-%2300837A?logo=pinecone&logoColor=white) ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?logo=google&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white) ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-FFFFFF?logo=shadcn&logoColor=000000) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?logo=framer&logoColor=white) ![React Markdown](https://img.shields.io/badge/React--Markdown-000000?logo=markdown&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-404D59?logo=express&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-FF6B00?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) ![Sentry](https://img.shields.io/badge/Sentry-000000?logo=sentry&logoColor=white) ![node-lru-cache](https://img.shields.io/badge/node--lru--cache-339933?logo=node.js&logoColor=white) ![k‑Means](https://img.shields.io/badge/k--Means-FF4080)
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) ![stream-json](https://img.shields.io/badge/stream--json-007ACC) ![Pinecone](https://img.shields.io/badge/Pinecone-%2300837A?logo=pinecone&logoColor=white) ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?logo=google&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white) ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-FFFFFF?logo=shadcn&logoColor=000000) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?logo=framer&logoColor=white) ![React Markdown](https://img.shields.io/badge/React--Markdown-000000?logo=markdown&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-404D59?logo=express&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-FF6B00?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) ![Sentry](https://img.shields.io/badge/Sentry-000000?logo=sentry&logoColor=white) ![node-lru-cache](https://img.shields.io/badge/node--lru--cache-339933?logo=node.js&logoColor=white) ![k‑Means](https://img.shields.io/badge/k--Means-FF4080)
 
 ---
 
@@ -22,10 +22,10 @@ EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC a
   - [3.1 KNN Query Implementation](#31-knn-query-implementation)
   - [3.2 Assembling Retrieval Context](#32-assembling-retrieval-context)
   - [3.3 Caching Frequent Queries](#33-caching-frequent-queries)
-- [4. Agentic AI Orchestration Layer](#4-agentic-ai-orchestration-layer)
-  - [4.1 Radix‑Style Tool Calls](#41-radixstyle-tool-calls)
-  - [4.2 Looping JSON Protocol](#42-looping-json-protocol)
-  - [4.3 Tool Implementations](#43-tool-implementations)
+- [4. RAG‑Decision Orchestration Layer](#4-ragdecision-orchestration-layer)
+  - [4.1 JSON‑Only Decision Protocol](#41-jsononly-decision-protocol)
+  - [4.2 Simplified Control Flow](#42-simplified-control-flow)
+  - [4.3 Implementation Highlights](#43-implementation-highlights)
 - [5. Clustering & Similarity Analysis](#5-clustering--similarity-analysis)
   - [5.1 Numeric Feature Extraction & Normalization](#51-numeric-feature-extraction--normalization)
   - [5.2 Plain‑JS K‑Means Implementation](#52-plainjs-kmeans-implementation)
@@ -301,47 +301,53 @@ This string is inserted into the LLM system prompt.
 
 ---
 
-## 4. Agentic AI Orchestration Layer
+## 4. RAG‑Decision Orchestration Layer
 
 **What it is:**  
-A “brain” layer that lets the model emit structured JSON tool calls (e.g. `searchProperties`, `clusterProperties`), executes them in code, feeds results back, and loops until a final answer is produced.
+A lightweight “decision” layer that runs a single LLM call to determine whether property data (RAG from Pinecone) is needed. It emits a simple JSON flag, and—based on that—either fetches the data or skips straight to the Mixture‑of‑Experts pipeline.
 
-**Why we use it:**  
-To give the LLM the ability to autonomously fetch, cluster, and reason over data before generating a response—mimicking a programmer‑in‑the‑loop but fully automated.
+**Why we use it:**
 
-### 4.1 Radix‑Style Tool Calls
+- To minimize latency and complexity. Instead of full agentic tool‑calling loops, we do one quick check: “Do I need external property data to answer this?”
+- If we can bypass RAG for simpler queries (e.g. greetings or basic questions), the chatbot saves significant time and compute by skipping the database lookup entirely.
+- When RAG is needed, it still allows us to pull in rich context on demand.
 
-We use a **JSON‑only** protocol:
+### 4.1 JSON‑Only Decision Protocol
+
+The model must respond **only** with:
 
 ```json
-{
-  "tool": "searchProperties",
-  "args": { "query": "3 bed under 500k", "topK": 5 }
-}
+{ "usePropertyData": true }
 ```
 
-- Must output **exact JSON** within a single code block.
+or
 
-### 4.2 Looping JSON Protocol
-
-1. **User →** System prompt with tool definitions
-2. **Assistant →** JSON tool call
-3. **Backend →** Execute tool, append `{"role":"tool","content":...}`
-4. **Assistant →** either new tool call or final answer
-
-### 4.3 Tool Implementations
-
-```tsx
-async function searchPropertiesTool(args: { query: string; topK?: number }) {
-  return await queryProperties(args.query, args.topK ?? 10);
-}
-
-async function clusterPropertiesTool(args: { query: string; topK?: number }) {
-  const results = await queryProperties(args.query, args.topK ?? 10);
-  const assignments = runKMeans(results, 4);
-  return { results, clusters: assignments };
-}
+```json
+{ "usePropertyData": false }
 ```
+
+- No extra text, just the exact JSON object in a single code block.
+
+### 4.2 Simplified Control Flow
+
+1. **User →** Send prompt to the decision agent
+2. **Agent →** Emits JSON `{"usePropertyData": …}`
+3. **Backend →**
+   - If `true`, fetch `queryPropertiesAsString` + `queryProperties` from Pinecone
+   - If `false`, skip data retrieval (fast path)
+4. **Backend →** Append fetched context (if any) to `userContext`
+5. **Backend →** Invoke the full Mixture‑of‑Experts pipeline with or without RAG context
+6. **Experts →** Produce specialized outputs → **Merger →** Final answer
+
+> **Note:** Skipping RAG for simple requests (greetings, clarifications, etc.) lets the bot respond almost instantly, saving both time and resources.
+
+### 4.3 Implementation Highlights
+
+- **Single LLM call:** No repeated tool loops needed—just one decision step.
+- **Deterministic output:** Use temperature = 0, topP = 1, topK = 1 to force strict JSON responses.
+- **Context injection:** When `usePropertyData` is `true`, we prepend the text summary of property listings into the system/user context for the experts.
+- **Fast‑path fallback:** If JSON parsing fails or the model misbehaves, default to `usePropertyData: false` to avoid blocking the pipeline.
+- **Efficiency gains:** By bypassing RAG for queries that don’t need it, we cut out database latency and reduce overall compute, making the chatbot far more responsive.
 
 ---
 
@@ -643,9 +649,11 @@ Throughout the development of **EstateWise**, we encountered several technical a
 
 ## 11. Appendices
 
-Additional resources, diagrams, and references for developers and data scientists working on EstateWise.
+Additional resources, diagrams, and references for developers and data scientists who are interested working on EstateWise.
 
 ### A. Environment Variables Reference
+
+The following environment variables are required for the application to function correctly. Ensure they are set in your `.env` file.
 
 | Name                   | Purpose                            |
 | ---------------------- | ---------------------------------- |
@@ -658,9 +666,13 @@ Additional resources, diagrams, and references for developers and data scientist
 
 ### B. AI/ML Flow Chart
 
+This flowchart illustrates the AI/ML pipeline, from data ingestion to embedding generation, RAG, and expert model invocation.
+
 ![AI Flowchart](img/flowchart.png)
 
 ### C. Overall App’s Flow Diagram
+
+Below is a simplified flow diagram of the entire application architecture, from user interaction to backend processing and data storage.
 
 ```plaintext
          ┌────────────────────────────────┐
@@ -746,36 +758,50 @@ Additional resources, diagrams, and references for developers and data scientist
 
 ### D. Mermaid Sequence Diagram
 
-This is a `Mermaid` sequence diagram. Paste it into a compatible editor to visualize.
+This is a `Mermaid` sequence diagram. Paste it into a compatible editor (e.g. Notion's `Mermaid` code block) to visualize.
 
 ```mermaid
 sequenceDiagram
     participant User
     participant UI as Next.js UI
     participant API as /api/chat
-    participant Agent as AgentService
-    participant Gemini
+    participant Agent as runEstateWiseAgent
+    participant DecisionAI as Decision Model
     participant Pinecone
+    participant Experts as MoE Pipeline
+    participant Gemini as Gemini Models
 
     User->>UI: sendMessage()
     UI->>API: POST /api/chat { message }
-    API->>Agent: runEstateWiseAgent()
-    Agent->>Gemini: system + user context
-    Gemini-->>Agent: JSON tool call
-    Agent->>Pinecone: queryProperties(args)
-    Pinecone-->>Agent: top‑K results
-    Agent->>Gemini: final merge prompt
-    Gemini-->>API: mergedResponse
+    API->>Agent: runEstateWiseAgent(prompt)
+
+    Agent->>DecisionAI: {"usePropertyData": ?}
+    DecisionAI-->>Agent: {"usePropertyData": true/false}
+
+    alt usePropertyData = true
+        Agent->>Pinecone: queryPropertiesAsString(prompt,50)\nqueryProperties(prompt,50)
+        Pinecone-->>Agent: propertyContext + rawResults
+        Agent->>Experts: chatWithEstateWise(history, prompt, propertyContext)
+    else usePropertyData = false
+        Agent->>Experts: chatWithEstateWise(history, prompt, userContext)
+    end
+
+    Experts->>Gemini: expert & merger invocations
+    Gemini-->>Experts: mergedResponse
+
+    Experts-->>API: { finalText, expertViews }
     API->>UI: 200 { response }
     UI->>User: renderResponse()
 ```
 
 ### E. Vector Schema & Metadata Example
 
+Below is an example of the vector schema and metadata stored in Pinecone:
+
 ```json
 {
   "id": "123456",
-  "values": [0.0123, -0.0456 /* 1536 dims */],
+  "values": [0.0123, -0.0456 /* 1536 dimensions */],
   "metadata": {
     "zpid": 123456,
     "address": "{\"streetAddress\":\"123 Main St\",\"city\":\"Chapel Hill\",\"state\":\"NC\",\"zipcode\":\"27514\"}",
@@ -792,5 +818,7 @@ sequenceDiagram
 ```
 
 ---
+
+Thank you for reading through the technical documentation of EstateWise! If you have any questions or need further clarification, feel free to reach out. 🏠
 
 [🔝 Back to Top](#estatewise-aipowered-real-estate-assistant-for-chapel-hill-nc)
