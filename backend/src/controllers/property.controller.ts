@@ -406,16 +406,21 @@ function buildAreaYearScatter(listings: Listing[]) {
 
 /**
  * GET /api/properties?q=…&topK=…
- * Fetch property data, parse metadata, and return listings with chart configurations.
+ * Fetch property data, parse metadata, filter out yearBuilt === 0,
+ * and return exactly 1500 listings with chart configurations.
  * @param req Express request
  * @param res Express response
  */
 export async function getPropertyData(req: Request, res: Response) {
   try {
     const q = String(req.query.q || "");
-    const topK = Number(req.query.topK) || 500;
-    const raw = await queryProperties(q, topK);
-    const listings: Listing[] = raw.map((r) => {
+    // Fetch up to `topK` results (default to 1500 to ensure enough after filtering)
+    const desiredCount = 1500;
+    const rawTopK = Number(req.query.topK) || desiredCount;
+    const raw = await queryProperties(q, rawTopK);
+
+    // Map raw results to Listing objects
+    const allListings: Listing[] = raw.map((r) => {
       const m = r.metadata as any;
       const addr = JSON.parse(m.address || "{}");
       return {
@@ -433,6 +438,13 @@ export async function getPropertyData(req: Request, res: Response) {
       };
     });
 
+    // Filter out any listings where yearBuilt is 0
+    let listings = allListings.filter((l) => l.yearBuilt !== 0);
+
+    // Ensure we return exactly `desiredCount` listings
+    listings = listings.slice(0, desiredCount);
+
+    // Build all the charts
     const charts = {
       homeType: buildHomeTypeDistribution(listings),
       bedrooms: buildBedroomsDistribution(listings),

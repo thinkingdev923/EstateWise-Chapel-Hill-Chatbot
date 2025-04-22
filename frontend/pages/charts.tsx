@@ -5,7 +5,13 @@ import Head from "next/head";
 import Link from "next/link";
 import Chart, { ChartConfiguration } from "chart.js/auto";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import {
   Sun,
   Moon,
@@ -77,7 +83,7 @@ const PALETTE = [
 const normalizeLabel = (label: string): string =>
   label
     .toLowerCase()
-    .split(/[\s_]+/)
+    .split(/[_\s]+/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
@@ -221,6 +227,27 @@ const chartTitles: Record<string, string> = {
   areaYear: "Living area vs year built",
 };
 
+const chartSubtitles: Record<string, string> = {
+  homeType: "Breakdown of number of listings per home type",
+  bedrooms: "Distribution of bedroom counts across listings",
+  bathrooms: "Distribution of bathroom counts across listings",
+  priceDist: "Histogram showing how listing prices are distributed",
+  areaDist: "Shows distribution of living area sizes in sqft",
+  yearBuiltDist: "Count of listings by their construction year",
+  priceArea: "Relationship between living area and price",
+  priceYear: "Trend of price over construction year",
+  bedsBaths: "Scatter of bedroom vs bathroom counts",
+  avgPriceType: "Average listing price per home type",
+  countByZip: "Number of listings in each zipcode",
+  pricePerSqft: "Distribution of price per square foot",
+  homeStatus: "Breakdown of listing statuses",
+  countByCity: "Number of listings per city",
+  avgAreaType: "Average living area size per home type",
+  scoreDist: "Shows how listing scores are distributed",
+  scorePrice: "Scatter comparing listing score with price",
+  areaYear: "Scatter of living area vs year built",
+};
+
 // ------------------------------------------------------------------
 // Main Page
 // ------------------------------------------------------------------
@@ -252,16 +279,6 @@ export default function ChartsPage() {
       <div className="min-h-screen bg-background text-foreground flex flex-col">
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
           <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
-            {/*<Link href="/chat">*/}
-            {/*  <Button*/}
-            {/*    variant="ghost"*/}
-            {/*    size="icon"*/}
-            {/*    aria-label="Chat"*/}
-            {/*    className="cursor-pointer"*/}
-            {/*  >*/}
-            {/*    <ChevronLeft className="h-5 w-5" />*/}
-            {/*  </Button>*/}
-            {/*</Link>*/}
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-primary" />
               <span className="font-extrabold tracking-tight text-lg">
@@ -306,11 +323,16 @@ export default function ChartsPage() {
                   key={key}
                   className="bg-card border border-border rounded-2xl shadow-sm hover:shadow-xl transition-shadow duration-200"
                 >
-                  <CardHeader className="pb-2 flex-row items-center gap-2">
-                    <BarChart3 className="w-4 h-4 text-primary" />
-                    <CardTitle className="text-md font-bold">
-                      {chartTitles[key]}
-                    </CardTitle>
+                  <CardHeader className="pb-2 flex-col items-start gap-1">
+                    <div className="flex-row flex items-center gap-2">
+                      <BarChart3 className="w-4 h-4 text-primary" />
+                      <CardTitle className="text-md font-bold">
+                        {chartTitles[key]}
+                      </CardTitle>
+                    </div>
+                    <CardDescription className="text-sm text-muted-foreground">
+                      {chartSubtitles[key]}
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="h-72">
                     <ChartBlock spec={spec} />
