@@ -1726,7 +1726,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         {messages.length === 0 && !loading && !convLoading && (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Home className="w-20 h-20 mb-4 text-primary" />
-            <p className="text-xl font-semibold">
+            <p className="text-xl text-center font-semibold">
               Hey {localStorage.getItem("username") || "there"}, send a message
               to start your home finding journey! 🚀
             </p>

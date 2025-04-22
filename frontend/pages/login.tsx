@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Key, MessageCircle, User } from "lucide-react";
 
 const formVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -80,8 +80,11 @@ export default function LoginPage() {
           animate="visible"
           className="w-full max-w-md"
         >
-          <Card className="p-8 rounded-xl shadow-2xl bg-card">
-            <h1 className="text-3xl font-bold text-center text-card-foreground">
+          <Card className="p-8 rounded-xl shadow-2xl bg-card m-2">
+            <div className="flex justify-center mt-2">
+              <User className="w-8 h-8 text-card-foreground opacity-80" />
+            </div>
+            <h1 className="text-3xl mt-0 font-bold text-center text-card-foreground">
               Log In
             </h1>
             <p className="text-sm text-center text-card-foreground">
@@ -167,11 +170,14 @@ export default function LoginPage() {
                     Logging in...
                   </>
                 ) : (
-                  "Log In"
+                  <>
+                    <Key className="w-5 h-5 text-white" />
+                    <span>Log In</span>
+                  </>
                 )}
               </Button>
             </form>
-            <p className="text-sm text-center mt-2 text-card-foreground">
+            <p className="text-sm text-center mt-0 text-card-foreground">
               Don&apos;t have an account?{" "}
               <Link
                 href="/signup"
@@ -191,6 +197,16 @@ export default function LoginPage() {
                 Reset Password
               </Link>
             </p>
+            <Button
+              variant="secondary"
+              className="w-full mt-0 cursor-pointer"
+              onClick={() => router.push("/chat")}
+              title="Back to Chat"
+              aria-label="Back to Chat"
+            >
+              <MessageCircle />
+              Back to Chat
+            </Button>
           </Card>
         </motion.div>
       </div>

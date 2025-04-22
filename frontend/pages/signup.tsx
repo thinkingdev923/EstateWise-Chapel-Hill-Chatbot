@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, MessageCircle, Plus, UserPlus } from "lucide-react";
 
 const formVariants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -104,7 +104,10 @@ export default function SignUpPage() {
           animate="visible"
           className="w-full max-w-md"
         >
-          <Card className="p-8 rounded-xl shadow-2xl bg-card">
+          <Card className="p-8 rounded-xl shadow-2xl bg-card m-2">
+            <div className="flex justify-center mt-2">
+              <UserPlus className="w-8 h-8 text-card-foreground opacity-80" />
+            </div>
             <h1 className="text-3xl font-bold text-center text-card-foreground">
               Sign Up
             </h1>
@@ -229,11 +232,14 @@ export default function SignUpPage() {
                     Signing up...
                   </>
                 ) : (
-                  "Sign Up"
+                  <>
+                    <Plus className="w-5 h-5 text-white" />
+                    <span>Sign Up</span>
+                  </>
                 )}
               </Button>
             </form>
-            <p className="text-sm text-center mt-2 text-card-foreground">
+            <p className="text-sm text-center mt-0 text-card-foreground">
               Already have an account?{" "}
               <Link
                 href="/login"
@@ -253,6 +259,16 @@ export default function SignUpPage() {
                 Reset Password
               </Link>
             </p>
+            <Button
+              variant="secondary"
+              className="w-full mt-0 cursor-pointer"
+              onClick={() => router.push("/chat")}
+              title="Back to Chat"
+              aria-label="Back to Chat"
+            >
+              <MessageCircle />
+              Back to Chat
+            </Button>
           </Card>
         </motion.div>
       </div>
