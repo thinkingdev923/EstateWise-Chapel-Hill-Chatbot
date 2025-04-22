@@ -382,7 +382,7 @@ const markdownComponents = {
   ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   thead: ({ children, ...props }: any) => (
-    <thead className="bg-gray-100 border-b border-gray-300" {...props}>
+    <thead className="bg-background border-b border-gray-300" {...props}>
       {children}
     </thead>
   ),
@@ -1305,6 +1305,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   const [convLoading, setConvLoading] = useState(false);
   const latestMessageRef = useRef<HTMLDivElement>(null);
   const prevConvoId = useRef<string | null>(null);
+  const [inputHistory, setInputHistory] = useState<string[]>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem("inputHistory") || "[]");
+    } catch {
+      return [];
+    }
+  });
+  const [historyIndex, setHistoryIndex] = useState(inputHistory.length);
+
+  useEffect(() => {
+    sessionStorage.setItem("inputHistory", JSON.stringify(inputHistory));
+  }, [inputHistory]);
 
   /* guest‑side adaptive weights */
   const [guestWeights, setGuestWeights] = useState<Record<string, number>>(
@@ -1321,18 +1333,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
   );
 
   /* per-message rating state */
-  const [ratings, setRatings] = useState<Record<number, "up" | "down">>(() => {
-    if (typeof window === "undefined") return {};
-    try {
-      return JSON.parse(localStorage.getItem("msgRatings") || "{}");
-    } catch {
-      return {};
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem("msgRatings", JSON.stringify(ratings));
-  }, [ratings]);
+  const [ratings, setRatings] = useState<Record<number, "up" | "down">>({});
 
   /* ------------------------------------------------------------------ */
   /* sync on conversation switch                                        */
@@ -1425,6 +1426,11 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
       const text = userInput;
       setUserInput("");
       setMessages((m) => [...m, { role: "user", text }]);
+      setInputHistory((h) => {
+        const next = [...h, text];
+        setHistoryIndex(next.length);
+        return next;
+      });
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const body: any = { message: text };
@@ -1741,14 +1747,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             animate="visible"
             className="flex justify-start mb-2"
           >
-            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-2">
+            <div className="bg-muted p-2 rounded-lg shadow-lg flex items-center gap-2 animate-pulse">
               {(() => {
-                const { Icon, spin } = loadingPhases[phaseIdx];
-                return React.createElement(Icon, {
-                  className: `w-5 h-5 ${spin ? "animate-spin" : "animate-pulse"}`,
-                });
+                const { Icon } = loadingPhases[phaseIdx];
+                return <Icon className="w-5 h-5" />;
               })()}
-              <span className="font-medium animate-pulse">
+              <span className="font-medium">
                 {loadingPhases[phaseIdx].text}
                 <AnimatedDots resetKey={phaseIdx} />
               </span>
@@ -1765,7 +1769,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             value={userInput}
             onChange={(e) => setUserInput(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "ArrowUp") {
+                e.preventDefault();
+                if (historyIndex > 0) {
+                  const prevIdx = historyIndex - 1;
+                  setUserInput(inputHistory[prevIdx]);
+                  setHistoryIndex(prevIdx);
+                }
+              } else if (e.key === "ArrowDown") {
+                e.preventDefault();
+                if (historyIndex < inputHistory.length) {
+                  const nextIdx = historyIndex + 1;
+                  setHistoryIndex(nextIdx);
+                  setUserInput(
+                    nextIdx < inputHistory.length ? inputHistory[nextIdx] : "",
+                  );
+                }
+              } else if (e.key === "Enter") {
                 e.preventDefault();
                 handleSend();
               }

@@ -101,13 +101,104 @@ const CLUSTER_COUNT = 4;
  * @return true if we can skip data retrieval and clustering
  */
 function isSimpleQuery(message: string): boolean {
-  const patterns = [
-    /^\s*(hi|hello|hey)\s*[\!\.]*$/i,
-    /^\s*how are you\??\s*$/i,
-    /^\s*good (morning|afternoon|evening)\s*$/i,
-    /^\s*(thanks|thank you)\s*[\!\.]*$/i,
-  ];
-  return patterns.some((re) => re.test(message));
+  // 1. Trim whitespace
+  let msg = message.trim();
+  // 2. Strip surrounding quotes
+  msg = msg.replace(/^['"]+|['"]+$/g, "");
+  // 3. Remove trailing punctuation
+  msg = msg.replace(/[!?.]+$/g, "");
+  // 4. Normalize case
+  msg = msg.trim().toLowerCase();
+
+  // 5. Exact-match set of simple queries
+  const simples = new Set([
+    // greetings
+    "hi",
+    "hello",
+    "hey",
+    "howdy",
+    "yo",
+    "hiya",
+    "greetings",
+    // time‑of‑day
+    "good morning",
+    "good afternoon",
+    "good evening",
+    "good night",
+    // farewells
+    "bye",
+    "goodbye",
+    "see you",
+    "see ya",
+    "later",
+    "peace",
+    "take care",
+    "catch you later",
+    "talk to you later",
+    // thanks
+    "thanks",
+    "thank you",
+    "thank you very much",
+    "thank you so much",
+    "thank you a lot",
+    "thank u",
+    // well‑being
+    "how are you",
+    "how are you doing",
+    "how's it going",
+    "how are things",
+    "how have you been",
+    "how you doing",
+    // small talk
+    "what's up",
+    "whats up",
+    "sup",
+    "what's new",
+    "whats new",
+    "what have you been up to",
+    "what's happening",
+    "whats happening",
+    // help/joke
+    "help",
+    "help me",
+    "support",
+    "assist",
+    "tell me a joke",
+    "joke",
+    "make me laugh",
+    // laughter
+    "lol",
+    "haha",
+    "lmao",
+    "rofl",
+    // pleasantries
+    "nice to meet you",
+    "nice meeting you",
+    "nice chatting",
+    "pleasure meeting",
+    "pleasure speaking",
+    "likewise",
+    // acknowledgments
+    "ok",
+    "okay",
+    "sure",
+    "got it",
+    "sounds good",
+    "yep",
+    "yeah",
+    "yup",
+    // negations
+    "no",
+    "nope",
+    "nah",
+    // reactions
+    "wow",
+    "awesome",
+    "nice",
+    "cool",
+  ]);
+
+  return simples.has(msg);
 }
 
 /**
@@ -213,7 +304,7 @@ export async function chatWithEstateWise(
 
     Below is a current list of detailed property records from our database. Use ALL THE DATA in the property records to provide the best recommendations. You can also use the user's additional context to tailor your recommendations:
     ---------------------------------------------------------
-    ${combinedPropertyContext}
+    ${combinedPropertyContext || "None available. Please use your own knowledge and the provided conversation history and answer conversationally."}
     ---------------------------------------------------------
 
     When recommending properties, do the following:
@@ -226,6 +317,9 @@ export async function chatWithEstateWise(
     6. If the user provides additional context or preferences, adjust your recommendations accordingly.
     7. Format your responses in a way that is easy to read and understand. Use structures like bullet points, tables, or numbered lists where appropriate.
     7.1. DO NOT ask the user. Just give them the recommendations/options first, and ask for follow‑up questions only if needed. DO NOT ask more questions unnecessarily. DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
+    7.2. You MUST use the conversation history to provide context and tailor your recommendations.
+    7.3. Give a table whenever possible to present the data in a clear and organized manner. Use markdown tables for better readability.
+    7.4. In the case the data misses some values, or N/A values, just try to answer the user to the best of your ability. Give all the available information that you have. Don't say you cannot answer or fulfill the user's request. Just give them the best answer you can based on the data you have. Also tell the user to ask more specific questions if they want more details or data.
     8. **Whenever** the user asks for a comparison, distribution, or trend (e.g. “show me price trends”, “how many bedrooms?”, “compare year built”), you **must** append a valid Chart.js spec in its own code block tagged \`chart-spec\`.
 
     9. Here’s a minimal example you should follow exactly:
@@ -268,10 +362,10 @@ export async function chatWithEstateWise(
     
     12.3. Limit your response so that it is not too verbose. And you must ensure that you don't take too long to answer. You must respond quickly and efficiently, without unnecessary delays.
     
-    12.4. When the user asks about your identity, how you were created, how you were trained, or similar questions, you must respond with something like "I am EstateWise Assistant, an AI-powered real estate concierge designed to help you find your dream home in Chapel Hill, NC. I was created using various advanced machine learning techniques and trained on a diverse dataset of real estate information." 
+    12.4. When the user asks about your identity, how you were created, how you were trained, or similar questions, you must respond with something like "I am EstateWise Assistant, an AI-powered real estate concierge designed to help you find your dream home in Chapel Hill, NC. I was created using various advanced machine learning techniques and trained on a diverse dataset of real estate information." But don't state this unnecessarily. Only respond to this question if the user asks about it.
     Be sure to keep it concise and avoid going into too much detail about the technical aspects of your creation or training. You can also mention that you are constantly learning and improving to provide better recommendations and insights for users like them. Note that users can give feedback, either through messages or thumbs up/down buttons, to help improve your performance and accuracy over time. This feedback is used to refine your algorithms and enhance your understanding of user preferences and needs.
     
-    12.5. Respond conversationally and naturally.
+    12.5. Respond conversationally and naturally. For example, if the user says "Hi there", you can respond with "Hello! How can I assist you today?" or "Hi! What can I help you with today?". If the user says "Thanks", you can respond with "You're welcome! If you have any more questions, feel free to ask." or "No problem! I'm here to help." Do the same for all questions and responses.
     
     Additional context: ${userContext || "None provided."}
   `;
