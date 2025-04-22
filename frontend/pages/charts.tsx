@@ -273,7 +273,7 @@ export default function ChartsPage() {
               <Link href="/chat" legacyBehavior>
                 <a
                   aria-label="Home"
-                  className="hidden sm:inline-flex mr-2 hover:text-primary"
+                  className="mr-2 hover:text-primary"
                 >
                   <HomeIcon className="h-5 w-5" />
                 </a>
