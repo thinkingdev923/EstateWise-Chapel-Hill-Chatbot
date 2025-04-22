@@ -79,6 +79,7 @@ function AnimatedInView({ children, className = "", delay = 0 }) {
   );
 }
 
+// Slider settings
 const sliderSettings = {
   dots: true,
   arrows: true,
@@ -392,6 +393,7 @@ export default function Home() {
           content="Discover dynamic, real-time property recommendations in Chapel Hill using our interactive chatbot."
         />
       </Head>
+
       <div className="font-sans overflow-x-hidden">
         {/* Global smooth scrolling */}
         <style jsx global>{`
@@ -401,13 +403,16 @@ export default function Home() {
 
           html,
           body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
             overscroll-behavior: none;
           }
         `}</style>
 
         {/* Full Screen Hero Section */}
         <section
-          className="relative min-h-screen w-full border-4 border-primary"
+          className="relative h-screen w-full border-4 border-primary"
           style={{
             backgroundImage: "url('/home.webp')",
             backgroundSize: "cover",

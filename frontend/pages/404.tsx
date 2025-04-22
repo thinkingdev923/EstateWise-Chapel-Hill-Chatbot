@@ -65,6 +65,16 @@ export default function NotFoundPage() {
         initial="hidden"
         animate="visible"
       >
+        <style jsx global>{`
+          html {
+            scroll-behavior: smooth;
+          }
+
+          html,
+          body {
+            overscroll-behavior: none;
+          }
+        `}</style>
         <motion.h1
           className="text-6xl md:text-8xl font-extrabold mb-4 text-center drop-shadow-lg"
           variants={titleVariants}
