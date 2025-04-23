@@ -2,6 +2,8 @@
 
 **EstateWise** is a full‑stack AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone (kNN), k‑Means clustering, and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
 
+> Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
+
 ## Table of Contents
 
 - [Live App](#live-app)
@@ -64,6 +66,7 @@ For a more detailed technical overview, check out the [Technical Documentation](
 
 - **Retrieval‑Augmented Generation (RAG):** Uses Pinecone for kNN‑based vector retrieval, then fuses retrieved data into generated responses.
 - **k‑Means Clustering & kNN:** Automatically groups similar listings and finds closest matches to refine recommendations.
+  - All features are also normalized to a range of 0-1 for better clustering and kNN performance.
 - **Decision AI Agent:** Decides whether to fetch RAG data (via `queryProperties`); if yes, it pulls in the Pinecone results, otherwise it skips straight to the Mixture‑of‑Experts pipeline.
 - **Mixture of Experts (MoE):** Dynamically routes each query through a master model to select specialized sub‑models (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) for maximal relevance.
 - **Feedback Loop & Reinforcement Learning:** Users rate responses; thumbs‑up/down adjust expert weights per conversation, and the system continuously learns to improve accuracy.
