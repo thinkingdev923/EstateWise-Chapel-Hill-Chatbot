@@ -20,7 +20,7 @@ mongoose
 
 /**
  * This is the cleaned property interface.
- * It contains only the fields needed for your chatbot recommendations.
+ * It contains only the fields needed for chatbot recommendations.
  */
 interface CleanedProperty {
   zpid: number;
@@ -88,7 +88,7 @@ function cleanDocument(doc: any): CleanedProperty {
 
   return {
     zpid: safeNum(doc.zpid, 0),
-    // Use top-level city/state if possible; if not, fallback to values in doc.address.
+    // Use top-level city/state if possible; if not, fallback to values in doc.address
     city:
       safeStr(doc.city, "") ||
       (doc.address && safeStr(doc.address.city, "")) ||
@@ -133,7 +133,7 @@ function cleanDocument(doc: any): CleanedProperty {
 
 /**
  * Main cleaning function: load all documents, clean each one and update the document individually.
- * This reduces the write batch size so that MongoDB Atlas does not hit your free-tier quota.
+ * This reduces the write batch size so that MongoDB Atlas does not hit our free-tier Pinecone quota.
  */
 async function cleanProperties() {
   try {
@@ -144,7 +144,7 @@ async function cleanProperties() {
     for (const doc of docs) {
       const cleaned = cleanDocument(doc.toObject());
       // Overwrite the document's content with the new cleaned document
-      // while preserving the existing _id.
+      // while preserving the existing _id
       doc.overwrite({ _id: doc._id, ...cleaned });
       try {
         await doc.save();

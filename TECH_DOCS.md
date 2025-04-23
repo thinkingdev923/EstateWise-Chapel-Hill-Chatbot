@@ -35,6 +35,7 @@ EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC a
   - [6.2 Parallel Expert Invocations](#62-parallel-expert-invocations)
   - [6.3 Weight Normalization & Feedback Loop](#63-weight-normalization--feedback-loop)
   - [6.4 Master Merger Model](#64-master-merger-model)
+  - [6.5 Prompt Engineering](#65-prompt-engineering)
 - [7. Backend API & Data Layer](#7-backend-api--data-layer)
   - [7.1 Express.js Routes & Controllers](#71-expressjs-routes--controllers)
   - [7.2 MongoDB Models & Conversations](#72-mongodb-models--conversations)
@@ -466,6 +467,31 @@ Now synthesize a single concise recommendation…
 `;
 ```
 
+### 6.5 Prompt Engineering
+
+All expert prompts are carefully crafted to elicit the most relevant information:
+
+- **Data Analyst**: “Analyze the price distribution, average/median prices, and any outliers.”
+- **Lifestyle Concierge**: “Focus on schools, parks, commute times, and local amenities.”
+- **Financial Advisor**: “Evaluate the investment potential, ROI, and financing options.”
+- **Neighborhood Expert**: “Provide insights on the neighborhood’s safety, culture, and community.”
+- **Cluster Analyst**: “Analyze the cluster of similar properties and their market trends.”
+
+The master merger model also receives a prompt that combines all expert outputs and their respective weights:
+
+- **Master Merger**: “You are the Master Merger. Combine these expert views (with weights): [expert outputs]. Now synthesize a single concise recommendation…”
+
+Also, all models, including the master model, share a common system prompt, carefully crafted so that they work together seamlessly:
+
+- **System Prompt**: “You are an AI model that specializes in real estate analysis. Your task is to provide insights based on the data and context provided.”
+
+Additionally, the AI Agent also receives a carefully-crafted system prompt to ensure it understands its role in the process:
+
+- **Agentic AI**: “You are an AI agent that orchestrates the entire process. You will decide whether to use property data, invoke experts, and merge their responses into a final recommendation.”
+
+**Takeaways**: All prompts, especially system prompts, are designed to be clear, concise, and focused on the specific task at hand. This ensures that the AI can generate the most relevant and accurate responses.
+They are ultra-specific and tailored to the task at hand, ensuring that the AI can generate the most relevant and accurate responses.
+
 ---
 
 ## 7. Backend API & Data Layer
@@ -644,6 +670,8 @@ Throughout the development of **EstateWise**, we encountered several technical a
 
 - **Vercel Timeouts:** The free‑tier 60 second function limit forced us to split some heavy operations (e.g. clustering) into background tasks or pre‑compute nightly.
 - **Secret Management:** Ensuring that Google AI keys, Pinecone credentials, and JWT secrets remained secure yet available to both frontend (only public‑safe tokens) and backend required careful `.env` scoping and GitHub Actions secrets configuration.
+- **Payload Size Limits:** Vercel enforces a 1024 \* 100 KB payload limit on API responses. We had to ensure that our responses were concise and efficient, especially when dealing with large datasets or multiple expert outputs.
+  - This can be problematic for guest users since we have to transmit the entire conversation history to the backend. We had to implement a mechanism to limit the size of the conversation history sent to guest users, ensuring that it fits within the payload size limits while still providing meaningful context.
 
 ---
 
@@ -819,6 +847,8 @@ Below is an example of the vector schema and metadata stored in Pinecone:
 
 ---
 
-Thank you for reading through the technical documentation of EstateWise! If you have any questions or need further clarification, feel free to reach out. 🏠
+Thank you for reading through the technical documentation of EstateWise! If you have any questions or need further clarification, feel free to reach out to us! 🏠
 
 [🔝 Back to Top](#estatewise-aipowered-real-estate-assistant-for-chapel-hill-nc)
+
+[🏠 Back to README](README.md)

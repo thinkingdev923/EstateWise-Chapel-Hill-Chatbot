@@ -10,6 +10,7 @@ import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import {
   Loader2,
+  BotMessageSquare,
   Send,
   Trash2,
   Search,
@@ -420,7 +421,7 @@ const markdownComponents = {
   ),
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ol: ({ children, ...props }: any) => (
-    <ol className="list-decimal list-outside pl-4 my-3" {...props}>
+    <ol className="list-decimal list-outside pl-4 my-3 ml-2" {...props}>
       {children}
     </ol>
   ),
@@ -1825,6 +1826,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             Privacy Policy
           </Link>
           .
+          <BotMessageSquare className="inline-block w-4 h-4 ml-0.5 hover:text-primary" />
         </p>
       </div>
     </div>

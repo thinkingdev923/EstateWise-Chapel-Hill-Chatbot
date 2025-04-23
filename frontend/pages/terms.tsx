@@ -58,7 +58,13 @@ These Terms are governed by and construed in accordance with the laws of the jur
 ## 12. Termination
 EstateWise reserves the right to suspend or terminate your access to the App at any time without notice for conduct that violates these Terms or is deemed harmful.
 
-## 13. Contact Information
+## 13. Severability
+If any provision of these Terms is found to be unenforceable or invalid, the remaining provisions will remain in full force and effect.
+
+## 14. Responsibility
+EstateWise provides data, analyses, and recommendations "as is" based on publicly available and user-provided information. You acknowledge that the data may contain inaccuracies or omissions and agree to waive any claims against EstateWise arising from such inaccuracies. You should verify all critical information independently and use the App’s data at your own risk.
+
+## 15. Contact Information
 For any questions regarding these Terms, please contact us at [hoangson091104@gmail.com](mailto:hoangson091104@gmail.com).
 `;
 

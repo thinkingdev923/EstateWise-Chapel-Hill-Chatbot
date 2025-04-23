@@ -67,6 +67,8 @@ For a more detailed technical overview, check out the [Technical Documentation](
 - **Decision AI Agent:** Decides whether to fetch RAG data (via `queryProperties`); if yes, it pulls in the Pinecone results, otherwise it skips straight to the Mixture‑of‑Experts pipeline.
 - **Mixture of Experts (MoE):** Dynamically routes each query through a master model to select specialized sub‑models (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) for maximal relevance.
 - **Feedback Loop & Reinforcement Learning:** Users rate responses; thumbs‑up/down adjust expert weights per conversation, and the system continuously learns to improve accuracy.
+- **Prompt Engineering:** Each expert has a unique prompt template, ensuring tailored responses based on user input.
+  - All experts, agents, and merger have a detailed and ultra-specific prompt template to ensure the best possible responses.
 
 ## Features
 
@@ -507,5 +509,7 @@ Contributions are welcome! Follow these steps:
 This project is licensed under the [MIT License](LICENSE).
 
 ---
+
+[📝 Go to Technical Documentation](TECH_DOCS.md)
 
 [⬆️ Back to Top](#table-of-contents)

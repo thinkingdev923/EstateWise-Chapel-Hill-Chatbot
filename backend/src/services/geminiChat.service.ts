@@ -213,9 +213,11 @@ export async function chatWithEstateWise(
     7.2. You MUST use the conversation history to provide context and tailor your recommendations.
     7.3. Give a table whenever possible to present the data in a clear and organized manner. Use markdown tables for better readability.
     7.4. In the case the data misses some values, or N/A values, just try to answer the user to the best of your ability. Give all the available information that you have. Don't say you cannot answer or fulfill the user's request. Just give them the best answer you can based on the data you have. Also tell the user to ask more specific questions if they want more details or data.
+    7.5. Never says you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have.
+    
     8. **Whenever** the user asks for a comparison, distribution, or trend (e.g. “show me price trends”, “how many bedrooms?”, “compare year built”), you **must** append a valid Chart.js spec in its own code block tagged \`chart-spec\`.
 
-    9. Here’s a minimal example you should follow exactly:
+    9. Here’s a minimal chart example you should follow exactly:
 
     \`\`\`chart-spec
     {
@@ -376,6 +378,8 @@ export async function chatWithEstateWise(
       .join("\n\n")}
           
     Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+    
+    If any model gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
     Once again, just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
   `;

@@ -346,40 +346,65 @@ function buildAverageLivingAreaByHomeType(listings: Listing[]) {
 }
 
 /**
- * Builds a bar chart for score distribution.
+ * Builds a histogram-like bar chart for property age distribution.
  * @param listings Array of property listings
  */
-function buildScoreDistribution(listings: Listing[]) {
-  const buckets: Record<string, number> = {};
+function buildAgeDistribution(listings: Listing[]) {
+  const currentYear = new Date().getFullYear();
+  const ages = listings
+    .map((l) => currentYear - l.yearBuilt)
+    .sort((a, b) => a - b);
+  if (!ages.length) return null;
+  const bins = 5;
+  const min = ages[0],
+    max = ages[ages.length - 1];
+  const width = (max - min) / bins;
+  const counts = Array(bins).fill(0);
   listings.forEach((l) => {
-    const b = Math.floor(l.score * 10) / 10; // bucket by 0.1
-    const label = `${b.toFixed(1)}-${(b + 0.1).toFixed(1)}`;
-    buckets[label] = (buckets[label] || 0) + 1;
+    const age = currentYear - l.yearBuilt;
+    const idx = Math.min(Math.floor((age - min) / width), bins - 1);
+    counts[idx]++;
   });
+  const labels = counts.map(
+    (_, i) =>
+      `${Math.round(min + i * width)}–${Math.round(min + (i + 1) * width)} years`,
+  );
   return {
     type: "bar",
-    data: {
-      labels: Object.keys(buckets),
-      datasets: [{ label: "Score Range", data: Object.values(buckets) }],
+    data: { labels, datasets: [{ label: "Age Range", data: counts }] },
+    options: {
+      responsive: true,
+      scales: {
+        x: { title: { display: true, text: "Age (years)" } },
+        y: { title: { display: true, text: "Count" } },
+      },
     },
-    options: { responsive: true },
   };
 }
 
 /**
- * Builds a scatter chart for price vs score.
+ * Builds a bar chart for average price per square foot by home type.
  * @param listings Array of property listings
  */
-function buildScorePriceScatter(listings: Listing[]) {
-  const pts = listings.map((l) => ({ x: l.score, y: l.price }));
+function buildAveragePricePerSqftByHomeType(listings: Listing[]) {
+  const sums: Record<string, number> = {},
+    counts: Record<string, number> = {};
+  listings.forEach((l) => {
+    const type = l.homeType || "Unknown";
+    const ppsqft = l.price / (l.livingArea || 1);
+    sums[type] = (sums[type] || 0) + ppsqft;
+    counts[type] = (counts[type] || 0) + 1;
+  });
+  const labels = Object.keys(sums);
+  const data = labels.map((t) => +(sums[t] / counts[t]).toFixed(2));
   return {
-    type: "scatter",
-    data: { datasets: [{ label: "Price vs Score", data: pts }] },
+    type: "bar",
+    data: { labels, datasets: [{ label: "Avg $/Sqft", data }] },
     options: {
       responsive: true,
       scales: {
-        x: { title: { display: true, text: "Score" } },
-        y: { title: { display: true, text: "$" } },
+        x: { title: { display: true, text: "Home Type" } },
+        y: { title: { display: true, text: "Avg Price per Sqft" } },
       },
     },
   };
@@ -408,6 +433,7 @@ function buildAreaYearScatter(listings: Listing[]) {
  * GET /api/properties?q=…&topK=…
  * Fetch property data, parse metadata, filter out yearBuilt === 0,
  * and return exactly 1500 listings with chart configurations.
+ *
  * @param req Express request
  * @param res Express response
  */
@@ -461,8 +487,8 @@ export async function getPropertyData(req: Request, res: Response) {
       homeStatus: buildHomeStatusDistribution(listings),
       countByCity: buildCountByCity(listings),
       avgAreaType: buildAverageLivingAreaByHomeType(listings),
-      scoreDist: buildScoreDistribution(listings),
-      scorePrice: buildScorePriceScatter(listings),
+      ageDist: buildAgeDistribution(listings),
+      avgPricePerSqftType: buildAveragePricePerSqftByHomeType(listings),
       areaYear: buildAreaYearScatter(listings),
     };
 

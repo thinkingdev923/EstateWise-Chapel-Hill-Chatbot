@@ -97,15 +97,46 @@ export default function SignUpPage() {
         <title>EstateWise | Sign Up</title>
         <meta name="description" content="Sign up for EstateWise" />
       </Head>
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 px-4">
+      <div className="min-h-screen flex items-center justify-center animated-gradient px-4">
         <style jsx global>{`
           html {
             scroll-behavior: smooth;
           }
-
           html,
           body {
             overscroll-behavior: none;
+          }
+          @keyframes gradientAnimation {
+            0% {
+              background-position: 0% 50%;
+            }
+            50% {
+              background-position: 100% 50%;
+            }
+            100% {
+              background-position: 0% 50%;
+            }
+          }
+          .animated-gradient {
+            background: linear-gradient(
+              270deg,
+              #7928ca,
+              #ff0080,
+              #fbbc05,
+              #12c2e9
+            );
+            background-size: 800% 800%;
+            animation: gradientAnimation 20s ease infinite;
+          }
+          /* Hover effect for all links */
+          a {
+            transition:
+              color 0.2s,
+              text-decoration-color 0.2s;
+          }
+          a:hover {
+            color: #ff0080;
+            text-decoration-color: #ff0080;
           }
         `}</style>
         <motion.div
@@ -165,7 +196,7 @@ export default function SignUpPage() {
                       }
                     }}
                     required
-                    className="w-full pr-10" // extra right padding to accommodate the icon button
+                    className="w-full pr-10"
                   />
                   <button
                     type="button"
