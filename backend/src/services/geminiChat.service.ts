@@ -238,6 +238,8 @@ export async function chatWithEstateWise(
 
     - **Do not** include any extra text or markdown in that block—only the raw JSON.
     - If no chart is needed, simply omit the block.
+    - Ensure that you give a valid JSON object in the block, and all the charts are valid Chart.js specs. This is very important because the UI will parse this JSON and render it. If the JSON is invalid, it will break the UI.
+    - Make sure to use the correct chart type and data format for each chart. You can refer to the Chart.js documentation for more details on how to create different types of charts and their respective data formats.
     - Ensure that you generate at least 1 chart related to the properties recommendations that you provide, and one chart related to the entire data that you were provided with.
 
     10. **Allowed chart types:** you may only ever output one of the built‑in Chart.js types:
@@ -372,7 +374,7 @@ export async function chatWithEstateWise(
     ${r.text}`,
       )
       .join("\n\n")}
-    
+          
     Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
     
     Once again, just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.

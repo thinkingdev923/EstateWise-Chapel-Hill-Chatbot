@@ -118,7 +118,6 @@ export async function runEstateWiseAgent(
 
   // 4) Kick off the Mixture‑of‑Experts pipeline (delegates to geminiChat.service)
   return chatWithEstateWise(
-    // history: only the user's prompt so far
     [{ role: "user", parts: [{ text: prompt }] }],
     prompt,
     mergedUserContext,

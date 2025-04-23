@@ -844,7 +844,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           setNewTitle("");
         }}
         title="Cancel"
-        className="cursor-pointer hover:text-gray-500"
+        className="cursor-pointer hover:text-red-500"
       >
         <X className="w-4 h-4" />
       </button>
@@ -1250,7 +1250,7 @@ const DeleteConfirmationDialog: React.FC<{
 }> = ({ open, onConfirm, onCancel }) => {
   return (
     <Dialog open={open} onOpenChange={onCancel}>
-      <DialogContent className="[&>button]:hidden">
+      <DialogContent className="[&>button]:hidden border-none">
         <DialogClose asChild>
           <button
             aria-label="Close"
