@@ -97,15 +97,13 @@ const CLUSTER_COUNT = 4;
 /**
  * Chat with EstateWise Assistant using Google Gemini AI.
  * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
- * to generate more informed responses. Includes a clustering
- * algorithm to group properties based on their features.
+ * to generate more informed responses. Includes a kMeans clustering
+ * algorithm (with norm.) to group properties based on their features.
  *
  * Note: When deployed on Vercel, this may cause a timeout due to
  * Vercel's 60s limit, and our approach requires at least 6 AI
  * calls (6 experts + 1 merger).
  *
- * For simple queries (greetings, small‑talk), we skip Pinecone lookups
- * and clustering entirely and pass directly to the experts.
  *
  * @param history - The conversation history, including previous messages.
  * @param message - The new message to send.
@@ -118,17 +116,20 @@ export async function chatWithEstateWise(
   userContext = "",
   expertWeights: Record<string, number> = {},
 ): Promise<{ finalText: string; expertViews: Record<string, string> }> {
+  const messageToAssess = message;
+
   const apiKey = process.env.GOOGLE_AI_API_KEY;
+
+  const dataNotFetched = agentHelper(messageToAssess);
+
   if (!apiKey) {
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
-  const simple = agentHelper(message);
-
   // 1) Fetch or skip property context and raw results
   let propertyContext = "";
   let rawResults: RawQueryResult[] = [];
-  if (!simple) {
+  if (!dataNotFetched) {
     [propertyContext, rawResults] = await Promise.all([
       queryPropertiesAsString(message, 50),
       queryProperties(message, 50),
@@ -137,7 +138,7 @@ export async function chatWithEstateWise(
 
   // 1.5) Only compute clustering if we fetched data
   let combinedPropertyContext: string;
-  if (!simple) {
+  if (!dataNotFetched) {
     // 1.5.a) Extract numeric feature vectors from metadata
     const featureVectors: number[][] = rawResults.map((r) => {
       const m = r.metadata;
@@ -187,7 +188,6 @@ export async function chatWithEstateWise(
       ${clusterContext}
       `.trim();
   } else {
-    // for simple queries, no context needed
     combinedPropertyContext = "";
   }
 
