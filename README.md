@@ -523,6 +523,17 @@ An OpenAPI specification file (`openapi.yaml`) is included in the root directory
 
 > Note: It may not be the latest and most updated version of the API specification, so please refer to the [Swagger API Documentation](#swagger-api-documentation) for the most up-to-date information.
 
+## Challenges & Future Improvements
+
+- **Data Quality:** Ensuring the quality and accuracy of the property data used for recommendations.
+- **Performance Optimization:** Improving the speed and efficiency of the AI processing and response generation.
+- **User Experience:** Enhancing the user interface and experience based on user feedback.
+- **Vercel Infrastructure Limitations:** The current Vercel infrastructure has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different hosting solution for the backend in the future.
+  - Additionally, it imposes a limit of 60 seconds to process API requests, which may not be sufficient for some complex queries. Thus, it may cause timeouts for some requests.
+  - The user will be notified if the request times out, and the user will be prompted to try again later.
+- **Gemini API Limitations:** The current Gemini API has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different AI solution in the future.
+  - Also, Google imposes rate limits on the number of requests that can be made to the Gemini API. If the rate limit is exceeded, the user will be notified and prompted to try again later.
+
 ## Contributing
 
 Contributions are welcome! Follow these steps:
