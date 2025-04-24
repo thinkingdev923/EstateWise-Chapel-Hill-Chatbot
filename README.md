@@ -37,7 +37,7 @@ Visit the live app on **Vercel** at [https://estatewise.vercel.app/](https://est
 
 The API is available at: [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
 
-Feel free to test the app as a guest or sign up for an account to save your conversations!
+Feel free to use the app as a guest or sign up for an account to save your conversations!
 
 ### Key Technologies Used
 
@@ -65,15 +65,18 @@ For a more detailed technical overview, check out the [Technical Documentation](
 **EstateWise** combines a modern API, real‑time chat, and a responsive UI with a powerful AI stack to deliver hyper‑personalized property recommendations:
 
 - **Retrieval‑Augmented Generation (RAG):** Uses Pinecone for kNN‑based vector retrieval, then fuses retrieved data into generated responses.
-- **k‑Means Clustering & kNN:** Automatically groups similar listings and finds closest matches to refine recommendations.
+- **k‑Means Clustering:** Automatically groups similar listings and finds closest matches to refine recommendations.
   - All features are also normalized to a range of 0-1 for better clustering and kNN performance.
 - **Decision AI Agent:** Decides whether to fetch RAG data (via `queryProperties`); if yes, it pulls in the Pinecone results, otherwise it skips straight to the Mixture‑of‑Experts pipeline.
 - **Mixture of Experts (MoE):** Dynamically routes each query through a master model to select specialized sub‑models (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) for maximal relevance.
 - **Feedback Loop & Reinforcement Learning:** Users rate responses; thumbs‑up/down adjust expert weights per conversation, and the system continuously learns to improve accuracy.
 - **Prompt Engineering:** Each expert has a unique prompt template, ensuring tailored responses based on user input.
   - All experts, agents, and merger have a detailed and ultra-specific prompt template to ensure the best possible responses.
+- **kNN & Cosine Similarity:** Uses Pinecone for fast, real‑time property retrieval based on user queries.
 
 ## Features
+
+EstateWise is packed with both UI and AI features to enhance your home-finding experience:
 
 - **Intelligent Property Recommendations**  
   Get tailored property suggestions powered by AI and Retrieval‑Augmented Generation (RAG).
@@ -105,7 +108,7 @@ For a more detailed technical overview, check out the [Technical Documentation](
 - **Clustering & Similarity Search**
 
   - k‑Means clustering groups similar properties for more focused suggestions.
-  - kNN (via Pinecone) finds the closest matches to your query in real time.
+  - kNN & Cosine Similarity (via Pinecone) finds the closest matches to your query in real time.
 
 - **Smooth Animations**  
   Engaging transitions and micro‑interactions powered by Framer Motion.
