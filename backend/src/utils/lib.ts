@@ -1,10 +1,11 @@
 /**
  * Detect if a user message is a simple greeting or small‑talk.
+ * (Deprecated - not being used anymore in the current codebase.)
  *
  * @param message - the user’s message text
  * @return true if we can skip data retrieval and clustering
  */
-export function agentHelper(message: string): boolean {
+export default function agentHelper(message: string): boolean {
   // 1. Trim whitespace
   let msg = message.trim();
   // 2. Strip surrounding quotes

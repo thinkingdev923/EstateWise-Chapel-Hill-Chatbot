@@ -3,7 +3,7 @@ import {
   HarmCategory,
   HarmBlockThreshold,
 } from "@google/generative-ai";
-import { agentHelper } from "../utils/lib";
+import lib from "../utils/lib";
 import {
   queryPropertiesAsString,
   queryProperties,
@@ -104,7 +104,6 @@ const CLUSTER_COUNT = 4;
  * Vercel's 60s limit, and our approach requires at least 6 AI
  * calls (6 experts + 1 merger).
  *
- *
  * @param history - The conversation history, including previous messages.
  * @param message - The new message to send.
  * @param userContext - Additional context provided by the user.
@@ -120,7 +119,7 @@ export async function chatWithEstateWise(
 
   const apiKey = process.env.GOOGLE_AI_API_KEY;
 
-  const dataNotFetched = agentHelper(messageToAssess);
+  const dataNotFetched = lib(messageToAssess);
 
   if (!apiKey) {
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");

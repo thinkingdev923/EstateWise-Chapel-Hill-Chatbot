@@ -30,6 +30,8 @@
 - [OpenAPI Specification](#openapi-specification)
 - [Contributing](#contributing)
 - [License](#license)
+- [Contact](#contact)
+- [Acknowledgments](#acknowledgments)
 
 ## Live App
 
@@ -285,7 +287,23 @@ Below is a high-level diagram that illustrates the flow of the application, incl
    Important: Be sure that you created the Pinecone index with the name `estatewise-index` in your Pinecone account before proceeding. Then,
    add data to the index using the `pinecone` CLI or API. For security purposes, our properties data is not publicly available in the repository. Please use your own data.
 
-4. **Run the Backend in Development Mode:**
+4. **Upsert Properties Data to Pinecone:**  
+   Use the `upsertProperties.ts` script to upsert your properties data into the Pinecone index. This script assumes that you place the 4 JSON files in the same directory as the script itself,
+   under the names `Zillow-March2025-dataset_part0.json`, `Zillow-March2025-dataset_part1.json`, `Zillow-March2025-dataset_part2.json`, and `Zillow-March2025-dataset_part3.json`.
+
+   ```bash
+   ts-node-dev --respawn --transpile-only src/scripts/upsertProperties.ts
+   ```
+
+   Alternatively, and preferably, you can use the following NPM command from the `backend` directory to quickly upsert the properties data:
+
+   ```bash
+   npm run upsert
+   ```
+
+   Note that it may take quite long to upsert all the 30,772 properties data into the Pinecone index, so please be patient.
+
+5. **Run the Backend in Development Mode:** After the properties data has been upserted into the Pinecone index, you can run the backend server in development mode:
 
    ```bash
    npm run dev
@@ -314,6 +332,12 @@ Below is a high-level diagram that illustrates the flow of the application, incl
    ```
 
    The frontend should be running at [http://localhost:3000](http://localhost:3000).
+
+4. **Change API URL:**  
+   If your backend is running on a different port or domain, update the API URL in the frontend code (simply CTRL + F or CMD + F and search for `https://estatewise-backend.vercel.app` in all frontend files, then replace it with your backend URL - by default it is `http://localhost:3001`).
+
+5. **View and Interact with the App:**  
+   Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to view the app. You can interact with the chatbot, sign up, log in, and explore the features.
 
 > Note: As you develop, before committing, we recommend running the linter and formatter to ensure code quality with `npm run format`. This will format your code according to the project's ESLint and Prettier configurations.
 
@@ -444,7 +468,7 @@ Access detailed API docs at the `/api-docs` endpoint on your deployed backend.
   <img src="img/swagger.png" alt="Swagger API Documentation" width="100%" />
 </p>
 
-Live API documentation is available at: [https://estatewise-backend.vercel.app/api-docs](https://estatewise-backend.vercel.app/api-docs)
+Live API documentation is available at: [https://estatewise-backend.vercel.app/api-docs](https://estatewise-backend.vercel.app/api-docs). You can visit it to explore and directly interact with the API endpoints, right in your web browser!
 
 ## Project Structure
 
@@ -497,6 +521,8 @@ However, you don't need to run the app using Docker. You can run the backend and
 
 An OpenAPI specification file (`openapi.yaml`) is included in the root directory. You can use Swagger UI or Postman to explore and test the API endpoints.
 
+> Note: It may not be the latest and most updated version of the API specification, so please refer to the [Swagger API Documentation](#swagger-api-documentation) for the most up-to-date information.
+
 ## Contributing
 
 Contributions are welcome! Follow these steps:
@@ -513,6 +539,16 @@ Contributions are welcome! Follow these steps:
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Contact
+
+For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository.
+
+## Acknowledgments
+
+- Thanks to the BUSI/COMP-488 course at UNC-Chapel Hill for the inspiration and opportunity to build this project.
+- Special thanks to our instructor and TA for their guidance and support throughout the course.
+- Huge thanks to the team members for their hard work and collaboration in building this project!
 
 ---
 
