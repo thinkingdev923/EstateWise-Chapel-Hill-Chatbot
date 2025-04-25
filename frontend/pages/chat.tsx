@@ -1328,6 +1328,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     }
   });
   const [historyIndex, setHistoryIndex] = useState(inputHistory.length);
+  const [draftInput, setDraftInput] = useState("");
 
   useEffect(() => {
     sessionStorage.setItem("inputHistory", JSON.stringify(inputHistory));
@@ -1786,6 +1787,10 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             onKeyDown={(e) => {
               if (e.key === "ArrowUp") {
                 e.preventDefault();
+                // if this is the very first up, stash the current draft
+                if (historyIndex === inputHistory.length) {
+                  setDraftInput(userInput);
+                }
                 if (historyIndex > 0) {
                   const prevIdx = historyIndex - 1;
                   setUserInput(inputHistory[prevIdx]);
@@ -1796,9 +1801,12 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                 if (historyIndex < inputHistory.length) {
                   const nextIdx = historyIndex + 1;
                   setHistoryIndex(nextIdx);
-                  setUserInput(
-                    nextIdx < inputHistory.length ? inputHistory[nextIdx] : "",
-                  );
+                  // if we've moved back past the last history entry, restore draft
+                  if (nextIdx === inputHistory.length) {
+                    setUserInput(draftInput);
+                  } else {
+                    setUserInput(inputHistory[nextIdx]);
+                  }
                 }
               } else if (e.key === "Enter") {
                 e.preventDefault();

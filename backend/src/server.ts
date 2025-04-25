@@ -12,6 +12,20 @@ import propertyRoutes from "./routes/property.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 
+// ─── Winston Logger Setup ────────────────────────────────────────────────────
+import winston from "winston";
+const logger = winston.createLogger({
+  level: "info",
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.printf(
+      ({ timestamp, level, message }) =>
+        `${timestamp} [${level.toUpperCase()}] ${message}`,
+    ),
+  ),
+  transports: [new winston.transports.Console()],
+});
+
 // ─── Express Status Monitor ─────────────────────────────────────────────────
 import statusMonitor from "express-status-monitor";
 
@@ -37,12 +51,10 @@ const mongoConnectionGauge = new client.Gauge({
 
 // ─── Global Error Handlers ───────────────────────────────────────────────────
 process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err);
-  // optionally: process.exit(1);
+  logger.error(`❌ Uncaught Exception: ${err.stack || err}`);
 });
 process.on("unhandledRejection", (reason) => {
-  console.error("❌ Unhandled Rejection:", reason);
-  // optionally: process.exit(1);
+  logger.error(`❌ Unhandled Rejection: ${reason}`);
 });
 
 // ─── App Setup ────────────────────────────────────────────────────────────────
@@ -77,23 +89,18 @@ app.use(
 // ─── Request/Response Logging & Metrics ─────────────────────────────────────
 app.use((req, res, next) => {
   const { method, url, headers, body } = req;
-  console.log(`➡️ Incoming Request: ${method} ${url}`);
-  console.log(`   Headers: ${JSON.stringify(headers)}`);
+  logger.info(`➡️ Incoming Request: ${method} ${url}`);
+  logger.debug(`   Headers: ${JSON.stringify(headers)}`);
   if (body && Object.keys(body).length > 0) {
-    console.log(`   Body: ${JSON.stringify(body)}`);
+    logger.debug(`   Body: ${JSON.stringify(body)}`);
   }
 
-  const end = httpHistogram.startTimer({
-    method,
-    route: url,
-  });
+  const end = httpHistogram.startTimer({ method, route: url });
 
   res.on("finish", () => {
     const durationSec = end({ status_code: res.statusCode });
-    console.log(
-      `⬅️ Response: ${method} ${url} → ${res.statusCode} (${(
-        durationSec * 1000
-      ).toFixed(1)}ms)`,
+    logger.info(
+      `⬅️ Response: ${method} ${url} → ${res.statusCode} (${(durationSec * 1000).toFixed(1)}ms)`,
     );
   });
 
@@ -119,7 +126,8 @@ app.get("/metrics", async (req, res) => {
     res.set("Content-Type", client.register.contentType);
     res.end(await client.register.metrics());
   } catch (ex) {
-    res.status(500).end(ex);
+    logger.error(`Error in /metrics endpoint: ${ex}`);
+    res.status(500).end(String(ex));
   }
 });
 
@@ -184,8 +192,8 @@ app.use(errorHandler);
 // ─── MongoDB Connection & Resilience ─────────────────────────────────────────
 const connectWithRetry = () => {
   mongoose
-    // @ts-ignore
-    .connect(process.env.MONGO_URI, {
+    .connect(process.env.MONGO_URI!, {
+      // @ts-ignore
       useNewUrlParser: true,
       useUnifiedTopology: true,
       serverSelectionTimeoutMS: 60000, // retry up to 60s on initial connect
@@ -194,11 +202,11 @@ const connectWithRetry = () => {
       socketTimeoutMS: 45000, // close socket after 45s of no response
     })
     .then(() => {
-      console.log("✅ Connected to MongoDB");
+      logger.info("✅ Connected to MongoDB");
     })
     .catch((err) => {
-      console.error("❌ Error connecting to MongoDB:", err);
-      console.log("🔄 Retrying MongoDB connection in 5s...");
+      logger.error(`❌ Error connecting to MongoDB: ${err}`);
+      logger.info("🔄 Retrying MongoDB connection in 5s...");
       setTimeout(connectWithRetry, 5000);
     });
 };
@@ -209,29 +217,28 @@ connectWithRetry();
 // Mongoose connection event listeners
 const db = mongoose.connection;
 db.on("error", (err) => {
-  console.error("❌ MongoDB connection error:", err);
+  logger.error(`❌ MongoDB connection error: ${err}`);
   mongoConnectionGauge.set(0);
-  // For transient socket resets, try to reconnect
   if ((err as any).code === "ECONNRESET") {
-    console.log("🔄 ECONNRESET detected — reconnecting to MongoDB...");
+    logger.info("🔄 ECONNRESET detected — reconnecting to MongoDB...");
     connectWithRetry();
   }
 });
 db.on("disconnected", () => {
-  console.warn("⚠️ MongoDB disconnected — reconnecting...");
+  logger.warn("⚠️ MongoDB disconnected — reconnecting...");
   mongoConnectionGauge.set(0);
   connectWithRetry();
 });
 db.on("reconnected", () => {
-  console.log("🔌 MongoDB reconnected");
+  logger.info("🔌 MongoDB reconnected");
   mongoConnectionGauge.set(1);
 });
 db.once("open", () => {
-  console.log("📡 MongoDB connection open");
+  logger.info("📡 MongoDB connection open");
   mongoConnectionGauge.set(1);
   // Only start listening after DB is open
   app.listen(PORT, () => {
-    console.log(`🏠 EstateWise backend listening on port ${PORT}`);
+    logger.info(`🏠 EstateWise backend listening on port ${PORT}`);
   });
 });
 
