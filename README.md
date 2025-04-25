@@ -27,7 +27,9 @@
   - [Swagger API Documentation](#swagger-api-documentation)
 - [Project Structure](#project-structure)
 - [Dockerization](#dockerization)
+- [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
 - [OpenAPI Specification](#openapi-specification)
+- [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
@@ -50,6 +52,7 @@ Feel free to use the app as a guest or sign up for an account to save your conve
 ![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
 ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-000000?style=for-the-badge&logo=framer&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-F38B4A?style=for-the-badge&logo=chartdotjs&logoColor=white)
 ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-000000?style=for-the-badge&logo=shadcn/ui&logoColor=white)
 ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Pinecone](https://img.shields.io/badge/Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
@@ -57,6 +60,7 @@ Feel free to use the app as a guest or sign up for an account to save your conve
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6512D?style=for-the-badge&logo=prometheus&logoColor=white)
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=white)
 ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 
@@ -516,6 +520,29 @@ To run the application **(OPTIONAL)** using Docker:
 This command builds and starts both the backend and frontend services as defined in the `docker-compose.yml` file.
 
 However, you don't need to run the app using Docker. You can run the backend and frontend separately as described in the **Setup & Installation** section.
+
+## Prometheus Monitoring & Visualizations
+
+Prometheus is used for monitoring the backend server. It collects metrics from the server and provides a web interface to visualize them.
+
+Metrics collected & visualized include:
+
+- CPU usage
+- Memory usage
+- Heap usage
+- Load average
+- Event loops
+- Requests per second
+- Status codes
+- Response times
+
+To view live server metrics, go to `https://estatewise-backend.vercel.app/metrics` in your browser. This will show you the raw metrics collected by Prometheus. If you are running the app locally, you can go to `http://localhost:3001/metrics` in your browser.
+
+To view live server data, go to `https://estatewise-backend.vercel.app/status` in your browser. If you are running the app locally, you can go to `http://localhost:3001/status` in your browser.
+
+<p align="center">
+  <img src="img/prometheus.png" alt="Prometheus Monitoring" width="100%" style="border-radius: 8px" />
+</p>
 
 ## OpenAPI Specification
 

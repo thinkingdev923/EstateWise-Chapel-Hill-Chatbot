@@ -1,8 +1,10 @@
-# EstateWise: AI‑Powered Real Estate Assistant for Chapel Hill, NC
+# EstateWise: AI‑Powered Real Estate Assistant for Chapel Hill, NC - Technical Documentation
 
 EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC and surrounding areas. This document provides a deep dive into every component—from raw data ingestion to AI orchestration, delivery via a React/Next.js front‑end, and end‑to‑end deployment.
 
-![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) ![stream-json](https://img.shields.io/badge/stream--json-007ACC) ![Pinecone](https://img.shields.io/badge/Pinecone-%2300837A?logo=pinecone&logoColor=white) ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?logo=google&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white) ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-FFFFFF?logo=shadcn&logoColor=000000) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?logo=framer&logoColor=white) ![React Markdown](https://img.shields.io/badge/React--Markdown-000000?logo=markdown&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-404D59?logo=express&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-FF6B00?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) ![Sentry](https://img.shields.io/badge/Sentry-000000?logo=sentry&logoColor=white) ![node-lru-cache](https://img.shields.io/badge/node--lru--cache-339933?logo=node.js&logoColor=white) ![k‑Means](https://img.shields.io/badge/k--Means-FF4080)
+Below, we outline the architecture, key components, and challenges faced during development. This is intended for developers and data scientists interested in understanding the inner workings of EstateWise. We also provide a flowchart and various diagrams to visualize the architecture and data flow throughout the system.
+
+![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) ![stream-json](https://img.shields.io/badge/stream--json-007ACC) ![Pinecone](https://img.shields.io/badge/Pinecone-%2300837A?logo=vectorworks&logoColor=white) ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?logo=google&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white) ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-FFFFFF?logo=shadcnui&logoColor=000000) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?logo=framer&logoColor=white) ![React Markdown](https://img.shields.io/badge/React--Markdown-000000?logo=markdown&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-404D59?logo=express&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-FF6B00?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) ![Sentry](https://img.shields.io/badge/Sentry-000000?logo=sentry&logoColor=white) ![node-lru-cache](https://img.shields.io/badge/node--lru--cache-339933?logo=node.js&logoColor=white) ![k‑Means](https://img.shields.io/badge/k--Means-FF4080) ![Mermaid](https://img.shields.io/badge/Mermaid-00A9E0?logo=mermaid&logoColor=white) ![JSON](https://img.shields.io/badge/JSON-000000?logo=json&logoColor=white)
 
 > Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
 
@@ -56,7 +58,11 @@ EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC a
   - [10.4 RAG & Context Assembly](#104-rag--context-assembly)
   - [10.5 Mixture‑of‑Experts Complexity](#105-mixtureofexperts-complexity)
   - [10.6 Deployment & Infrastructure](#106-deployment--infrastructure)
-- [11. Appendices](#11-appendices)
+- [11. Logging & Monitoring](#11-logging--monitoring)
+  - [11.1 Logging](#111-logging)
+  - [11.2 Monitoring](#112-monitoring)
+  - [11.3 Visualization](#113-visualization)
+- [12. Appendices](#11-appendices)
   - [A. Environment Variables Reference](#a-environment-variables-reference)
   - [B. AI/ML Flow Chart](#b-aiml-flow-chart)
   - [C. Overall App’s Flow Diagram](#c-overall-apps-flow-diagram)
@@ -678,7 +684,57 @@ Throughout the development of **EstateWise**, we encountered several technical a
 
 ---
 
-## 11. Appendices
+## 11. Logging & Monitoring
+
+**What it is:**
+A comprehensive logging and monitoring system that tracks the performance, errors, and usage of the EstateWise application.
+
+**Why we use it:**
+To ensure the application runs smoothly, identify issues quickly, and gather insights into user behavior and system performance.
+
+### 11.1 Logging
+
+- We log all incoming requests, outgoing responses, and errors.
+- We use structured logging with JSON format for easy parsing and analysis.
+- We log important events such as user signups, logins, and chat interactions.
+- We also log the performance of critical operations, such as embedding generation and database queries.
+- And more...
+
+### 11.2 Monitoring
+
+- We use Prometheus to collect metrics from the application, including:
+
+  - Request counts and latencies
+  - Error rates
+  - Embedding generation times
+  - Database query times
+  - And more…
+
+- Prometheus is configured to scrape metrics from the application at regular intervals.
+- The app exposes a `/metrics` endpoint that Prometheus can scrape.
+  - This endpoint provides a summary of the application’s performance metrics in a format that Prometheus can understand.
+  - It includes metrics such as:
+    - `http_requests_total`: Total number of HTTP requests received
+    - `http_request_duration_seconds`: Duration of HTTP requests in seconds
+    - `embedding_generation_duration_seconds`: Duration of embedding generation in seconds
+    - `database_query_duration_seconds`: Duration of database queries in seconds
+    - And more…
+
+### 11.3 Visualization
+
+- We use `express-status-monitor` to expose a `/status` endpoint to visualize the application’s health and performance metrics.
+- We also use Grafana to create dashboards for monitoring key metrics over time.
+- Grafana is configured to pull data from Prometheus and display it in a user-friendly format.
+- Dashboards include:
+  - Request rates and latencies
+  - Error rates
+  - Embedding generation times
+  - Database query times
+  - And more…
+
+---
+
+## 12. Appendices
 
 Additional resources, diagrams, and references for developers and data scientists who are interested working on EstateWise.
 
@@ -789,7 +845,7 @@ Below is a simplified flow diagram of the entire application architecture, from 
 
 ### D. Mermaid Sequence Diagram
 
-This is a `Mermaid` sequence diagram. Paste it into a compatible editor (e.g. Notion's `Mermaid` code block) to visualize.
+This UML sequence diagram illustrates the flow of data and interactions between the user, UI, API, agent, decision model, Pinecone, experts, and Gemini models:
 
 ```mermaid
 sequenceDiagram
@@ -824,6 +880,8 @@ sequenceDiagram
     API->>UI: 200 { response }
     UI->>User: renderResponse()
 ```
+
+> Diagram not working? Paste the code into a compatible Mermaid editor, like [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/) or [Mermaid Preview](https://marketplace.visualstudio.com/items?itemName=vstirbu.vscode-mermaid-preview) to visualize it.
 
 ### E. Vector Schema & Metadata Example
 

@@ -12,6 +12,29 @@ import propertyRoutes from "./routes/property.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 
+// ─── Express Status Monitor ─────────────────────────────────────────────────
+import statusMonitor from "express-status-monitor";
+
+// ─── Prometheus Metrics Setup ───────────────────────────────────────────────
+import client from "prom-client";
+
+// Collect default system metrics (CPU, memory, etc)
+client.collectDefaultMetrics();
+
+// HTTP request duration histogram
+const httpHistogram = new client.Histogram({
+  name: "http_request_duration_seconds",
+  help: "Histogram of HTTP request durations in seconds",
+  labelNames: ["method", "route", "status_code"],
+  buckets: [0.005, 0.01, 0.05, 0.1, 0.3, 1, 1.5, 3, 5],
+});
+
+// MongoDB connection status gauge
+const mongoConnectionGauge = new client.Gauge({
+  name: "mongodb_connection_status",
+  help: "MongoDB connection status (1 = connected, 0 = disconnected)",
+});
+
 // ─── Global Error Handlers ───────────────────────────────────────────────────
 process.on("uncaughtException", (err) => {
   console.error("❌ Uncaught Exception:", err);
@@ -29,21 +52,51 @@ const PORT = process.env.PORT || 3001;
 
 app.use(cookieParser());
 
-// ─── Request/Response Logging ────────────────────────────────────────────────
+// ─── Status Monitor Middleware ───────────────────────────────────────────────
+app.use(
+  statusMonitor({
+    title: "EstateWise Status",
+    path: "/status",
+    spans: [
+      { interval: 1, retention: 60 },
+      { interval: 5, retention: 60 },
+      { interval: 15, retention: 60 },
+    ],
+    chartVisibility: {
+      cpu: true,
+      mem: true,
+      load: true,
+      heap: true,
+      responseTime: true,
+      rps: true,
+      statusCodes: true,
+    },
+  }),
+);
+
+// ─── Request/Response Logging & Metrics ─────────────────────────────────────
 app.use((req, res, next) => {
   const { method, url, headers, body } = req;
   console.log(`➡️ Incoming Request: ${method} ${url}`);
   console.log(`   Headers: ${JSON.stringify(headers)}`);
-  if (Object.keys(body || {}).length > 0) {
+  if (body && Object.keys(body).length > 0) {
     console.log(`   Body: ${JSON.stringify(body)}`);
   }
-  const start = Date.now();
+
+  const end = httpHistogram.startTimer({
+    method,
+    route: url,
+  });
+
   res.on("finish", () => {
-    const duration = Date.now() - start;
+    const durationSec = end({ status_code: res.statusCode });
     console.log(
-      `⬅️ Response: ${method} ${url} → ${res.statusCode} (${duration}ms)`,
+      `⬅️ Response: ${method} ${url} → ${res.statusCode} (${(
+        durationSec * 1000
+      ).toFixed(1)}ms)`,
     );
   });
+
   next();
 });
 
@@ -59,6 +112,16 @@ app.use(express.json());
 
 // Serve favicon
 app.use(favicon(path.join(__dirname, "public", "favicon.ico")));
+
+// ─── Expose Prometheus /metrics endpoint ───────────────────────────────────
+app.get("/metrics", async (req, res) => {
+  try {
+    res.set("Content-Type", client.register.contentType);
+    res.end(await client.register.metrics());
+  } catch (ex) {
+    res.status(500).end(ex);
+  }
+});
 
 // REST API routes
 app.use("/api/auth", authRoutes);
@@ -147,6 +210,7 @@ connectWithRetry();
 const db = mongoose.connection;
 db.on("error", (err) => {
   console.error("❌ MongoDB connection error:", err);
+  mongoConnectionGauge.set(0);
   // For transient socket resets, try to reconnect
   if ((err as any).code === "ECONNRESET") {
     console.log("🔄 ECONNRESET detected — reconnecting to MongoDB...");
@@ -155,13 +219,16 @@ db.on("error", (err) => {
 });
 db.on("disconnected", () => {
   console.warn("⚠️ MongoDB disconnected — reconnecting...");
+  mongoConnectionGauge.set(0);
   connectWithRetry();
 });
 db.on("reconnected", () => {
   console.log("🔌 MongoDB reconnected");
+  mongoConnectionGauge.set(1);
 });
 db.once("open", () => {
   console.log("📡 MongoDB connection open");
+  mongoConnectionGauge.set(1);
   // Only start listening after DB is open
   app.listen(PORT, () => {
     console.log(`🏠 EstateWise backend listening on port ${PORT}`);

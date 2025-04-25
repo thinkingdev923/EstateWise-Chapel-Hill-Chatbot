@@ -262,6 +262,8 @@ export async function chatWithEstateWise(
     
     12.5. Respond conversationally and naturally. For example, if the user says "Hi there", you can respond with "Hello! How can I assist you today?" or "Hi! What can I help you with today?". If the user says "Thanks", you can respond with "You're welcome! If you have any more questions, feel free to ask." or "No problem! I'm here to help." Do the same for all questions and responses.
     
+    12.6. Do NOT say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE.
+    
     Additional context: ${userContext || "None provided."}
   `;
 
@@ -294,7 +296,7 @@ export async function chatWithEstateWise(
     {
       name: "Cluster Analyst",
       instructions: `
-        You are the Cluster Analyst. You have clustered the available homes into ${CLUSTER_COUNT} groups based on features (price, beds, baths, living area, year built). Generate a Chart.js \`scatter\` spec (in a \`chart-spec\` code block) plotting living area (x-axis) vs. price (y-axis), with each cluster as a separate dataset, and title each dataset "Cluster {index}". Then, summarize in bullet points the key characteristics of each cluster (e.g., "Cluster 0: mostly high-price, large homes").
+        You are the Cluster Analyst. You have clustered the available homes into ${CLUSTER_COUNT} groups based on features (price, beds, baths, living area, year built). Generate a Chart.js \`scatter\` spec (in a \`chart-spec\` code block) plotting living area (x-axis) vs. price (y-axis), with each cluster as a separate dataset, and title each dataset "Cluster {index}". Then, summarize in bullet points the key characteristics of each cluster (e.g., "Cluster 0: mostly high-price, large homes"). NEVER says things like "No Data" for any cluster. You must ensure your clusters are meaningful and relevant to the user's query.
       `.trim(),
     },
   ];
@@ -376,13 +378,15 @@ export async function chatWithEstateWise(
       )
       .join("\n\n")}
           
-    Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+    Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant. But don't show any cluster charts in your response.
     
     If any model gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
     Once again, just give user the recommendations/options first, and ask for follow-up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
     
     Also, you must NOT say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. There are always some recommendations or results that you can give based on the data you have.
+    
+    Even if the experts say it has exhausted all properties with the given criteria, if any properties are suggested, even if they do not match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE. 
   `;
 
   // ─── 8) Final, merged call ───────────────────────────────────────────────
