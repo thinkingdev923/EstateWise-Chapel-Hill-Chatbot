@@ -12,15 +12,38 @@ import propertyRoutes from "./routes/property.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 
+// ─── Global Error Handlers ───────────────────────────────────────────────────
+process.on("uncaughtException", (err) => {
+  console.error("❌ Uncaught Exception:", err);
+  // optionally: process.exit(1);
+});
+process.on("unhandledRejection", (reason) => {
+  console.error("❌ Unhandled Rejection:", reason);
+  // optionally: process.exit(1);
+});
+
+// ─── App Setup ────────────────────────────────────────────────────────────────
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cookieParser());
 
-// Logging middleware: Log every incoming request.
+// ─── Request/Response Logging ────────────────────────────────────────────────
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.url}`);
+  const { method, url, headers, body } = req;
+  console.log(`➡️ Incoming Request: ${method} ${url}`);
+  console.log(`   Headers: ${JSON.stringify(headers)}`);
+  if (Object.keys(body || {}).length > 0) {
+    console.log(`   Body: ${JSON.stringify(body)}`);
+  }
+  const start = Date.now();
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(
+      `⬅️ Response: ${method} ${url} → ${res.statusCode} (${duration}ms)`,
+    );
+  });
   next();
 });
 
@@ -61,10 +84,7 @@ app.get("/api-docs", (req, res) => {
         <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="16x16" />
         <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <style>
-          body {
-            margin: 0;
-            padding: 0;
-          }
+          body { margin: 0; padding: 0; }
         </style>
       </head>
       <body>
@@ -98,18 +118,54 @@ app.get("/", (req, res) => {
 // Error Handling Middleware
 app.use(errorHandler);
 
-// Connect to MongoDB and start the server
-mongoose
-  // @ts-ignore
-  .connect(process.env.MONGO_URI, {})
-  .then(() => {
-    console.log("Connected to MongoDB");
-    app.listen(PORT, () => {
-      console.log(`EstateWise backend listening on port ${PORT}`);
+// ─── MongoDB Connection & Resilience ─────────────────────────────────────────
+const connectWithRetry = () => {
+  mongoose
+    // @ts-ignore
+    .connect(process.env.MONGO_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      serverSelectionTimeoutMS: 60000, // retry up to 60s on initial connect
+      keepAlive: true, // keep sockets alive
+      keepAliveInitialDelay: 300000, // 5m before sending first keepAlive
+      socketTimeoutMS: 45000, // close socket after 45s of no response
+    })
+    .then(() => {
+      console.log("✅ Connected to MongoDB");
+    })
+    .catch((err) => {
+      console.error("❌ Error connecting to MongoDB:", err);
+      console.log("🔄 Retrying MongoDB connection in 5s...");
+      setTimeout(connectWithRetry, 5000);
     });
-  })
-  .catch((error) => {
-    console.error("Error connecting to MongoDB:", error);
+};
+
+// Start initial connection
+connectWithRetry();
+
+// Mongoose connection event listeners
+const db = mongoose.connection;
+db.on("error", (err) => {
+  console.error("❌ MongoDB connection error:", err);
+  // For transient socket resets, try to reconnect
+  if ((err as any).code === "ECONNRESET") {
+    console.log("🔄 ECONNRESET detected — reconnecting to MongoDB...");
+    connectWithRetry();
+  }
+});
+db.on("disconnected", () => {
+  console.warn("⚠️ MongoDB disconnected — reconnecting...");
+  connectWithRetry();
+});
+db.on("reconnected", () => {
+  console.log("🔌 MongoDB reconnected");
+});
+db.once("open", () => {
+  console.log("📡 MongoDB connection open");
+  // Only start listening after DB is open
+  app.listen(PORT, () => {
+    console.log(`🏠 EstateWise backend listening on port ${PORT}`);
   });
+});
 
 export default app;

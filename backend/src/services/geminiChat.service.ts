@@ -115,17 +115,17 @@ export async function chatWithEstateWise(
   userContext = "",
   expertWeights: Record<string, number> = {},
 ): Promise<{ finalText: string; expertViews: Record<string, string> }> {
-  const messageToAssess = message;
-
   const apiKey = process.env.GOOGLE_AI_API_KEY;
-
-  const dataNotFetched = lib(messageToAssess);
-
   if (!apiKey) {
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
-  // 1) Fetch or skip property context and raw results
+  // ─── SPEED OPT #1: TRIM LONG HISTORIES ─────────────────────────────────
+  const MAX_HISTORY = 20;
+  const effectiveHistory = history.slice(-MAX_HISTORY);
+
+  // ─── 1) Fetch or skip property context and raw results ───────────────────
+  const dataNotFetched = lib(message);
   let propertyContext = "";
   let rawResults: RawQueryResult[] = [];
   if (!dataNotFetched) {
@@ -135,10 +135,10 @@ export async function chatWithEstateWise(
     ]);
   }
 
-  // 1.5) Only compute clustering if we fetched data
+  // ─── 1.5) Only compute clustering if we fetched data ────────────────────
   let combinedPropertyContext: string;
   if (!dataNotFetched) {
-    // 1.5.a) Extract numeric feature vectors from metadata
+    // Offload the heavy clustering string assembly immediately
     const featureVectors: number[][] = rawResults.map((r) => {
       const m = r.metadata;
       const price =
@@ -155,31 +155,30 @@ export async function chatWithEstateWise(
       return [price, bedrooms, bathrooms, livingArea, yearBuilt];
     });
 
-    // 1.5.b) Normalize feature vectors
+    // Normalize feature vectors
     const dims = featureVectors[0]?.length ?? 0;
     const mins = Array(dims).fill(Infinity);
     const maxs = Array(dims).fill(-Infinity);
-    for (const vec of featureVectors) {
+    featureVectors.forEach((vec) =>
       vec.forEach((val, i) => {
         if (val < mins[i]) mins[i] = val;
         if (val > maxs[i]) maxs[i] = val;
-      });
-    }
+      }),
+    );
     const normalized = featureVectors.map((vec) =>
       vec.map((val, i) =>
         maxs[i] === mins[i] ? 0 : (val - mins[i]) / (maxs[i] - mins[i]),
       ),
     );
 
-    // 1.5.c) Perform K-Means clustering into CLUSTER_COUNT clusters
+    // Cluster
     const { clusters: clusterAssignments } = kmeans(normalized, CLUSTER_COUNT);
 
-    // 1.5.d) Build a textual representation of cluster assignments
+    // Build cluster text
     const clusterContext = rawResults
       .map((r, i) => `- Property ID ${r.id}: cluster ${clusterAssignments[i]}`)
       .join("\n");
 
-    // 1.5.e) Combine property list and cluster info
     combinedPropertyContext = `
       ${propertyContext}
       
@@ -190,7 +189,7 @@ export async function chatWithEstateWise(
     combinedPropertyContext = "";
   }
 
-  // 2) Base system instruction (used for all experts)
+  // ─── 2) Base system instruction (used for all experts) ─────────────────
   const baseSystemInstruction = `
     You are EstateWise Assistant, an expert real estate concierge for Chapel Hill, NC, USA. You help users find their dream homes by providing personalized property recommendations based on their preferences and needs. You have access to a database of detailed property records, including information about the properties, their locations, and their features.
 
@@ -208,7 +207,7 @@ export async function chatWithEstateWise(
     5. Use the property data to create engaging, detailed, and actionable recommendations. Present a top few options first, and then provide additional options based on the user's preferences and feedback.
     6. If the user provides additional context or preferences, adjust your recommendations accordingly.
     7. Format your responses in a way that is easy to read and understand. Use structures like bullet points, tables, or numbered lists where appropriate.
-    7.1. DO NOT ask the user. Just give them the recommendations/options first, and ask for follow‑up questions only if needed. DO NOT ask more questions unnecessarily. DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
+    7.1. DO NOT ask the user. Just give them the recommendations/options first, and ask for follow-up questions only if needed. DO NOT ask more questions unnecessarily. DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have.
     7.2. You MUST use the conversation history to provide context and tailor your recommendations.
     7.3. Give a table whenever possible to present the data in a clear and organized manner. Use markdown tables for better readability.
     7.4. In the case the data misses some values, or N/A values, just try to answer the user to the best of your ability. Give all the available information that you have. Don't say you cannot answer or fulfill the user's request. Just give them the best answer you can based on the data you have. Also tell the user to ask more specific questions if they want more details or data.
@@ -243,15 +242,15 @@ export async function chatWithEstateWise(
     - Make sure to use the correct chart type and data format for each chart. You can refer to the Chart.js documentation for more details on how to create different types of charts and their respective data formats.
     - Ensure that you generate at least 1 chart related to the properties recommendations that you provide, and one chart related to the entire data that you were provided with.
 
-    10. **Allowed chart types:** you may only ever output one of the built‑in Chart.js types:
+    10. **Allowed chart types:** you may only ever output one of the built-in Chart.js types:
      \`"bar"\`, \`"line"\`, \`"pie"\`, \`"doughnut"\`, \`"radar"\`, \`"polarArea"\`, \`"bubble"\`, or \`"scatter"\`.
-     – If you need a “histogram,” use \`"bar"\` with full‑width bars (set \`categoryPercentage\` and \`barPercentage\` to 1).
-     – All trend‑lines (e.g. price vs. area) must be \`"line"\`.
+     – If you need a “histogram,” use \`"bar"\` with full-width bars (set \`categoryPercentage\` and \`barPercentage\` to 1).
+     – All trend-lines (e.g. price vs. area) must be \`"line"\`.
 
     11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed.
     
-    12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow‑up questions only if needed.
-
+    12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow-up questions only if needed.
+    
     12.1. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
     
     12.2. Keep in mind that the dataset available to you here is only the top 50 properties based on the user's query. You do not have access to the entire dataset. So, you must be careful about how you present the data and avoid making any assumptions about the completeness of the dataset. Maybe display a disclaimer at the bottom of the response, such as "Note: The dataset is limited to the top 50 properties based on your query. For a more comprehensive analysis, provide additional context or preferences.".
@@ -266,12 +265,12 @@ export async function chatWithEstateWise(
     Additional context: ${userContext || "None provided."}
   `;
 
-  // 3) Define your experts with very detailed instructions
+  // ─── 3) Define your experts with very detailed instructions ────────────────
   const experts = [
     {
       name: "Data Analyst",
       instructions: `
-        You are the Data Analyst. Focus on extracting statistics, distributions, and trends in the property data. Provide breakdowns (avg price, bedroom counts, area distributions) and, when relevant, include a Chart.js code block showing these metrics. Keep language concise and data‑driven.
+        You are the Data Analyst. Focus on extracting statistics, distributions, and trends in the property data. Provide breakdowns (avg price, bedroom counts, area distributions) and, when relevant, include a Chart.js code block showing these metrics. Keep language concise and data-driven.
       `.trim(),
     },
     {
@@ -300,7 +299,7 @@ export async function chatWithEstateWise(
     },
   ];
 
-  // 4) Normalize weights or default to equal
+  // ─── 4) Normalize weights or default to equal ─────────────────────────────
   const weights: Record<string, number> = {};
   let total = 0;
   experts.forEach((e) => {
@@ -316,7 +315,7 @@ export async function chatWithEstateWise(
     weights[k] = weights[k] / total;
   });
 
-  // 5) Prepare common generation & safety config
+  // ─── 5) Prepare common generation & safety config ─────────────────────────
   const genAI = new GoogleGenerativeAI(apiKey);
   const generationConfig = {
     temperature: 1,
@@ -343,25 +342,26 @@ export async function chatWithEstateWise(
     },
   ];
 
-  // 6) Run each expert in parallel
-  const expertResults = await Promise.all(
-    experts.map(async (expert) => {
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.0-flash-lite",
-        systemInstruction: baseSystemInstruction + "\n\n" + expert.instructions,
-      });
-      const chat = model.startChat({
-        generationConfig,
-        safetySettings,
-        history,
-      });
-      const result = await chat.sendMessage(message);
-      const text = result.response.text();
-      return { name: expert.name, text };
-    }),
-  );
+  // ─── 6) Run each expert in parallel ─────────────────────────────────────
+  const expertPromises = experts.map(async (expert) => {
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash-lite",
+      systemInstruction: baseSystemInstruction + "\n\n" + expert.instructions,
+    });
+    const chat = model.startChat({
+      generationConfig,
+      safetySettings,
+      history: effectiveHistory,
+    });
+    const result = await chat.sendMessage(message);
+    return {
+      name: expert.name,
+      text: result.response.text(),
+    };
+  });
+  const expertResults = await Promise.all(expertPromises);
 
-  // 7) Build merger instruction, including expert weights
+  // ─── 7) Build merger instruction, including expert weights ──────────────
   const mergerInstruction = `
     You are the EstateWise Master Agent. You have now received input from five specialized agents.
     
@@ -380,25 +380,23 @@ export async function chatWithEstateWise(
     
     If any model gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
-    Once again, just give user the recommendations/options first, and ask for follow‑up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
+    Once again, just give user the recommendations/options first, and ask for follow-up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
   `;
 
-  // 8) Final, merged call
+  // ─── 8) Final, merged call ───────────────────────────────────────────────
   const mergerModel = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-lite",
     systemInstruction: baseSystemInstruction + "\n\n" + mergerInstruction,
   });
-
   const mergerChat = mergerModel.startChat({
     generationConfig,
     safetySettings,
-    history,
+    history: effectiveHistory,
   });
-
   const finalResult = await mergerChat.sendMessage(message);
   const finalText = finalResult.response.text();
 
-  // 9) Return both the merged text and each expert view so the UI can toggle them
+  // ─── 9) Return both the merged text and each expert view so the UI can toggle them
   const expertViews: Record<string, string> = {};
   expertResults.forEach((r) => {
     expertViews[r.name] = r.text;
