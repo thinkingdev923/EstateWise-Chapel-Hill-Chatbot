@@ -29,7 +29,7 @@ import {
 function kmeans(
   data: number[][],
   k: number,
-  maxIter = 50,
+  maxIter = 20,
 ): { clusters: number[] } {
   const n = data.length;
   if (n === 0 || k <= 0) {
@@ -120,6 +120,9 @@ export async function chatWithEstateWise(
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
+  const startTime = Date.now(); // ← start timer
+  const TIMEOUT_MS = 59_000; // ← 59 seconds
+
   // ─── SPEED OPT #1: TRIM LONG HISTORIES ─────────────────────────────────
   const MAX_HISTORY = 20;
   const effectiveHistory = history.slice(-MAX_HISTORY);
@@ -130,15 +133,14 @@ export async function chatWithEstateWise(
   let rawResults: RawQueryResult[] = [];
   if (!dataNotFetched) {
     [propertyContext, rawResults] = await Promise.all([
-      queryPropertiesAsString(message, 50),
-      queryProperties(message, 50),
+      queryPropertiesAsString(message, 30),
+      queryProperties(message, 30),
     ]);
   }
 
   // ─── 1.5) Only compute clustering if we fetched data ────────────────────
   let combinedPropertyContext: string;
   if (!dataNotFetched) {
-    // Offload the heavy clustering string assembly immediately
     const featureVectors: number[][] = rawResults.map((r) => {
       const m = r.metadata;
       const price =
@@ -253,7 +255,7 @@ export async function chatWithEstateWise(
     
     12.1. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
     
-    12.2. Keep in mind that the dataset available to you here is only the top 50 properties based on the user's query. You do not have access to the entire dataset. So, you must be careful about how you present the data and avoid making any assumptions about the completeness of the dataset. Maybe display a disclaimer at the bottom of the response, such as "Note: The dataset is limited to the top 50 properties based on your query. For a more comprehensive analysis, provide additional context or preferences.".
+    12.2. Keep in mind that the dataset available to you here is only the top 30 properties based on the user's query. You do not have access to the entire dataset. So, you must be careful about how you present the data and avoid making any assumptions about the completeness of the dataset. Maybe display a disclaimer at the bottom of the response, such as "Note: The dataset is limited to the top 30 properties based on your query. For a more comprehensive analysis, provide additional context or preferences.".
     
     12.3. Limit your response so that it is not too verbose. And you must ensure that you don't take too long to answer. You must respond quickly and efficiently, without unnecessary delays.
     
@@ -367,7 +369,7 @@ export async function chatWithEstateWise(
   const mergerInstruction = `
     You are the EstateWise Master Agent. You have now received input from five specialized agents.
     
-    Use their responses to create a **cohesive** and **concise** recommendation for the user. Focus on answering the user's queries in a natural and conversational manner, while also ensuring that the response is informative and engaging.
+    Use their responses to create a **coherent** and **concise** recommendation for the user. Focus on answering the user's queries in a natural and conversational manner, while also ensuring that the response is informative and engaging.
     
     Below are their responses along with their relative weights (importance):
     
@@ -377,8 +379,8 @@ export async function chatWithEstateWise(
     ${r.text}`,
       )
       .join("\n\n")}
-          
-    Now, **synthesize** these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant. But don't show any cluster charts in your response.
+                
+    Now, synthesize these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
     
     If any model gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
@@ -386,21 +388,42 @@ export async function chatWithEstateWise(
     
     Also, you must NOT say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. There are always some recommendations or results that you can give based on the data you have.
     
+    If an expert gives any recommendation(s), you MUST include them, so that your response never says that you cannot give any recommendations even though the expert(s) have provided some recommendations. DO NOT OMIT ANY EXPERT'S RECOMMENDATIONS. You must include all of them in your final response, even if they are not relevant to the user's query. You must also ensure that you do not say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have.
+    
     Even if the experts say it has exhausted all properties with the given criteria, if any properties are suggested, even if they do not match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE. 
   `;
 
-  // ─── 8) Final, merged call ───────────────────────────────────────────────
+  // ─── 8) Final, merged call with timeout fallback ─────────────────────────
   const mergerModel = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-lite",
-    systemInstruction: baseSystemInstruction + "\n\n" + mergerInstruction,
+    systemInstruction: mergerInstruction + "\n\n" + baseSystemInstruction,
   });
   const mergerChat = mergerModel.startChat({
     generationConfig,
     safetySettings,
     history: effectiveHistory,
   });
-  const finalResult = await mergerChat.sendMessage(message);
-  const finalText = finalResult.response.text();
+
+  // race between the merge call and our 59s timer
+  const mergePromise = mergerChat.sendMessage(message);
+  const remaining = TIMEOUT_MS - (Date.now() - startTime);
+  const resultOrTimeout = await Promise.race([
+    mergePromise,
+    new Promise((resolve) =>
+      setTimeout(() => resolve({ timeout: true }), Math.max(0, remaining)),
+    ),
+  ]);
+
+  let finalText: string;
+  if ((resultOrTimeout as any).timeout) {
+    // timed out → pick highest‐weight expert
+    const best = expertResults.reduce((a, b) =>
+      weights[b.name] > weights[a.name] ? b : a,
+    );
+    finalText = `${best.text}`;
+  } else {
+    finalText = (resultOrTimeout as any).response.text();
+  }
 
   // ─── 9) Return both the merged text and each expert view so the UI can toggle them
   const expertViews: Record<string, string> = {};

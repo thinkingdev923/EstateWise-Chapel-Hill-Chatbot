@@ -140,6 +140,8 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial Jupyter‑powered dive into the data.
   - Explore `EstateWise-CLI-Chatbot.ipynb` in the repo root for a Jupyter‑powered CLI chatbot that can be used to test the Gemini chatbot.
 
+> Note: Please note that the deployed version of the app is subject to Vercel's infrastructure limitations, which may affect the performance and availability of the app. You are encouraged to run the app locally for the best experience.
+
 ## Architecture
 
 **EstateWise** is built with a modern, full-stack architecture consisting of two major parts:

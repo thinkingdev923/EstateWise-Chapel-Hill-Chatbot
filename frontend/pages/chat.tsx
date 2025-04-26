@@ -34,6 +34,7 @@ import {
   Cpu,
   Zap,
   Check,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1599,6 +1600,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     const [view, setView] = useState<string>("Combined");
     const [pickerOpen, setPickerOpen] = useState<boolean>(false);
     const pickerRef = useRef<HTMLDivElement>(null);
+    const [copied, setCopied] = useState(false);
 
     // scroll the dropdown into view when opened
     useEffect(() => {
@@ -1609,6 +1611,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         });
       }
     }, [pickerOpen]);
+
+    const handleCopy = async () => {
+      try {
+        // copy the rendered text (you could also copy msg.text if you prefer raw markdown)
+        const textToCopy = msg.text;
+        await navigator.clipboard.writeText(textToCopy);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        console.error("Clipboard write failed", err);
+      }
+    };
 
     const text =
       view === "Combined" || !msg.expertViews
@@ -1701,6 +1715,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
               {/* thumbs btns */}
               <div className="flex gap-1">
                 <button
+                  onClick={handleCopy}
+                  className="p-1 cursor-pointer hover:text-primary"
+                  title="Copy message"
+                  aria-label="Copy message"
+                >
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-500" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
+                </button>
+                <button
                   onClick={() => rateConversation("up", idx)}
                   className={`p-1 cursor-pointer ${upColor}`}
                   title="Like the response? Click to let us know!"
@@ -1743,8 +1769,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <Home className="w-20 h-20 mb-4 text-primary" />
             <p className="text-xl text-center font-semibold">
-              Hey {localStorage.getItem("username") || "there"}, send a message
-              to start your home finding journey! 🚀
+              Hey {localStorage.getItem("username") || "there"} 👋 Send a
+              message to start your home finding journey! 🚀
             </p>
           </div>
         )}
