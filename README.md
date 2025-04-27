@@ -67,6 +67,8 @@ Feel free to use the app as a guest or sign up for an account to save your conve
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
+For a CLI version of the chatbot, as well as the initial EDA (Exploratory Data Analysis) of the properties data and interactive geospatial visualizations, check out the Jupyter notebooks in the root directory: [EstateWise-CLI-Chatbot.ipynb](EstateWise-CLI-Chatbot.ipynb).
+
 ### AI Techniques
 
 **EstateWise** combines a modern API, real‑time chat, and a responsive UI with a powerful AI stack to deliver hyper‑personalized property recommendations:

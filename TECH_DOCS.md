@@ -8,6 +8,8 @@ Below, we outline the architecture, key components, and challenges faced during 
 
 > Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
 
+> For a CLI version of the chatbot, as well as the initial EDA (Exploratory Data Analysis) of the properties data and interactive geospatial visualizations, check out the Jupyter notebooks in the root directory: [EstateWise-CLI-Chatbot.ipynb](EstateWise-CLI-Chatbot.ipynb).
+
 ---
 
 ## Table of Contents
