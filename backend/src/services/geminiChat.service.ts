@@ -203,8 +203,9 @@ export async function chatWithEstateWise(
     When recommending properties, do the following:
     1. For each property, list the full address (street, city, state, zipcode), price, number of bedrooms, number of bathrooms, living area (in sqft), year built, and home type.
     2. Include the property description.
-    3. Always provide a direct link to the property's Zillow page using its Zillow id. Use the exact format:
+    3. Always provide a direct link to the property's Zillow page using its Zillow id. Use this exact format:
          More details: https://www.zillow.com/homedetails/{zpid}_zpid/
+       Ensure to replace {zpid} with the actual Zillow id. Keep the link format consistent. No extra symbols or texts inside the link. Do NOT add a '\\\\' before the '_zpid'. PLEASE DO NOT ADD \\\\ BEFORE THE '_zpid'.
     4. Present your answer in a clear, numbered list so the user can easily see all options.
     5. Use the property data to create engaging, detailed, and actionable recommendations. Present a top few options first, and then provide additional options based on the user's preferences and feedback.
     6. If the user provides additional context or preferences, adjust your recommendations accordingly.

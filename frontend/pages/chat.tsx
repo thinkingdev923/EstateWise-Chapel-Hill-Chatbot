@@ -244,6 +244,15 @@ ChartBlock.displayName = "ChartBlock";
 // ReactMarkdown Custom Components
 // ----------------------------------------------------------
 const markdownComponents = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars
+  text: ({ children, ...props }: any) => (
+    <>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      {children.map((child: any) =>
+        typeof child === "string" ? child.replace(/\\_/g, "_") : child,
+      )}
+    </>
+  ),
   // Headings
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   h1: ({ children, ...props }: any) => (
@@ -1653,7 +1662,7 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
             remarkPlugins={[remarkGfm]}
             components={markdownComponents}
           >
-            {text}
+            {text.replace(/\\_/g, "_")}
           </ReactMarkdown>
 
           {msg.role === "model" && (
