@@ -590,6 +590,7 @@ For any questions or inquiries, please contact the [repository maintainer](https
 ## Acknowledgments
 
 - Thanks to the BUSI/COMP-488 course at UNC-Chapel Hill for the inspiration and opportunity to build this project.
+  - Thanks to the professors and TAs for the comprehensive Chapel Hill real-estate datasets provided. Without them, we would not have been able to build this project.
 - Special thanks to our instructor and TA for their guidance and support throughout the course.
 - Huge thanks to the team members for their hard work and collaboration in building this project!
 
