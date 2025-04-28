@@ -1,7 +1,27 @@
 {
   "name": "frontend",
-  "version": "0.1.0",
-  "private": true,
+  "version": "1.1.0",
+  "private": false,
+  "author": "Son Nguyen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hoangsonww/AI-Assistant-Chatbot.git"
+  },
+  "keywords": [
+    "real-estate",
+    "chatbot",
+    "ai",
+    "assistant",
+    "estate",
+    "home",
+    "property",
+    "apartment",
+    "recommendation"
+  ],
+  "bugs": {
+    "url": "https://github.com/hoangsonww/AI-Assistant-Chatbot/issues"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",

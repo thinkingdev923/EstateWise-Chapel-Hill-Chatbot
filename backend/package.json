@@ -1,8 +1,29 @@
 {
   "name": "estatewise-backend",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Backend for EstateWise, a real estate chatbot that learns from past conversations.",
   "main": "dist/server.js",
+  "private": false,
+  "author": "Son Nguyen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hoangsonww/AI-Assistant-Chatbot.git"
+  },
+  "keywords": [
+    "real-estate",
+    "chatbot",
+    "ai",
+    "assistant",
+    "estate",
+    "home",
+    "property",
+    "apartment",
+    "recommendation"
+  ],
+  "bugs": {
+    "url": "https://github.com/hoangsonww/AI-Assistant-Chatbot/issues"
+  },
   "scripts": {
     "start": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",

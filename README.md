@@ -1,6 +1,8 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full‑stack AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone (kNN), k‑Means clustering, and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
+**EstateWise** is a full‑stack AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth
+animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone
+(kNN & cosine similarity), k‑Means clustering, and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
 
 > Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
 
@@ -37,9 +39,9 @@
 
 ## Live App
 
-Visit the live app on **Vercel** at [https://estatewise.vercel.app/](https://estatewise.vercel.app/) and explore the intelligent estate assistant!
+Visit the live app on **Vercel** at **[https://estatewise.vercel.app/](https://estatewise.vercel.app/)** and explore the intelligent estate assistant!
 
-The API is available at: [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
+The backend API is also available at: [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
 
 Feel free to use the app as a guest or sign up for an account to save your conversations!
 
@@ -69,7 +71,7 @@ For a more detailed technical overview, check out the [Technical Documentation](
 
 > Feel free to go to this [Colaboratory Notebook](https://colab.research.google.com/drive/1-Z3h0LUHl0v-e0RaZgwruL8q180Uk4Z-?usp=sharing) to directly view and run the code in this notebook & see the results in real time.
 
-For a CLI version of the chatbot, as well as the initial EDA (Exploratory Data Analysis) of the properties data and interactive geospatial visualizations, check out the Jupyter notebooks in the root directory: [EstateWise-CLI-Chatbot.ipynb](EstateWise-CLI-Chatbot.ipynb).
+For a CLI version of the chatbot, as well as the initial EDA (Exploratory Data Analysis) of the properties data and interactive geospatial visualizations, check out the Jupyter notebooks in the root directory: [EDA-CLI-Chatbot.ipynb](EDA-CLI-Chatbot.ipynb).
 
 ### AI Techniques
 
@@ -141,8 +143,8 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
   - After cleaning, **30,772 properties** remain in the database, available for the chatbot to use.
-  - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial Jupyter‑powered dive into the data.
-  - Explore `EstateWise-CLI-Chatbot.ipynb` in the repo root for a Jupyter‑powered CLI chatbot that can be used to test the Gemini chatbot.
+  - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial, quick Jupyter‑powered dive into the data.
+  - Explore `EDA-CLI-Chatbot.ipynb` in the repo root for a more detailed and comprehensive analysis of the data, as well as a CLI version of our chatbot.
 
 > Note: Please note that the deployed version of the app is subject to Vercel's infrastructure limitations, which may affect the performance and availability of the app. You are encouraged to run the app locally for the best experience.
 
@@ -508,7 +510,7 @@ EstateWise/
 ├── docker-compose.yml        # Docker configuration for backend and frontend
 ├── Dockerfile                # Dockerfile for backend
 ├── openapi.yaml              # OpenAPI specification for API documentation
-├── EstateWise-CLI-Chatbot.ipynb # Jupyter notebook for CLI chatbot
+├── EDA-CLI-Chatbot.ipynb        # Jupyter notebook for CLI chatbot
 ├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
 └── ... (other config files, etc.)
 ```
