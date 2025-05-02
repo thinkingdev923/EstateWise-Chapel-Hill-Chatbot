@@ -94,6 +94,12 @@ function kmeans(
 
 const CLUSTER_COUNT = 4;
 
+// context object so we can cache and reuse pinecone results
+export interface EstateWiseContext {
+  rawResults?: RawQueryResult[];
+  propertyContext?: string;
+}
+
 /**
  * Chat with EstateWise Assistant using Google Gemini AI.
  * This uses a Mixture-of-Experts (MoE) with Reinforcement Learning
@@ -112,35 +118,45 @@ const CLUSTER_COUNT = 4;
 export async function chatWithEstateWise(
   history: Array<{ role: string; parts: Array<{ text: string }> }>,
   message: string,
-  userContext = "",
+  userContext: EstateWiseContext = {},
   expertWeights: Record<string, number> = {},
 ): Promise<{ finalText: string; expertViews: Record<string, string> }> {
+  if (typeof userContext !== "object" || userContext === null) {
+    userContext = {};
+  }
+
   const apiKey = process.env.GOOGLE_AI_API_KEY;
   if (!apiKey) {
     throw new Error("Missing GOOGLE_AI_API_KEY in environment variables");
   }
 
-  const startTime = Date.now(); // ← start timer
-  const TIMEOUT_MS = 59_000; // ← 59 seconds
+  const startTime = Date.now();
+  const TIMEOUT_MS = 50_000; // 50 seconds
 
-  // ─── SPEED OPT #1: TRIM LONG HISTORIES ─────────────────────────────────
+  // ─── SPEED OPT: TRIM LONG HISTORIES ─────────────────────────────────
   const MAX_HISTORY = 20;
   const effectiveHistory = history.slice(-MAX_HISTORY);
 
   // ─── 1) Fetch or skip property context and raw results ───────────────────
   const dataNotFetched = lib(message);
-  let propertyContext = "";
-  let rawResults: RawQueryResult[] = [];
-  if (!dataNotFetched) {
+  let propertyContext: string;
+  let rawResults: RawQueryResult[];
+
+  if (!dataNotFetched || !userContext.rawResults) {
     [propertyContext, rawResults] = await Promise.all([
       queryPropertiesAsString(message, 30),
       queryProperties(message, 30),
     ]);
+    userContext.propertyContext = propertyContext;
+    userContext.rawResults = rawResults;
+  } else {
+    propertyContext = userContext.propertyContext!;
+    rawResults = userContext.rawResults!;
   }
 
-  // ─── 1.5) Only compute clustering if we fetched data ────────────────────
+  // ─── 1.5) Only compute clustering if we have rawResults ────────────────
   let combinedPropertyContext: string;
-  if (!dataNotFetched) {
+  if (rawResults.length > 0) {
     const featureVectors: number[][] = rawResults.map((r) => {
       const m = r.metadata;
       const price =
@@ -183,10 +199,10 @@ export async function chatWithEstateWise(
 
     combinedPropertyContext = `
       ${propertyContext}
-      
+
       Cluster Assignments:
       ${clusterContext}
-      `.trim();
+    `.trim();
   } else {
     combinedPropertyContext = "";
   }
@@ -215,7 +231,7 @@ export async function chatWithEstateWise(
     7.3. Give a table whenever possible to present the data in a clear and organized manner. Use markdown tables for better readability.
     7.4. In the case the data misses some values, or N/A values, just try to answer the user to the best of your ability. Give all the available information that you have. Don't say you cannot answer or fulfill the user's request. Just give them the best answer you can based on the data you have. Also tell the user to ask more specific questions if they want more details or data.
     7.5. Never says you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
-    
+
     8. **Whenever** the user asks for a comparison, distribution, or trend (e.g. “show me price trends”, “how many bedrooms?”, “compare year built”), you **must** append a valid Chart.js spec in its own code block tagged \`chart-spec\`.
 
     9. Here’s a minimal chart example you should follow exactly:
@@ -251,22 +267,22 @@ export async function chatWithEstateWise(
      – All trend-lines (e.g. price vs. area) must be \`"line"\`.
 
     11. Every time you list properties, you must generate at least one relevant chart. Use the data you have to create a chart that is relevant to the properties listed.
-    
+
     12. Make sure your responses, while detailed, are concise and to the point. Avoid unnecessary verbosity or repetition. And must not be too long. And avoid asking additional questions. Just give user the recommendations/options first, and ask for follow-up questions only if needed.
-    
+
     12.1. Do NOT take too long to respond. Time is of the essence. You must respond quickly and efficiently, without unnecessary delays.
-    
+
     12.2. Keep in mind that the dataset available to you here is only the top 30 properties based on the user's query. You do not have access to the entire dataset. So, you must be careful about how you present the data and avoid making any assumptions about the completeness of the dataset. Maybe display a disclaimer at the bottom of the response, such as "Note: The dataset is limited to the top 30 properties based on your query. For a more comprehensive analysis, provide additional context or preferences.".
-    
+
     12.3. Limit your response so that it is not too verbose. And you must ensure that you don't take too long to answer. You must respond quickly and efficiently, without unnecessary delays.
-    
+
     12.4. When the user asks about your identity, how you were created, how you were trained, or similar questions, you must respond with something like "I am EstateWise Assistant, an AI-powered real estate concierge designed to help you find your dream home in Chapel Hill, NC. I was created using various advanced machine learning techniques and trained on a diverse dataset of real estate information." But don't state this unnecessarily. Only respond to this question if the user asks about it.
     Be sure to keep it concise and avoid going into too much detail about the technical aspects of your creation or training. You can also mention that you are constantly learning and improving to provide better recommendations and insights for users like them. Note that users can give feedback, either through messages or thumbs up/down buttons, to help improve your performance and accuracy over time. This feedback is used to refine your algorithms and enhance your understanding of user preferences and needs.
-    
+
     12.5. Respond conversationally and naturally. For example, if the user says "Hi there", you can respond with "Hello! How can I assist you today?" or "Hi! What can I help you with today?". If the user says "Thanks", you can respond with "You're welcome! If you have any more questions, feel free to ask." or "No problem! I'm here to help." Do the same for all questions and responses.
-    
+
     12.6. Do NOT say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE.
-    
+
     Additional context: ${userContext || "None provided."}
   `;
 
@@ -304,20 +320,18 @@ export async function chatWithEstateWise(
     },
   ];
 
-  // ─── 4) Normalize weights or default to equal ─────────────────────────────
+  // ─── 4) Build your weight map (no normalization) ─────────────────────────
+  const CLUSTER_KEY = "Cluster Analyst";
   const weights: Record<string, number> = {};
-  let total = 0;
+
+  // fix cluster at 1
+  weights[CLUSTER_KEY] = 1;
+
+  // clamp every other expert’s weight into [0.1,2.0], defaulting to 1
   experts.forEach((e) => {
-    const w = expertWeights[e.name] ?? 1;
-    weights[e.name] = w;
-    total += w;
-  });
-  if (total <= 0) {
-    experts.forEach((e) => (weights[e.name] = 1));
-    total = experts.length;
-  }
-  Object.keys(weights).forEach((k) => {
-    weights[k] = weights[k] / total;
+    if (e.name === CLUSTER_KEY) return;
+    const raw = expertWeights[e.name] ?? 1;
+    weights[e.name] = Math.min(Math.max(raw, 0.1), 2.0);
   });
 
   // ─── 5) Prepare common generation & safety config ─────────────────────────
@@ -369,30 +383,34 @@ export async function chatWithEstateWise(
   // ─── 7) Build merger instruction, including expert weights ──────────────
   const mergerInstruction = `
     You are the EstateWise Master Agent. You have now received input from five specialized agents.
-    
+
     Use their responses to create a **coherent** and **concise** recommendation for the user. Focus on answering the user's queries in a natural and conversational manner, while also ensuring that the response is informative and engaging.
-    
+
     Below are their responses along with their relative weights (importance):
-    
+
     ${expertResults
       .map(
         (r) => `**${r.name}** (weight: ${weights[r.name].toFixed(2)}):
     ${r.text}`,
       )
       .join("\n\n")}
-                
+
     Now, synthesize these five expert opinions into **one unified** final recommendation for the user. Follow all of the original EstateWise instructions (including numbering, full property details, chart-spec blocks when needed, concise format, and no extra markdown around charts). Use the expert weights to prioritize which insights to emphasize, but produce a single cohesive response exactly as the user expects from EstateWise Assistant.
+
+    If any expert gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
-    If any model gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
-    
+    If any expert gives a recommendation(s), you MUST include them, so that your response never says that you cannot give any recommendations even though the model(s) have provided some recommendations. You must also ensure that you do not say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have.
+
     Once again, just give user the recommendations/options first, and ask for follow-up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
-    
+
     Also, you must NOT say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have. If you cannot find any properties that match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. There are always some recommendations or results that you can give based on the data you have.
-    
+
     If an expert gives any recommendation(s), you MUST include them, so that your response never says that you cannot give any recommendations even though the expert(s) have provided some recommendations. DO NOT OMIT ANY EXPERT'S RECOMMENDATIONS. You must include all of them in your final response, even if they are not relevant to the user's query. You must also ensure that you do not say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have.
-    
-    Even if the experts say it has exhausted all properties with the given criteria, if any properties are suggested, even if they do not match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE. 
+
+    Even if the experts say it has exhausted all properties with the given criteria, if any properties are suggested, even if they do not match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE.
   `;
+
+  console.log(mergerInstruction);
 
   // ─── 8) Final, merged call with timeout fallback ─────────────────────────
   const mergerModel = genAI.getGenerativeModel({
@@ -405,7 +423,7 @@ export async function chatWithEstateWise(
     history: effectiveHistory,
   });
 
-  // race between the merge call and our 59s timer
+  // race between the merge call and the 50s timer
   const mergePromise = mergerChat.sendMessage(message);
   const remaining = TIMEOUT_MS - (Date.now() - startTime);
   const resultOrTimeout = await Promise.race([

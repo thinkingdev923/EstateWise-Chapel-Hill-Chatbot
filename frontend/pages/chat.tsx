@@ -1349,9 +1349,23 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
     () => {
       if (typeof window === "undefined") return {};
       try {
-        return JSON.parse(
+        const stored = JSON.parse(
           localStorage.getItem("estateWiseGuestWeights") || "{}",
         );
+        const KEYS = [
+          "Data Analyst",
+          "Lifestyle Concierge",
+          "Financial Advisor",
+          "Neighborhood Expert",
+          "Cluster Analyst",
+        ];
+        const ok =
+          KEYS.every((k) => typeof stored[k] === "number") &&
+          KEYS.filter((k) => k !== "Cluster Analyst").every(
+            (k) => stored[k] >= 0.1,
+          ) &&
+          stored["Cluster Analyst"] === 1;
+        return ok ? stored : {};
       } catch {
         return {};
       }
@@ -1623,15 +1637,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
 
     const handleCopy = async () => {
       try {
-        // copy the rendered text (you could also copy msg.text if you prefer raw markdown)
-        const textToCopy = msg.text;
-        await navigator.clipboard.writeText(textToCopy);
+        await navigator.clipboard.writeText(displayedText);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       } catch (err) {
         console.error("Clipboard write failed", err);
       }
     };
+
+    const displayedText =
+      view === "Combined" || !msg.expertViews
+        ? msg.text
+        : msg.expertViews[view];
 
     const text =
       view === "Combined" || !msg.expertViews

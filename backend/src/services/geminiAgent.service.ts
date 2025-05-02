@@ -8,17 +8,17 @@ import {
   queryPropertiesAsString,
   RawQueryResult,
 } from "../scripts/queryProperties";
-import { chatWithEstateWise } from "./geminiChat.service";
+import { chatWithEstateWise, EstateWiseContext } from "./geminiChat.service";
 
 interface DecisionPayload {
   usePropertyData: boolean;
 }
 
 /**
- * Top‑level agent that first determines whether we need to
+ * Top-level agent that first determines whether we need to
  * fetch RAG data (property listings from Pinecone). If so,
  * it retrieves that data and injects it into the downstream
- * Mixture‑of‑Experts pipeline; if not, it calls the experts
+ * Mixture-of-Experts pipeline; if not, it calls the experts
  * without any RAG context.
  *
  * @param prompt         The user’s latest message
@@ -27,7 +27,7 @@ interface DecisionPayload {
  */
 export async function runEstateWiseAgent(
   prompt: string,
-  userContext = "",
+  userContext: string = "",
   expertWeights: Record<string, number> = {},
 ): Promise<{ finalText: string; expertViews: Record<string, string> }> {
   const apiKey = process.env.GOOGLE_AI_API_KEY;
@@ -37,14 +37,8 @@ export async function runEstateWiseAgent(
   const genAI = new GoogleGenerativeAI(apiKey);
 
   // --- 1) Decide via a quick Gemini call whether to fetch property data ---
-  const decisionInstruction = `
-    You are a simple decision agent. Given the user's message, decide
-    whether querying our property database is needed to answer it.
-    Respond **only** with a JSON object, nothing else, like:
-    {"usePropertyData": true}
-    or
-    {"usePropertyData": false}
-  `.trim();
+  const decisionInstruction =
+    'Read the user\'s message and reply **exactly** one JSON object with a boolean field "usePropertyData": either {"usePropertyData":true} or {"usePropertyData":false}. No other text.';
 
   const decisionModel = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-lite",
@@ -79,10 +73,7 @@ export async function runEstateWiseAgent(
   const decisionChat = decisionModel.startChat({
     generationConfig,
     safetySettings,
-    history: [
-      { role: "system", parts: [{ text: decisionInstruction }] },
-      { role: "user", parts: [{ text: prompt }] },
-    ],
+    history: [{ role: "user", parts: [{ text: prompt }] }],
   });
 
   const decisionResult = await decisionChat.sendMessage("");
@@ -93,7 +84,7 @@ export async function runEstateWiseAgent(
     ) as DecisionPayload;
     usePropertyData = Boolean(parsed.usePropertyData);
   } catch {
-    // If parsing fails, default to no RAG
+    // fallback if parse fails
     usePropertyData = false;
   }
 
@@ -107,20 +98,26 @@ export async function runEstateWiseAgent(
     ]);
   }
 
-  // --- 3) Build a little envelope to deliver RAG context to the experts ---
-  const mergedUserContext = usePropertyData
+  // --- 3) Build merged userContext object ---
+  const mergedPropertyContext = usePropertyData
     ? `${userContext}
 
       --- PROPERTY DATA START ---
       ${propertyContext}
-      --- PROPERTY DATA END ---`
+      --- PROPERTY DATA END ---
+      `
     : userContext;
 
-  // 4) Kick off the Mixture‑of‑Experts pipeline (delegates to geminiChat.service)
+  const estateWiseContext: EstateWiseContext = {
+    propertyContext: mergedPropertyContext,
+    rawResults: usePropertyData ? rawResults : undefined,
+  };
+
+  // --- 4) Kick off the Mixture-of-Experts pipeline ---
   return chatWithEstateWise(
     [{ role: "user", parts: [{ text: prompt }] }],
     prompt,
-    mergedUserContext,
+    estateWiseContext,
     expertWeights,
   );
 }
