@@ -7,6 +7,9 @@ import Cookies from "js-cookie";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
 import { toast } from "sonner";
 import {
   Loader2,
@@ -1676,7 +1679,8 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           } max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg`}
         >
           <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
+            remarkPlugins={[remarkGfm, remarkMath]}
+            rehypePlugins={[rehypeKatex]}
             components={markdownComponents}
           >
             {text.replace(/\\_/g, "_")}
