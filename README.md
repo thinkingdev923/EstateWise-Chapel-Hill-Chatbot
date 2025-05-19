@@ -1,6 +1,6 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full‑stack AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth
+**EstateWise** is a full‑stack, monorepo AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth
 animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone
 (kNN & cosine similarity), k‑Means clustering, and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
 

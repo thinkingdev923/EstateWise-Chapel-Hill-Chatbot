@@ -1,39 +1,33 @@
-# Stage 1: Build the application
-FROM node:18-alpine AS builder
-
-# Set the working directory
+# 1) Builder stage
+FROM node:18-slim AS builder
 WORKDIR /app
 
-# Copy package files and install all dependencies
-COPY package*.json ./
-RUN npm install
+# Copy manifests
+COPY package.json package-lock.json tsconfig.json ./
 
-# Copy all source files to the container
-COPY . .
+# Copy source
+COPY src/ src/
+COPY public/ public/
 
-# Build the TypeScript code (outputs to the "dist" folder)
-RUN npm run build
+# Install deps and compile TypeScript
+RUN npm install && npm run build
 
-# Stage 2: Create the production image
-FROM node:18-alpine
-
+# 2) Runtime stage
+FROM node:18-slim
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Metadata labels
+LABEL org.opencontainers.image.title="estatewise-backend"
+LABEL org.opencontainers.image.version="1.1.0"
+LABEL org.opencontainers.image.description="Backend for EstateWise, an AI-powered real estate chatbot that learns from past conversations."
 
-# Install only production dependencies
-RUN npm install --production
-
-# Copy the compiled output from the builder stage
+# Copy compiled app and dependencies
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/public ./public
 
-# If you have any static assets or additional configuration, copy them as needed.
-# For example:
-# COPY --from=builder /app/config ./config
-
-# Expose the port your server listens on (adjust the port if needed)
+# Expose port if needed
 EXPOSE 3000
 
-# Run the compiled application
+# Launch the server
 CMD ["node", "dist/server.js"]
