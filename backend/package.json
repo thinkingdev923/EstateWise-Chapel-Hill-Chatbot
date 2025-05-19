@@ -28,7 +28,8 @@
     "start": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
     "upsert": "ts-node-dev --respawn --transpile-only src/scripts/upsertProperties.ts",
-    "clean": "ts-node-dev --respawn --transpile-only src/scripts/cleanProperties.ts"
+    "clean": "ts-node-dev --respawn --transpile-only src/scripts/cleanProperties.ts",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\""
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
