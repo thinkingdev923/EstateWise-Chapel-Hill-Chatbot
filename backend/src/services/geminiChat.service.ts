@@ -11,6 +11,29 @@ import {
 } from "../scripts/queryProperties";
 
 /**
+ * Chain-of-Thought prompt to guide the models.
+ * Instructs the model to produce step-by-step reasoning before the final answer.
+ */
+const COT_PROMPT = `Let's think step by step. Show your chain of thought before the final answer.`;
+
+/**
+ * Hidden Chain-of-Thought prefix for internal reasoning.
+ * Instructs the model to think step-by-step internally without exposing reasoning.
+ */
+const HIDDEN_COT = `
+You will think through this request step-by-step internally;
+You do not need to explain your reasoning to the user, just make sure that your responses
+are of high quality.
+`.trim();
+
+/**
+ * Utility to wrap any system instruction with the hidden CoT prefix.
+ */
+function wrapWithHiddenCoT(mainInstruction: string): string {
+  return `${HIDDEN_COT}\n\n${mainInstruction}`;
+}
+
+/**
  * Function to perform K-Means clustering on a set of data points. It
  * assigns each data point to one of k clusters based on the
  * Euclidean distance to the cluster centroids.
@@ -363,9 +386,12 @@ export async function chatWithEstateWise(
 
   // ─── 6) Run each expert in parallel ─────────────────────────────────────
   const expertPromises = experts.map(async (expert) => {
+    const systemInstruction = wrapWithHiddenCoT(
+      baseSystemInstruction + "\n\n" + expert.instructions,
+    );
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash-lite",
-      systemInstruction: baseSystemInstruction + "\n\n" + expert.instructions,
+      systemInstruction,
     });
     const chat = model.startChat({
       generationConfig,
@@ -399,7 +425,7 @@ export async function chatWithEstateWise(
 
     If any expert gives a conflicting or contradictory answer, you must resolve it in a way that is consistent with the overall context and the user's needs. For example, if one or more model(s) does not give any recommendations, you must still provide a recommendation based on the other models' responses. Never say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give.
     
-    If any expert gives a recommendation(s), you MUST include them, so that your response never says that you cannot give any recommendations even though the model(s) have provided some recommendations. You must also ensure that you do not say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have.
+    If any expert gives a recommendation(s), you MUST include them, so that your response never says that you cannot give any recommendations even though the expert(s) have provided some recommendations. You must also ensure that you do not say that you cannot give any recommendations or results. You must always provide at least one recommendation or result based on the data you have.
 
     Once again, just give user the recommendations/options first, and ask for follow-up questions only if needed. PLEASE DO NOT ASK ANY QUESTIONS OR TELLING THEM TO PROVIDE MORE INFO - Just give them the recommendations/options first, based on all the info you currently have. DO NOT ASK MORE QUESTIONS UNNECESSARILY. **IMPORTANT:** DO NOT ASK THE USER - Just give them recommendations based on all the info you currently have.
 
@@ -410,12 +436,12 @@ export async function chatWithEstateWise(
     Even if the experts say it has exhausted all properties with the given criteria, if any properties are suggested, even if they do not match the user's criteria, you must still provide at least one recommendation or result based on the data you have. You MUST NOT say that you cannot answer or fulfill the user's request or there is no recommendation/results that you can give. IMPORTANT: YOU MUST NEVER SAY THAT YOU CANNOT GIVE ANY RECOMMENDATIONS. IT IS YOUR JOB TO GIVE RECOMMENDATIONS BASED ON THE DATA YOU HAVE.
   `;
 
-  console.log(mergerInstruction);
-
   // ─── 8) Final, merged call with timeout fallback ─────────────────────────
   const mergerModel = genAI.getGenerativeModel({
     model: "gemini-2.0-flash-lite",
-    systemInstruction: mergerInstruction + "\n\n" + baseSystemInstruction,
+    systemInstruction: wrapWithHiddenCoT(
+      mergerInstruction + "\n\n" + baseSystemInstruction,
+    ),
   });
   const mergerChat = mergerModel.startChat({
     generationConfig,

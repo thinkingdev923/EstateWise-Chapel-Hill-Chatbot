@@ -42,29 +42,33 @@ Below, we outline the architecture, key components, and challenges faced during 
   - [6.3 Weight Normalization & Feedback Loop](#63-weight-normalization--feedback-loop)
   - [6.4 Master Merger Model](#64-master-merger-model)
   - [6.5 Prompt Engineering](#65-prompt-engineering)
-- [7. Backend API & Data Layer](#7-backend-api--data-layer)
-  - [7.1 Express.js Routes & Controllers](#71-expressjs-routes--controllers)
-  - [7.2 MongoDB Models & Conversations](#72-mongodb-models--conversations)
-  - [7.3 Authentication & JWT Workflow](#73-authentication--jwt-workflow)
-  - [7.4 OpenAPI / Swagger Integration](#74-openapi--swagger-integration)
-- [8. Frontend Integration](#8-frontend-integration)
-- [9. Infrastructure & Deployment](#9-infrastructure--deployment)
-  - [9.1 Docker Compose & Services](#91-docker-compose--services)
-  - [9.2 Environment Configuration](#92-environment-configuration)
-  - [9.3 CI/CD Pipeline (GitHub Actions)](#93-cicd-pipeline-github-actions)
-  - [9.4 Monitoring & Logging](#94-monitoring--logging)
-- [10. Challenges](#10-challenges)
-  - [10.1 Large‑Scale Data Ingestion](#101-largescale-data-ingestion)
-  - [10.2 Embedding Generation & Rate Limits](#102-embedding-generation--rate-limits)
-  - [10.3 Vector Store Scaling](#103-vector-store-scaling)
-  - [10.4 RAG & Context Assembly](#104-rag--context-assembly)
-  - [10.5 Mixture‑of‑Experts Complexity](#105-mixtureofexperts-complexity)
-  - [10.6 Deployment & Infrastructure](#106-deployment--infrastructure)
-- [11. Logging & Monitoring](#11-logging--monitoring)
-  - [11.1 Logging](#111-logging)
-  - [11.2 Monitoring](#112-monitoring)
-  - [11.3 Visualization](#113-visualization)
-- [12. Appendices](#11-appendices)
+- [7. Chain-of-Thought Reasoning](#7-chain-of-thought-reasoning)
+  - [7.1 Implementation](#71-implementation)
+  - [7.2 Example](#72-example)
+  - [7.3 Benefits](#73-benefits)
+- [8. Backend API & Data Layer](#8-backend-api--data-layer)
+  - [7.1 Express.js Routes & Controllers](#81-expressjs-routes--controllers)
+  - [7.2 MongoDB Models & Conversations](#82-mongodb-models--conversations)
+  - [7.3 Authentication & JWT Workflow](#83-authentication--jwt-workflow)
+  - [7.4 OpenAPI / Swagger Integration](#84-openapi--swagger-integration)
+- [9. Frontend Integration](#9-frontend-integration)
+- [10. Infrastructure & Deployment](#10-infrastructure--deployment)
+  - [10.1 Docker Compose & Services](#101-docker-compose--services)
+  - [10.2 Environment Configuration](#102-environment-configuration)
+  - [10.3 CI/CD Pipeline (GitHub Actions)](#103-cicd-pipeline-github-actions)
+  - [10.4 Monitoring & Logging](#104-monitoring--logging)
+- [11. Challenges](#11-challenges)
+  - [11.1 Large‑Scale Data Ingestion](#111-largescale-data-ingestion)
+  - [11.2 Embedding Generation & Rate Limits](#112-embedding-generation--rate-limits)
+  - [11.3 Vector Store Scaling](#113-vector-store-scaling)
+  - [11.4 RAG & Context Assembly](#114-rag--context-assembly)
+  - [11.5 Mixture‑of‑Experts Complexity](#115-mixtureofexperts-complexity)
+  - [11.6 Deployment & Infrastructure](#116-deployment--infrastructure)
+- [12. Logging & Monitoring](#12-logging--monitoring)
+  - [12.1 Logging](#121-logging)
+  - [12.2 Monitoring](#122-monitoring)
+  - [12.3 Visualization](#123-visualization)
+- [13. Appendices](#13-appendices)
   - [A. Environment Variables Reference](#a-environment-variables-reference)
   - [B. AI/ML Flow Chart](#b-aiml-flow-chart)
   - [C. Overall App’s Flow Diagram](#c-overall-apps-flow-diagram)
@@ -504,7 +508,49 @@ They are ultra-specific and tailored to the task at hand, ensuring that the AI c
 
 ---
 
-## 7. Backend API & Data Layer
+## 7. Chain-of-Thought Reasoning
+
+**What it is:**
+A mechanism that allows the AI to break down complex tasks into smaller, manageable steps, providing a more structured and logical approach to problem-solving.
+
+**Why we use it:**
+To enhance the AI's reasoning capabilities, allowing it to tackle intricate queries and provide more coherent and comprehensive responses.
+
+### 7.1 Implementation
+
+```tsx
+const chainOfThoughtPrompt = `<chain-of-thought-instructions>`; // such as: "Think step-by-step and provide a detailed breakdown of your reasoning process before you attempt to answer the question."
+const fullSystemPrompt = `${baseSystemPrompt} ${chainOfThoughtPrompt}`;
+const model = genAI.getGenerativeModel({
+  systemInstruction: fullSystemPrompt,
+});
+```
+
+### 7.2 Example
+
+**User Query:**
+"Can you analyze the price trends of properties in Chapel Hill over the last year?"
+
+**AI Response:**
+
+1. **Data Collection**: Gather property data from the last year.
+2. **Data Analysis**: Analyze the price trends, including average, median, and outliers.
+3. **Conclusion**: Summarize the findings and provide insights on the overall market trends.
+4. **Recommendation**: Suggest potential investment opportunities based on the analysis.
+
+> Note: Each expert also receives a chain-of-thought prompt to ensure they follow the same structured approach. The master merger model also receives a chain-of-thought prompt to ensure it can effectively combine the expert outputs into a coherent final recommendation.
+
+### 7.3 Benefits
+
+- **Improved Clarity**: By breaking down complex tasks, the AI can provide clearer and more structured responses.
+- **Enhanced Reasoning**: The AI can tackle intricate queries more effectively, leading to better insights and recommendations.
+- **User Engagement**: Users can follow the AI's thought process, making the interaction more transparent and engaging.
+- **Consistency**: All experts and the master model follow the same structured approach, ensuring coherent and comprehensive responses.
+- **Flexibility**: The chain-of-thought reasoning can be adapted to various tasks, making it a versatile tool in the AI's toolkit.
+
+---
+
+## 8. Backend API & Data Layer
 
 **What it is:**  
 An Express.js + TypeScript server with REST endpoints for chat, rating, conversation CRUD, authentication (JWT), and integrated Swagger/OpenAPI docs; MongoDB persists users, conversations, and expert weights.
@@ -512,7 +558,7 @@ An Express.js + TypeScript server with REST endpoints for chat, rating, conversa
 **Why we use it:**  
 Provides a secure, scalable interface for the frontend to interact with the AI pipeline, store history, and capture feedback for continuous improvement.
 
-### 7.1 Express.js Routes & Controllers
+### 8.1 Express.js Routes & Controllers
 
 ```tsx
 // routes/chat.ts
@@ -521,7 +567,7 @@ router.post("/chat/rate", ratingController);
 // More endpoints follow similarly…
 ```
 
-### 7.2 MongoDB Models & Conversations
+### 8.2 MongoDB Models & Conversations
 
 ```tsx
 import mongoose from "mongoose";
@@ -539,12 +585,12 @@ const ConversationSchema = new mongoose.Schema(
 export const Conversation = mongoose.model("Conversation", ConversationSchema);
 ```
 
-### 7.3 Authentication & JWT Workflow
+### 8.3 Authentication & JWT Workflow
 
 - **Signup/Login** endpoints issue JWT with 1h expiry
 - **Middleware** verifies `Authorization: Bearer <token>`
 
-### 7.4 OpenAPI / Swagger Integration
+### 8.4 OpenAPI / Swagger Integration
 
 ```yaml
 openapi: 3.0.1
@@ -566,7 +612,7 @@ paths:
 
 ---
 
-## 8. Frontend Integration
+## 9. Frontend Integration
 
 **What it is:**  
 A Next.js + React + TailwindCSS app using Shadcn UI components, Framer Motion animations, React‑Markdown custom components, `localStorage` for guest mode, and more.
@@ -574,16 +620,18 @@ A Next.js + React + TailwindCSS app using Shadcn UI components, Framer Motion an
 **Why we use it:**  
 Delivers a smooth, responsive chat experience—complete with inline charts, expert‑view toggles, theme switching, and conversation management—so users can focus on real estate insights.
 
+Also, using Next.js's SSR (Server-Side Rendering) capabilities, we can pre-render pages for better performance and SEO and improve the overall user experience.
+
 **Live Frontend URL:**  
 https://estatewise-backend.vercel.app/
 
 ---
 
-## 9. Infrastructure & Deployment
+## 10. Infrastructure & Deployment
 
 Currently, both the frontend and backend of the app are deployed on **Vercel** to ensure fast response times and high availability, combined with great cost effectiveness.
 
-### 9.1 Docker Compose & Services
+### 10.1 Docker Compose & Services
 
 ```yaml
 version: "3.8"
@@ -598,7 +646,7 @@ services:
     ports: ["3000:3000"]
 ```
 
-### 9.2 Environment Configuration
+### 10.2 Environment Configuration
 
 **`.env`**
 
@@ -612,7 +660,7 @@ PINECONE_INDEX=estatewise-index
 JWT_SECRET=...
 ```
 
-### 9.3 CI/CD Pipeline (GitHub Actions)
+### 10.3 CI/CD Pipeline (GitHub Actions)
 
 ```yaml
 name: CI
@@ -639,7 +687,7 @@ jobs:
           npm run test
 ```
 
-### 9.4 Monitoring & Logging
+### 10.4 Monitoring & Logging
 
 - **Prometheus** + **Grafana** for embedding/upsert/query metrics
 - **Sentry** for error tracking
@@ -647,36 +695,37 @@ jobs:
 
 ---
 
-## 10. Challenges
+## 11. Challenges
 
 Throughout the development of **EstateWise**, we encountered several technical and operational hurdles. Below is a breakdown of the most significant challenges and how we addressed them:
 
-### 10.1 Large‑Scale Data Ingestion
+### 11.1 Large‑Scale Data Ingestion
 
 - **Memory Constraints:** Ingesting four multi‑gigabyte JSON files without overwhelming Node.js required a streaming parser and explicit back‑pressure (`pause()`/`resume()`).
 - **Data Quality & Completeness:** Many raw records had missing or malformed fields (e.g. `yearBuilt` outside realistic ranges, non‑numeric beds/baths). We iterated on our `cleanDocument()` logic, adding strict range checks and defaulting to `"Unknown"` where appropriate.
 
-### 10.2 Embedding Generation & Rate Limits
+### 11.2 Embedding Generation & Rate Limits
 
 - **API Throughput:** Generating 30,000+ embeddings against Google’s `text-embedding-004` model risked hitting per‑minute or per‑day quotas. We implemented exponential backoff, jittered retries, and an in‑flight counter to throttle concurrent requests.
 - **Latency Variability:** Embedding calls occasionally spiked to hundreds of milliseconds each; batching and parallelizing up to a safe concurrency limit (5–10 simultaneous requests) was critical.
 
-### 10.3 Vector Store Scaling
+### 11.3 Vector Store Scaling
 
 - **Pinecone Payload Limits:** Pinecone imposes size caps on each upsert call. We experimented to find a reliable batch size (50 vectors) that balanced throughput and success rate.
 - **Index Cold Starts:** Query latency spiked when the index was idle. To mitigate, we schedule a small “ping” query every 5 minutes to keep the index warm.
 
-### 10.4 RAG & Context Assembly
+### 11.4 RAG & Context Assembly
 
 - **Context Window Management:** Feeding too many retrieved records into Gemini could exceed its context limits. We settled on a top‑50 retrieval, then truncated or summarized lower‑relevance entries to stay within token budgets.
 - **Cache Invalidation:** Simple in‑memory caches risked serving stale data after new upserts. We scoped our caches with short TTLs (30 minutes) and clear entries on data‑loading events.
 
-### 10.5 Mixture‑of‑Experts Complexity
+### 11.5 Mixture‑of‑Experts Complexity
 
 - **Latency Accumulation:** Invoking six separate Gemini calls (5 experts + merger) often pushed total response time close to Vercel’s 60 second limit. We fine‑tuned temperatures, `maxOutputTokens`, and reduced expert instructions’ verbosity to shave off precious seconds.
 - **Weight Convergence:** Naïve feedback adjustments could drive one expert’s weight to near zero, starving the system of diversity. We capped weight updates (no expert drops below 0.1) and renormalize to maintain a healthy ensemble.
+- Also, implementing a MoE pipeline also means we need 2 separate calls to the LLM: 5 parallel calls to the experts and 1 call to the master model. This means that we need to ensure that the LLM can handle multiple concurrent requests without crashing or slowing down.
 
-### 10.6 Deployment & Infrastructure
+### 11.6 Deployment & Infrastructure
 
 - **Vercel Timeouts:** The free‑tier 60 second function limit forced us to split some heavy operations (e.g. clustering) into background tasks or pre‑compute nightly.
   - However, many heavy queries can still cause timeouts. This is unavoidable, and we have to ensure that the user is informed about the timeout and that they should retry the query.
@@ -686,7 +735,7 @@ Throughout the development of **EstateWise**, we encountered several technical a
 
 ---
 
-## 11. Logging & Monitoring
+## 12. Logging & Monitoring
 
 **What it is:**
 A comprehensive logging and monitoring system that tracks the performance, errors, and usage of the EstateWise application.
@@ -694,7 +743,7 @@ A comprehensive logging and monitoring system that tracks the performance, error
 **Why we use it:**
 To ensure the application runs smoothly, identify issues quickly, and gather insights into user behavior and system performance.
 
-### 11.1 Logging
+### 12.1 Logging
 
 We use Winston for logging in the backend. The logging system is configured to log messages at different levels (info, warn, error) and to output logs in JSON format for easy parsing and analysis:
 
@@ -717,7 +766,7 @@ We use Winston for logging in the backend. The logging system is configured to l
   - Message
   - Additional metadata (e.g., request ID, user ID, etc.)
 
-### 11.2 Monitoring
+### 12.2 Monitoring
 
 - We use Prometheus to collect metrics from the application, including:
 
@@ -737,7 +786,7 @@ We use Winston for logging in the backend. The logging system is configured to l
     - `database_query_duration_seconds`: Duration of database queries in seconds
     - And more…
 
-### 11.3 Visualization
+### 12.3 Visualization
 
 - We use `express-status-monitor` to expose a `/status` endpoint to visualize the application’s health and performance metrics.
 - We also use Grafana to create dashboards for monitoring key metrics over time.
@@ -751,7 +800,7 @@ We use Winston for logging in the backend. The logging system is configured to l
 
 ---
 
-## 12. Appendices
+## 13. Appendices
 
 Additional resources, diagrams, and references for developers and data scientists who are interested working on EstateWise.
 
@@ -872,7 +921,7 @@ sequenceDiagram
     participant Agent as runEstateWiseAgent
     participant DecisionAI as Decision Model
     participant Pinecone
-    participant Experts as MoE Pipeline
+    participant Experts as MoE Pipeline & Chain-of-Thought
     participant Gemini as Gemini Models
 
     User->>UI: sendMessage()
