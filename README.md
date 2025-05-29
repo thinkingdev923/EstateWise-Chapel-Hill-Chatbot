@@ -4,7 +4,7 @@
 animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone
 (kNN & cosine similarity), k‑Means clustering, Chain-of-Thought (CoT), and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
 
-> Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
+> Built by Rikhil Fellner, Muskaan Joshi, [David Nguyen](https://github.com/hoangsonww), Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
 
 ## Table of Contents
 
