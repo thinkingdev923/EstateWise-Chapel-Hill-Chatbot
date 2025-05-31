@@ -250,6 +250,9 @@ async function processFileStreaming(
   });
 }
 
+/**
+ * Main function to read all property files and upsert them to Pinecone.
+ */
 async function upsertPropertiesToPinecone() {
   try {
     const files = [

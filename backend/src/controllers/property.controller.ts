@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { queryProperties } from "../scripts/queryProperties";
 
+/**
+ * Represents a property listing with relevant metadata.
+ */
 export interface Listing {
   id: string;
   score: number;
