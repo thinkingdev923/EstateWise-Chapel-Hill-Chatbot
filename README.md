@@ -42,9 +42,9 @@ animations and optional sign‑in to save your conversation history. Under the h
 
 Visit the live app on **Vercel** at **[https://estatewise.vercel.app/](https://estatewise.vercel.app/)** and explore the intelligent estate assistant!
 
-The backend API is also available at: [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
+The backend API is also available **[here](https://estatewise-backend.vercel.app/).**
 
-Feel free to use the app as a guest or sign up for an account to save your conversations!
+_Feel free to use the app as a guest or sign up for an account to save your conversations!_
 
 ### Key Technologies Used
 
@@ -170,6 +170,8 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
 - **Swagger API Documentation:** Automatically generated API documentation for easy reference and testing.
 - **Docker:** Containerization for easy deployment and scalability.
 - **OpenAPI Specification:** An OpenAPI specification file (`openapi.yaml`) is included in the root directory. You can use Swagger UI or Postman to explore and test the API endpoints.
+- **Prometheus Monitoring:** Collects and visualizes metrics for performance monitoring.
+- **GitHub Actions:** CI/CD pipeline for automated testing and deployment.
 - and more...
 
 ### Frontend
@@ -179,6 +181,9 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
 - **Framer Motion:** Provides smooth animations and transitions throughout the user experience.
 - **Dark Mode/Light Mode:** Users can toggle themes with seamless background color transitions.
 - **Chart.js:** For interactive data visualizations and graphs.
+- **Tailwind CSS:** Utility-first CSS framework for rapid UI development.
+- **Responsive Design:** Optimized for desktop, tablet, and mobile devices.
+- **API Integration:** Communicates with the backend API for chat functionality, user authentication, and conversation management.
 - and more...
 
 ### High-Level Architecture Flow Diagrams
@@ -367,17 +372,19 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 ## Deployment
 
 - **Backend:** Deploy your backend on your chosen platform (Heroku, Vercel, AWS, etc.) and ensure environment variables are properly set.
-  - Currently, the backend is deployed on Vercel at [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
+  - Currently, our backend & AI/ML APIs are deployed on Vercel & AWS at [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/).
 - **Frontend:** Deploy the React/Next.js frontend using services like Vercel or Netlify. Update any API endpoints if necessary.
-  - Currently, the frontend is deployed on Vercel at [https://estatewise.vercel.app/](https://estatewise.vercel.app/).
+  - Currently, our frontend is deployed on Vercel at [https://estatewise.vercel.app/](https://estatewise.vercel.app/).
 - **Database:** Ensure your MongoDB instance is accessible from your deployed backend. You can use services like MongoDB Atlas for cloud hosting.
   - Currently, we are using MongoDB Atlas for the database. It is a cloud-hosted MongoDB service that provides a fully managed database solution.
 - **Pinecone:** Ensure your Pinecone instance is accessible from your deployed backend. You can use the Pinecone CLI or API to manage your index and data.
   - Currently, we are using Pinecone for vector storage and retrieval. It is a cloud-hosted vector database that provides a fully managed solution for storing and retrieving vectors.
 
+![AWS](https://img.shields.io/badge/Deployed%20on%20AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Deployed%20on%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![MongoDB Atlas](https://img.shields.io/badge/Using%20MongoDB%20Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
 ![Pinecone](https://img.shields.io/badge/Using%20Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/CI/CD%20with%20GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
 ## Usage
 
@@ -542,7 +549,7 @@ This script automates the deployment process to AWS, including building the Dock
 
 Our stack:
 
-- **AWS ECS (with Fargate):** For running the backend server.
+- **AWS ECS (with Fargate):** For running the backend server & AI/ML APIs.
   - Backup: **Vercel**.
 - **AWS ECR:** For storing Docker images.
   - Backup: **GitHub Container Registry**.
@@ -607,6 +614,9 @@ An OpenAPI specification file (`openapi.yaml`) is included in the root directory
 - **Vercel Infrastructure Limitations:** The current Vercel infrastructure has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different hosting solution for the backend in the future.
   - Additionally, it imposes a limit of 60 seconds to process API requests, which may not be sufficient for some complex queries. Thus, it may cause timeouts for some requests.
   - The user will be notified if the request times out, and the user will be prompted to try again later.
+- **AWS Limitation:** Although AWS was used to address the Vercel infrastructure limitations, it has its own set of limitations, such as the number of requests and the amount of data that can be processed.
+  - Also, the billing for AWS services can be complex and may lead to unexpected costs if not monitored carefully.
+  - Thus, we are limiting the number of requests and the amount of data that can be processed by the backend API to avoid unexpected costs.
 - **Gemini API Limitations:** The current Gemini API has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different AI solution in the future.
   - Also, Google imposes rate limits on the number of requests that can be made to the Gemini API. If the rate limit is exceeded, the user will be notified and prompted to try again later.
 
