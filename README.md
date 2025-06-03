@@ -28,6 +28,7 @@ animations and optional sign‑in to save your conversation history. Under the h
   - [Chat](#chat)
   - [Swagger API Documentation](#swagger-api-documentation)
 - [Project Structure](#project-structure)
+- [AWS Deployment](#aws-deployment)
 - [Dockerization](#dockerization)
 - [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
 - [OpenAPI Specification](#openapi-specification)
@@ -60,6 +61,7 @@ Feel free to use the app as a guest or sign up for an account to save your conve
 ![Pinecone](https://img.shields.io/badge/Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
 ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)
+![Amazon Web Services](https://img.shields.io/badge/Amazon%20Web%20Services-124568?style=for-the-badge&logo=amazonwebservices&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6512D?style=for-the-badge&logo=prometheus&logoColor=white)
@@ -501,6 +503,9 @@ Live API documentation is available at: [https://estatewise-backend.vercel.app/a
 
 ```plaintext
 EstateWise/
+├── aws/                      # AWS deployment scripts
+│   ├── deploy.sh             # Script to deploy the backend to AWS
+│   └── ... (other AWS config files, Dockerfiles, etc.)
 ├── frontend/                 # Frontend Next.js application
 │   ├── public/               # Static assets (images, icons, etc.)
 │   ├── components/           # Reusable UI components
@@ -509,7 +514,7 @@ EstateWise/
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── ... (other config files, etc.)
-├── server/                   # Backend Express application
+├── backend/                   # Backend Express application
 │   ├── src/
 │   │   ├── controllers/      # API controllers and endpoints
 │   │   ├── models/           # Mongoose models
@@ -519,15 +524,36 @@ EstateWise/
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── ... (other config files, etc.)
+├── shell/                    # Shell scripts for deployment and setup
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
 ├── docker-compose.yml        # Docker configuration for backend and frontend
-├── Dockerfile                # Dockerfile for backend
+├── Dockerfile                # Dockerfile for application
 ├── openapi.yaml              # OpenAPI specification for API documentation
 ├── EDA-CLI-Chatbot.ipynb        # Jupyter notebook for CLI chatbot
 ├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
 └── ... (other config files, etc.)
 ```
+
+## AWS Deployment
+
+To deploy the backend to AWS, you can use the provided `deploy.sh` script in the `aws/` directory.
+This script automates the deployment process to AWS, including building the Docker image, pushing it to AWS ECR, and deploying it to AWS ECS.
+
+Our stack:
+
+- **AWS ECS (with Fargate):** For running the backend server.
+  - Backup: **Vercel**.
+- **AWS ECR:** For storing Docker images.
+  - Backup: **GitHub Container Registry**.
+- **AWS S3:** For static file storage.
+  - Backup: **Supabase Storage**.
+- **MongoDB Atlas:** For database hosting.
+- **Pinecone:** For vector storage and retrieval.
+- **Vercel:** For hosting the frontend application.
+  - **Backup:** **Netlify**.
+
+Feel free to use the provided `deploy.sh` script to deploy the backend to AWS. You can also modify the script to suit your needs.
 
 ## Dockerization
 

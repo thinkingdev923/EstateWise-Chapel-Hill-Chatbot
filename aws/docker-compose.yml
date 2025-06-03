@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  # ------------------------------------------------------------------------
+  # 1) documentdb-local (for local dev/testing)
+  #
+  #    Amazon provides an “DocumentDB Local” Docker image that implements
+  #    most MongoDB 4.0+ wire protocol features so the backend can connect
+  #    exactly as it would to a hosted DocumentDB cluster. In AWS, our
+  #    ECS deploy script creates a real DocumentDB cluster; this service
+  #    is only for local testing.
+  # ------------------------------------------------------------------------
+  documentdb:
+    image: amazon/documentdb-local:latest
+    container_name: documentdb-local
+    ports:
+      - "27017:27017"
+    environment:
+      - JVM_MEM_OPTS=-Xms512m -Xmx1024m
+    # Volume to persist local data if desired (optional)
+    volumes:
+      - documentdb_data:/data/db
+    networks:
+      - estatewise-net
+
+  # ------------------------------------------------------------------------
+  # 2) backend service
+  #
+  #    Builds from the “backend” stage in aws/Dockerfile. We pass
+  #    environment variables needed for JWT, Google AI, Pinecone, etc.
+  # ------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: backend
+    container_name: estatewise-backend
+    depends_on:
+      - documentdb
+    ports:
+      - "3001:3001"
+    environment:
+      # Make sure the backend sees a MongoURI pointing at our local DocumentDB
+      MONGO_URI: mongodb://docdb_local_user:docdb_local_pass@documentdb:27017/estatewise?ssl=false
+      JWT_SECRET: your_jwt_secret_here
+      GOOGLE_AI_API_KEY: your_google_ai_key_here
+      PINECONE_API_KEY: your_pinecone_key_here
+      PINECONE_INDEX: estatewise-index
+    networks:
+      - estatewise-net
+
+  # ------------------------------------------------------------------------
+  # 3) frontend service
+  #
+  #    Builds from the “frontend” stage in aws/Dockerfile. Set
+  #    NEXT_PUBLIC_API_BASE_URL so Next.js will call the backend at /api.
+  # ------------------------------------------------------------------------
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: frontend
+    container_name: estatewise-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://localhost:3001/api
+    networks:
+      - estatewise-net
+
+# --------------------------------------------------------------------------
+# Volumes & Networks
+# --------------------------------------------------------------------------
+volumes:
+  documentdb_data:
+
+networks:
+  estatewise-net:
+    driver: bridge
