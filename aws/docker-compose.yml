@@ -1,5 +1,11 @@
 version: '3.8'
 
+# IMPORTANT: Fill in the environment variables below with your actual values,
+# and the credentials for your MongoDB URI, JWT secret, Google AI API key,
+# and Pinecone API key. These are essential for the backend to function correctly
+# in both local development and production environments. Mine are not included
+# here for security reasons, so you must provide your own.
+
 services:
   # ------------------------------------------------------------------------
   # 1) documentdb-local (for local dev/testing)
@@ -41,7 +47,7 @@ services:
       - "3001:3001"
     environment:
       # Make sure the backend sees a MongoURI pointing at our local DocumentDB
-      MONGO_URI: mongodb://docdb_local_user:docdb_local_pass@documentdb:27017/estatewise?ssl=false
+      MONGO_URI: your_mongo_uri_here
       JWT_SECRET: your_jwt_secret_here
       GOOGLE_AI_API_KEY: your_google_ai_key_here
       PINECONE_API_KEY: your_pinecone_key_here
