@@ -1,0 +1,43 @@
+steps:
+  # 1. Build container
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'build',
+        '-t',
+        'us-east1-docker.pkg.dev/$PROJECT_ID/estatewise/backend:$COMMIT_SHA',
+        '-f',
+        'backend/Dockerfile',
+        '.',
+      ]
+
+  # 2. Push to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      [
+        'push',
+        'us-east1-docker.pkg.dev/$PROJECT_ID/estatewise/backend:$COMMIT_SHA',
+      ]
+
+  # 3. Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        gcloud run deploy estatewise-backend \
+          --image us-east1-docker.pkg.dev/$PROJECT_ID/estatewise/backend:$COMMIT_SHA \
+          --region us-east1 \
+          --platform managed \
+          --allow-unauthenticated \
+          --set-env-vars MONGO_URI=${_MONGO_URI},PINECONE_API_KEY=${_PINECONE_API_KEY},GOOGLE_AI_API_KEY=${_GOOGLE_AI_API_KEY}
+
+images:
+  - 'us-east1-docker.pkg.dev/$PROJECT_ID/estatewise/backend:$COMMIT_SHA'
+
+substitutions:
+  _MONGO_URI: 'projects/$PROJECT_ID/secrets/MONGO_URI:latest'
+  _PINECONE_API_KEY: 'projects/$PROJECT_ID/secrets/PINECONE_API_KEY:latest'
+  _GOOGLE_AI_API_KEY: 'projects/$PROJECT_ID/secrets/GOOGLE_AI_API_KEY:latest'
+
+timeout: '1200s'

@@ -1,0 +1,16 @@
+resources:
+  - name: estatewise-assets
+    type: storage.v1.bucket
+    properties:
+      location: US-EAST1
+      storageClass: STANDARD
+      iamConfiguration:
+        uniformBucketLevelAccess:
+          enabled: true
+      website:
+        mainPageSuffix: index.html
+        notFoundPage: 404.html
+
+outputs:
+  - name: bucketUrl
+    value: gs://$(ref.estatewise-assets.name)
