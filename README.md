@@ -29,7 +29,6 @@ animations and optional sign‑in to save your conversation history. Under the h
   - [Chat](#chat)
   - [Swagger API Documentation](#swagger-api-documentation)
 - [Project Structure](#project-structure)
-- [Deployment](#deployment)
 - [Dockerization](#dockerization)
 - [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
 - [OpenAPI Specification](#openapi-specification)
@@ -580,26 +579,6 @@ EstateWise/
 └── ... (other config files, etc.)
 ```
 
-## Deployment
-
-To deploy the backend to AWS, you can use the provided `deploy.sh` script in the `aws/` directory.
-This script automates the deployment process to AWS, including building the Docker image, pushing it to AWS ECR, and deploying it to AWS ECS.
-
-Our stack:
-
-- **AWS ECS (with Fargate):** For running the backend server & AI/ML APIs.
-  - Backup: **Vercel**.
-- **AWS ECR:** For storing Docker images.
-  - Backup: **GitHub Container Registry**.
-- **AWS S3:** For static file storage.
-  - Backup: **Supabase Storage**.
-- **MongoDB Atlas:** For database hosting.
-- **Pinecone:** For vector storage and retrieval.
-- **Vercel:** For hosting the frontend application.
-  - **Backup:** **Netlify**.
-
-Feel free to use the provided `deploy.sh` script to deploy the backend to AWS. You can also modify the script to suit your needs.
-
 ## Dockerization
 
 To run the application **(OPTIONAL)** using Docker:
@@ -679,8 +658,6 @@ This project is licensed under the [MIT License](LICENSE).
 ## Contact
 
 For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository.
-
-## Team Members
 
 ## Acknowledgments
 
