@@ -1,0 +1,34 @@
+resources:
+  - name: estatewise-vpc
+    type: compute.v1.network
+    properties:
+      autoCreateSubnetworks: false
+
+  - name: public-subnet-a
+    type: compute.v1.subnetwork
+    properties:
+      ipCidrRange: 10.10.1.0/24
+      region: us-east1
+      network: $(ref.estatewise-vpc.selfLink)
+      privateIpGoogleAccess: true
+
+  - name: public-subnet-b
+    type: compute.v1.subnetwork
+    properties:
+      ipCidrRange: 10.10.2.0/24
+      region: us-east1
+      network: $(ref.estatewise-vpc.selfLink)
+      privateIpGoogleAccess: true
+
+  - name: estatewise-igw
+    type: compute.v1.router
+    properties:
+      network: $(ref.estatewise-vpc.selfLink)
+
+outputs:
+  - name: network
+    value: $(ref.estatewise-vpc.selfLink)
+  - name: subnets
+    value:
+      - $(ref.public-subnet-a.selfLink)
+      - $(ref.public-subnet-b.selfLink)

@@ -1,0 +1,26 @@
+resources:
+  - name: estatewise-backend
+    type: gcp-types/run-v1:projects.locations.services
+    properties:
+      parent: projects/$(projectId)/locations/us-east1
+      serviceAccount: $(ref.estatewise-run-sa.email)
+      metadata:
+        name: estatewise-backend
+      spec:
+        template:
+          spec:
+            containers:
+              - image: us-east1-docker.pkg.dev/$(projectId)/estatewise/backend:latest
+                env:
+                  - name: NODE_ENV
+                    value: production
+                ports:
+                  - containerPort: 3001
+            containerConcurrency: 80
+            vpcAccess:
+              connector: projects/$(projectId)/locations/us-east1/connectors/estatewise-connector
+              egress: ALL_TRAFFIC
+            serviceAccountName: $(ref.estatewise-run-sa.email)
+        traffic:
+          - percent: 100
+            latestRevision: true

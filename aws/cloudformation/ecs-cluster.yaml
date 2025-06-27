@@ -1,0 +1,13 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: ECS Cluster for EstateWise
+
+Resources:
+  EstateWiseCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: estatewise-cluster
+
+Outputs:
+  ClusterName:
+    Description: ECS Cluster Name
+    Value: !Ref EstateWiseCluster

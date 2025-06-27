@@ -1,0 +1,28 @@
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+      docker: 20
+    commands:
+      - echo Logging in to Amazon ECR...
+      - $(aws ecr get-login --no-include-email --region $AWS_DEFAULT_REGION)
+  pre_build:
+    commands:
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - REPOSITORY_URI=123456789012.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com/estatewise-backend
+  build:
+    commands:
+      - echo Build started at `date`
+      - docker build -t $REPOSITORY_URI:$IMAGE_TAG -f backend/Dockerfile .
+  post_build:
+    commands:
+      - echo Build completed at `date`
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - printf '[{"name":"backend","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+
+artifacts:
+  files:
+    - imagedefinitions.json
