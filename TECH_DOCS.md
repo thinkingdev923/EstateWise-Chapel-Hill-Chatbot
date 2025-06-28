@@ -1,4 +1,4 @@
-# EstateWise: AI‑Powered Real Estate Assistant for Chapel Hill, NC - Technical Documentation
+# EstateWise: AI‑Powered Real Estate Assistant for Chapel Hill, NC - AI/ML/Infrastructure Technical Documentation
 
 EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC and surrounding areas. This document provides a deep dive into every component—from raw data ingestion to AI orchestration, delivery via a React/Next.js front‑end, and end‑to‑end deployment.
 

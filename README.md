@@ -160,7 +160,7 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - Explore `EDA-CLI-Chatbot.ipynb` in the repo root for a more detailed and comprehensive analysis of the data, as well as a CLI version of our chatbot.
 
 > [!IMPORTANT]
-> Please note that the deployed version of the app is subject to Vercel's infrastructure limitations, which may affect the performance and availability of the app. You are encouraged to run the app locally for the best experience.
+> Please note that the deployed version of the app is subject to our infrastructure limitations, which may affect the performance and availability of the app. You are encouraged to run the app locally for the best experience.
 
 ## Architecture
 
@@ -369,7 +369,7 @@ Below is a high-level diagram that illustrates the flow of the application, incl
    The frontend should be running at [http://localhost:3000](http://localhost:3000).
 
 4. **Change API URL:**  
-   If your backend is running on a different port or domain, update the API URL in the frontend code (simply CTRL + F or CMD + F and search for `https://estatewise-backend.vercel.app` in all frontend files, then replace it with your backend URL - by default it is `http://localhost:3001`).
+   If your backend is running on a different port or domain, update the API URL in the frontend code (simply CTRL + F or CMD + F and search for our official backend API URL in all frontend files, then replace it with your backend URL - by default it is `http://localhost:3001`).
 
 5. **View and Interact with the App:**  
    Open your browser and navigate to [http://localhost:3000](http://localhost:3000) to view the app. You can interact with the chatbot, sign up, log in, and explore the features.
@@ -378,6 +378,8 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 > As you develop, before committing, we recommend running the linter and formatter to ensure code quality with `npm run format`. This will format your code according to the project's ESLint and Prettier configurations.
 
 ## Deployment
+
+Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks (AWS, GCP, Terraform, Vercel, and more)! Below are its specifics:
 
 - **Infrastructure as Code (IaC)**
 
@@ -609,9 +611,9 @@ Metrics collected & visualized include:
 - Status codes
 - Response times
 
-To view live server metrics, go to `https://estatewise-backend.vercel.app/metrics` in your browser. This will show you the raw metrics collected by Prometheus. If you are running the app locally, you can go to `http://localhost:3001/metrics` in your browser.
+To view our live server metrics, go to [this link](https://estatewise-backend.vercel.app/metrics) in your browser. This will show you the raw metrics of our server collected by Prometheus. If you are running the app locally, you can go to `http://localhost:3001/metrics` in your browser.
 
-To view live server data, go to `https://estatewise-backend.vercel.app/status` in your browser. If you are running the app locally, you can go to `http://localhost:3001/status` in your browser.
+To view our live server data, go to [this URL](https://estatewise-backend.vercel.app/status) in your browser. If you are running the app locally, you can go to `http://localhost:3001/status` in your browser.
 
 <p align="center">
   <img src="img/prometheus.png" alt="Prometheus Monitoring" width="100%" style="border-radius: 8px" />
@@ -632,7 +634,7 @@ An OpenAPI specification file (`openapi.yaml`) is included in the root directory
 - **Vercel Infrastructure Limitations:** The current Vercel infrastructure has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different hosting solution for the backend in the future.
   - Additionally, it imposes a limit of 60 seconds to process API requests, which may not be sufficient for some complex queries. Thus, it may cause timeouts for some requests.
   - The user will be notified if the request times out, and the user will be prompted to try again later.
-- **AWS Limitation:** Although AWS was used to address the Vercel infrastructure limitations, it has its own set of limitations, such as the number of requests and the amount of data that can be processed.
+- **AWS Limitation:** Although AWS was used to address the Vercel infrastructure limitations, it has its own set of limitations, such as the number of requests and the amount of data that can be processed (we intentionally limited our resources because we do NOT want our wallet to explode...)
   - Also, the billing for AWS services can be complex and may lead to unexpected costs if not monitored carefully.
   - Thus, we are limiting the number of requests and the amount of data that can be processed by the backend API to avoid unexpected costs.
 - **Gemini API Limitations:** The current Gemini API has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different AI solution in the future.
