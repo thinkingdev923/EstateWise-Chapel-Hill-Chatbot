@@ -1,11 +1,19 @@
 # EstateWise – Your Intelligent Estate Assistant 🏡
 
-**EstateWise** is a full‑stack, monorepo AI chatbot built for Chapel Hill, NC and the surrounding areas, featuring a sleek, responsive UI with smooth
-animations and optional sign‑in to save your conversation history. Under the hood it leverages agentic AI, Retrieval‑Augmented Generation with Pinecone
-(kNN & cosine similarity), k‑Means clustering, Chain-of-Thought (CoT), and a Mixture‑of‑Experts ensemble to deliver fast, hyper‑personalized property recommendations based on your preferences. 📲
+**EstateWise** is a **full‑stack, monorepo AI/ML** **chatbot & data analytics project** built for real estates in _Chapel Hill, NC_ and the surrounding areas,
+featuring a sleek, responsive UI with smart, agentic AI capabilities powered by comprehensive data analysis and advanced machine learning techniques to help you find your dream home! 🏠✨
+
+Under the hood, it leverages **agentic AI, Retrieval‑Augmented Generation (RAG) with Pinecone (kNN & cosine similarity), k‑Means clustering, Chain-of-Thought (CoT),
+Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver _fast,_ _hyper‑personalized_ property recommendations based on your preferences! 📲🧠
+
+<p align="center">
+  <a href="https://estatewise.vercel.app/">
+    <img src="img/logo.png" alt="EstateWise Logo" width="25%" style="border-radius: 8px" />
+  </a>
+</p>
 
 > [!NOTE]
-> Built by Rikhil Fellner, Muskaan Joshi, [David Nguyen](https://github.com/hoangsonww), Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
+> Built by Rikhil Fellner, Muskaan Joshi, [David Nguyen](https://github.com/hoangsonww), Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill. **© EstateWise Team, 2025.**
 
 ## Table of Contents
 
