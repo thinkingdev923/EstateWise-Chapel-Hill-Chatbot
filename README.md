@@ -8,7 +8,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 
 <p align="center">
   <a href="https://estatewise.vercel.app/">
-    <img src="img/logo.png" alt="EstateWise Logo" width="25%" style="border-radius: 8px" />
+    <img src="img/logo.png" alt="EstateWise Logo" width="35%" style="border-radius: 8px" />
   </a>
 </p>
 
