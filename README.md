@@ -666,6 +666,9 @@ Contributions are welcome! Follow these steps:
 
 This project is licensed under the [MIT License](LICENSE).
 
+> [!CAUTION]
+> This project is provided for educational purposes only. Any use, including non-commercial or academic, must include proper attribution to the original creators. Unauthorized redistribution or commercial use without explicit permission is strictly prohibited.
+
 ## Contact
 
 For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository.
