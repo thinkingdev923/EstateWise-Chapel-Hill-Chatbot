@@ -13,7 +13,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 </p>
 
 > [!NOTE]
-> Built by Rikhil Fellner, Muskaan Joshi, [David Nguyen](https://github.com/hoangsonww), Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill. **© EstateWise Team, 2025.**
+> Built by [David Nguyen](https://sonnguyenhoang.com), Rikhil Fellner, Muskaan Joshi, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill. **© EstateWise Team, 2025.**
 
 ## Table of Contents
 
@@ -48,9 +48,9 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 
 ## Live App
 
-Visit the live app on **Vercel** at **[https://estatewise.vercel.app/](https://estatewise.vercel.app/)** and explore the intelligent estate assistant!
+Visit the live app on **Vercel** at **[https://estatewise.vercel.app](https://estatewise.vercel.app/)** and explore the intelligent estate assistant!
 
-The backend API is also available **[here](https://estatewise-backend.vercel.app/).**
+The backend API & its documentation are also available **[here](https://estatewise-backend.vercel.app/).**
 
 _Feel free to use the app as a guest or sign up for an account to save your conversations!_
 
@@ -666,9 +666,12 @@ Contributions are welcome! Follow these steps:
 
 This project is licensed under the [MIT License](LICENSE).
 
+> [!CAUTION]
+> This project is provided for educational purposes only. Any use, including non-commercial or academic, must include proper attribution to the original creators. Unauthorized redistribution or commercial use without explicit permission is strictly prohibited.
+
 ## Contact
 
-For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository.
+For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository [here](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues). You're also welcome to join our ongoing discussions [at this link](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/discussions).
 
 ## Acknowledgments
 
