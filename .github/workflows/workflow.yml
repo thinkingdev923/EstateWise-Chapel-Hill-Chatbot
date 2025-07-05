@@ -30,50 +30,62 @@ jobs:
   # ────────────────────────────────────────────────────────────────
   backend-tests:
     name: "🐘 Backend Tests"
-    needs: lint-format
+    needs: [lint-format]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: backend } }
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npm test -- --runInBand
 
   frontend-jest-tests:
     name: "🧪 Frontend Unit (Jest)"
-    needs: lint-format
+    needs: [lint-format]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend } }
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npm test
 
   frontend-cypress-tests:
     name: "⚙️ Cypress E2E"
-    needs: lint-format
+    needs: [lint-format]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend } }
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npx cypress install
       - run: npx cypress run
 
   frontend-selenium-tests:
     name: "🕸️ Selenium E2E"
-    needs: lint-format
+    needs: [lint-format]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend } }
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: xvfb-run -a npm run test:selenium
 
@@ -82,31 +94,41 @@ jobs:
   # ────────────────────────────────────────────────────────────────
   backend-coverage:
     name: "📊 Backend Coverage"
-    needs: backend-tests
+    needs: [backend-tests]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: backend } }
+    defaults:
+      run:
+        working-directory: backend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npm run test:coverage
       - uses: actions/upload-artifact@v4
-        with: { name: backend-coverage, path: backend/coverage }
+        with:
+          name: backend-coverage
+          path: backend/coverage
 
   frontend-coverage:
     name: "📊 Frontend Coverage"
-    needs: frontend-jest-tests
+    needs: [frontend-jest-tests]
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: frontend } }
+    defaults:
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npm run test:coverage
       - uses: actions/upload-artifact@v4
-        with: { name: frontend-coverage, path: frontend/coverage }
+        with:
+          name: frontend-coverage
+          path: frontend/coverage
 
   # ────────────────────────────────────────────────────────────────
   #  🏗️ Build (stage 4)                                             #
@@ -118,37 +140,49 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: |
           cd backend
           npm ci --legacy-peer-deps
           npm run build
       - uses: actions/upload-artifact@v4
-        with: { name: backend-dist, path: backend/dist }
+        with:
+          name: backend-dist
+          path: backend/dist
 
   frontend-build:
     name: "🏗️ Frontend Build"
-    needs: [frontend-jest-tests, frontend-cypress-tests, frontend-selenium-tests, frontend-coverage]
+    needs:
+      - frontend-jest-tests
+      - frontend-cypress-tests
+      - frontend-selenium-tests
+      - frontend-coverage
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: ${{ env.NODE_VERSION }} }
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - run: |
           cd frontend
           npm ci --legacy-peer-deps
           npm run build
       - uses: actions/upload-artifact@v4
-        with: { name: frontend-next, path: frontend/.next }
+        with:
+          name: frontend-next
+          path: frontend/.next
 
   # ────────────────────────────────────────────────────────────────
   #  🐳 GHCR Docker (stage 5)                                        #
   # ────────────────────────────────────────────────────────────────
   docker-backend:
     name: "🐳 Backend → GHCR"
-    needs: backend-build
+    needs: [backend-build]
     runs-on: ubuntu-latest
-    permissions: { contents: read, packages: write }
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
@@ -167,9 +201,11 @@ jobs:
 
   docker-frontend:
     name: "🐳 Frontend → GHCR"
-    needs: frontend-build
+    needs: [frontend-build]
     runs-on: ubuntu-latest
-    permissions: { contents: read, packages: write }
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
       - uses: docker/login-action@v3
