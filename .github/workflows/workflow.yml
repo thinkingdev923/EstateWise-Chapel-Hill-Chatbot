@@ -55,7 +55,7 @@ jobs:
   #  🧹 2. Root Lint & Format                                        #
   # ────────────────────────────────────────────────────────────────
   lint-format:
-    name: "🧹 Lint & Format (root)"
+    name: "🧹 Lint & Format (Entire Workspace)"
     needs: [preflight]
     runs-on: ubuntu-latest
     steps:
