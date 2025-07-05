@@ -290,20 +290,29 @@ jobs:
       - frontend-selenium-tests
       - frontend-coverage
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-      - run: |
+
+      - name: Install & Build
+        run: |
           cd frontend
           export TSC_COMPILE_ON_ERROR=true
           npm ci --legacy-peer-deps
-          npm run build || true
-      - uses: actions/upload-artifact@v4
+          npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
         with:
           name: frontend-next
-          path: frontend/.next
+          path: |
+            frontend/.next/**
+            frontend/public/**
+            frontend/next.config.js
 
   # ────────────────────────────────────────────────────────────────
   #  🐳 6. GHCR Docker                                            #
