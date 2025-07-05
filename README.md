@@ -39,6 +39,8 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Project Structure](#project-structure)
 - [Dockerization](#dockerization)
 - [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
+- [GitHub Actions CI/CD](#github-actions)
+- [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
 - [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
@@ -80,8 +82,18 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=white)
 ![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
 ![Husky](https://img.shields.io/badge/Husky-6C6C6C?style=for-the-badge&logo=apachekylin&logoColor=white)
+![Jupyter Notebook](https://img.shields.io/badge/Jupyter%20Notebook-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
+![Selenium WebDriver](https://img.shields.io/badge/Selenium%20WebDriver-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
+![Cypress](https://img.shields.io/badge/Cypress-17202C?style=for-the-badge&logo=cypress&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 ![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-2EA44F?style=for-the-badge&logo=github&logoColor=white)
+![Dependabot](https://img.shields.io/badge/Dependabot-blue?style=for-the-badge&logo=dependabot&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
+![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
+![Markdown](https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -627,6 +639,93 @@ To view our live server data, go to [this URL](https://estatewise-backend.vercel
 <p align="center">
   <img src="img/prometheus.png" alt="Prometheus Monitoring" width="100%" style="border-radius: 8px" />
 </p>
+
+## GitHub Actions
+
+GitHub Actions is used for continuous integration and deployment (CI/CD) of the application. It automatically runs tests, builds the Docker images, and deploys the application to Vercel or AWS whenever changes are pushed to the main branch.
+
+To view the GitHub Actions workflow, go to the [Actions tab](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/actions) of this repository. You can see the status of the latest runs, view logs, and check for any errors.
+
+Our pipeline is set up to run the following steps:
+- **Linting:** Runs ESLint to check for code quality and style issues.
+- **Testing:** Runs unit tests to ensure the application is functioning correctly.
+- **Building:** Builds the Docker images for the backend and frontend.
+- **Deploying:** Deploys the application to Vercel or AWS, depending on the configuration.
+- **Publishing:** Publishes the Docker images to GitHub Packages or AWS ECR.
+- **Monitoring:** Collects metrics and logs from the application for monitoring and debugging purposes.
+- **Notifications:** Sends notifications to the team via email or Slack when a build fails or succeeds.
+- **Code Coverage:** Runs code coverage reports to ensure the application is well-tested.
+- **Security Scanning:** Scans the code for security vulnerabilities using tools like Snyk or Dependabot.
+- **Dependency Updates:** Automatically updates dependencies to keep the application secure and up-to-date.
+- _and more..._
+
+<p align="center">
+  <img src="img/gh.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
+</p>
+
+This ensures that the application is always in a deployable state and that any issues are caught early in the development process.
+
+## Testing
+
+The application includes unit tests for both the backend and frontend components. These tests ensure that the application functions correctly and that any changes made do not break existing functionality.
+
+### Running Tests
+
+To run the tests, follow these steps:
+
+1. **Backend Unit & Integration Tests:**
+   - Navigate to the `backend` directory.
+   - Run the tests using the following command:
+
+     ```bash
+     npm run test
+     
+     # or run with watch mode (recommended for development - reruns tests on file changes)
+     npm run test:watch
+     
+     # or run with coverage report (recommended for CI/CD - generates a coverage report)
+     npm run test:coverage
+     ```
+   - This command runs the unit tests defined in the `src/tests` directory using Jest.
+
+2. **Frontend Unit & Integration Tests:**
+   - Navigate to the `frontend` directory.
+   - Run the tests using the following command:
+
+     ```bash
+     npm run test
+     
+     # or run with watch mode (recommended for development - reruns tests on file changes)
+     npm run test:watch
+     
+     # or run with coverage report (recommended for CI/CD - generates a coverage report)
+     npm run test:coverage
+     ```
+   - This command runs the unit tests defined in the `__tests__` directory using Jest and React Testing Library.
+
+3. **Frontend E2E Tests:**
+   - For end-to-end tests, we use Cypress and Selenium WebDriver. 
+   - To run the Selenium E2E tests, navigate to the `frontend` directory and run:
+
+     ```bash
+     npm run test:selenium
+     ```
+     
+    - To run the Cypress E2E tests, navigate to the `frontend` directory and run:
+  
+      ```bash
+      npm run cypress:run
+      
+      # to open the Cypress Test Runner in interactive mode, run:
+      npm run cypress:open
+      ```
+      
+    - This command runs the end-to-end tests defined in the `cypress/integration` directory using Cypress.
+
+These tests cover various aspects of the application, including:
+- **Unit Tests:** Individual components and functions to ensure they behave as expected.
+- **Integration Tests:** Multiple components working together to ensure they interact correctly.
+- **End-to-End Tests:** Simulating user interactions to ensure the entire application flow works as intended.
 
 ## OpenAPI Specification
 

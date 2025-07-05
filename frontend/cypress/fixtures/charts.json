@@ -1,0 +1,25 @@
+{
+  "charts": {
+    "homeType": {
+      "type": "polarArea",
+      "data": {
+        "labels": ["Single Family", "Townhouse", "Condo"],
+        "datasets": [{ "data": [12, 5, 7] }]
+      }
+    },
+    "bedrooms": {
+      "type": "bar",
+      "data": {
+        "labels": ["1", "2", "3", "4", "5"],
+        "datasets": [{ "data": [2, 8, 15, 4, 1] }]
+      }
+    },
+    "priceDist": {
+      "type": "line",
+      "data": {
+        "labels": ["$200k", "$400k", "$600k", "$800k", "$1M+"],
+        "datasets": [{ "data": [1, 4, 6, 3, 1] }]
+      }
+    }
+  }
+}
