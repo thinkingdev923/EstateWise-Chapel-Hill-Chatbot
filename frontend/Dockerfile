@@ -29,9 +29,7 @@ RUN npm install --production
 # Copy the built Next.js output and any public assets from the builder stage
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-
-# Optionally copy other necessary files (e.g., next.config.js)
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/next.config.ts ./
 
 # Expose the port that the Next.js app uses (default is 3000)
 EXPOSE 3000
