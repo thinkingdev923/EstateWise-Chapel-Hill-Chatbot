@@ -30,7 +30,8 @@
     "frontend": "cd frontend && npm run dev",
     "backend": "cd backend && npm start",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
-    "store": "cd server && ts-node src/scripts/storeKnowledge.ts"
+    "lint": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
+    "store": "cd backend && ts-node src/scripts/upsertProperties.ts"
   },
   "dependencies": {
     "prettier": "^3.4.2"

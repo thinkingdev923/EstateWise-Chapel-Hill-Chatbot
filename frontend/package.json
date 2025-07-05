@@ -27,7 +27,13 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\""
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:selenium": "mocha --timeout 30000 \"selenium/**/*.spec.js\"",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.4",
@@ -75,14 +81,22 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/jest": "^30.0.0",
     "@types/js-cookie": "^3.0.6",
-    "@types/node": "^20",
+    "@types/node": "^20.19.4",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/react-slick": "^0.23.13",
+    "chai": "^5.2.0",
+    "chromedriver": "^138.0.1",
+    "cypress": "^14.5.1",
     "eslint": "^9",
     "eslint-config-next": "15.3.0",
+    "jest": "^30.0.4",
+    "mocha": "^11.7.1",
+    "selenium-webdriver": "^4.34.0",
     "tailwindcss": "^4",
+    "ts-jest": "^29.4.0",
     "typescript": "^5"
   }
 }
