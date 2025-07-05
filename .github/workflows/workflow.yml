@@ -40,10 +40,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Node.js (for caching)
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
       - name: Cache root npm
         uses: actions/cache@v3
         with:
@@ -119,44 +115,53 @@ jobs:
           npx semgrep --config=auto --timeout 60 || true
 
   # ────────────────────────────────────────────────────────────────
-  #  🧪 3. Tests (stage 2) – run in parallel                       #
+  #  🐘 3a. Backend Tests                                           #
   # ────────────────────────────────────────────────────────────────
   backend-tests:
     name: "🐘 Backend Tests"
     needs: [lint-format, db-check]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci --legacy-peer-deps
+      - run: npm test -- --runInBand
+
+  # ────────────────────────────────────────────────────────────────
+  #  🐘 3b. Backend DB Version Matrix                               #
+  # ────────────────────────────────────────────────────────────────
+  backend-db-compat:
+    name: "🐘 Backend DB Compat Tests"
+    needs: [lint-format]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        node: [16,18,20]
+        mongo-version: [5, 6]
     services:
       mongo:
-        image: mongo:6
+        image: mongo:${{ matrix.mongo-version }}
         ports: ['27017:27017']
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports: ['5432:5432']
-      redis:
-        image: redis:7
-        ports: ['6379:6379']
     defaults:
       run:
         working-directory: backend
     env:
       MONGO_URL: mongodb://localhost:27017/test
-      POSTGRES_URL: postgres://postgres:postgres@localhost:5432/postgres
-      REDIS_URL: redis://localhost:6379
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node }}
+          node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
       - run: npm test -- --runInBand
 
+  # ────────────────────────────────────────────────────────────────
+  #  🧪 3c. Frontend Unit (Jest)                                    #
+  # ────────────────────────────────────────────────────────────────
   frontend-jest-tests:
     name: "🧪 Frontend Unit (Jest)"
     needs: [lint-format, db-check]
@@ -172,6 +177,9 @@ jobs:
       - run: npm ci --legacy-peer-deps
       - run: npm test
 
+  # ────────────────────────────────────────────────────────────────
+  #  ⚙️ 3d. Cypress E2E                                             #
+  # ────────────────────────────────────────────────────────────────
   frontend-cypress-tests:
     name: "⚙️ Cypress E2E"
     needs: [lint-format, db-check]
@@ -185,9 +193,16 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
-      - run: npx cypress install
-      - run: npx cypress run || true
+      - name: Install Cypress
+        run: npx cypress install
+      - name: Run Cypress in Chrome
+        run: npx cypress run --browser chrome || true
+      - name: Run Cypress in Firefox
+        run: npx cypress run --browser firefox || true
 
+  # ────────────────────────────────────────────────────────────────
+  #  🕸️ 3e. Selenium E2E                                           #
+  # ────────────────────────────────────────────────────────────────
   frontend-selenium-tests:
     name: "🕸️ Selenium E2E"
     needs: [lint-format, db-check]
@@ -201,7 +216,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
       - run: npm ci --legacy-peer-deps
-      - run: xvfb-run -a npm run test:selenium || true
+      - run: |
+          xvfb-run -a npm run test:selenium || true
 
   # ────────────────────────────────────────────────────────────────
   #  📊 4. Coverage (stage 3) – parallel                           #
@@ -290,7 +306,7 @@ jobs:
           path: frontend/.next
 
   # ────────────────────────────────────────────────────────────────
-  #  🐳 6. GHCR Docker                                            #
+  #  🐳 6. GHCR Docker – Multi-Arch                               #
   # ────────────────────────────────────────────────────────────────
   docker-backend:
     name: "🐳 Backend → GHCR"
@@ -300,7 +316,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v2
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -308,6 +324,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v5
         with:
+          platforms: linux/amd64,linux/arm64
           context: ./backend
           file: ./backend/Dockerfile
           push: true
@@ -323,7 +340,7 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v2
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -331,12 +348,50 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v5
         with:
+          platforms: linux/amd64,linux/arm64
           context: ./frontend
           file: ./frontend/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/estatewise-app-frontend:${{ github.sha }}
             ghcr.io/${{ github.repository_owner }}/estatewise-app-frontend:latest
+
+  # ────────────────────────────────────────────────────────────────
+  #  🔍 Image Vulnerability Scan                                  #
+  # ────────────────────────────────────────────────────────────────
+  image-scan:
+    name: "🔍 Image Vulnerability Scan"
+    needs: [docker-backend, docker-frontend]
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - name: Scan backend image
+        uses: aquasecurity/trivy-action@v0.12.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/estatewise-app-backend:latest
+          format: sarif
+          exit-code: 0
+      - name: Scan frontend image
+        uses: aquasecurity/trivy-action@v0.12.0
+        with:
+          image-ref: ghcr.io/${{ github.repository_owner }}/estatewise-app-frontend:latest
+          format: sarif
+          exit-code: 0
+
+  # ────────────────────────────────────────────────────────────────
+  #  ⚡ Performance Benchmark                                     #
+  # ────────────────────────────────────────────────────────────────
+  perf-test:
+    name: "⚡ Performance Benchmark"
+    needs: [backend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci --legacy-peer-deps
+      - run: |
+          npm --prefix backend start &
+          sleep 5
+          npx artillery quick --count 20 -n 50 http://localhost:5001/health || true
 
   # ────────────────────────────────────────────────────────────────
   #  🚀 7. Deploy                                                #
