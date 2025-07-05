@@ -496,7 +496,7 @@ export async function getPropertyData(req: Request, res: Response) {
     };
 
     res.json({ listings, charts });
-  } catch (err) {
+  } catch (err: unknown) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch property data" });
   }
