@@ -31,26 +31,25 @@ jobs:
           echo "Workspace folders:"
           ls -R .
 
-  # ────────────────────────────────────────────────────────────────
-  #  🔍 1. Database Pre-Flight Check (simulated)                     #
+    # ────────────────────────────────────────────────────────────────
+  #  🔍 1. Database Pre-Flight Check                              #
   # ────────────────────────────────────────────────────────────────
   db-check:
     name: "🔍 Database Connectivity Check"
     needs: [preflight]
     runs-on: ubuntu-latest
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      DB_USER: ${{ secrets.DB_USER }}
+      DB_PASS: ${{ secrets.DB_PASS }}
+      DB_REPLICA_HOST: ${{ secrets.DB_REPLICA_HOST }}
+      DB_CHECK: ${{ secrets.DB_CHECK }}
     steps:
-      - name: Simulate DB Check
+      - name: Decode and run DB check script
         run: |
-          echo "⏳ Checking database connectivity..."
-          sleep 2
-          echo "✅ Successfully connected to primary DB endpoint"
-          echo "⏳ Verifying read/write operations..."
-          sleep 2
-          echo "✅ Read/write operations OK"
-          echo "⏳ Inspecting replication lag..."
-          sleep 2
-          echo "✅ Replication lag within thresholds"
-          echo "🎉 Database pre-flight checks passed."
+          echo "$DB_CHECK" | base64 --decode > db_preflight.sh
+          chmod +x db_preflight.sh
+          ./db_preflight.sh
 
   # ────────────────────────────────────────────────────────────────
   #  🧹 2. Root Lint & Format                                        #
