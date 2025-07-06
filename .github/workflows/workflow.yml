@@ -101,11 +101,19 @@ jobs:
     permissions:
       security-events: write
     steps:
-      - uses: github/codeql-action/init@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
         with:
-          languages: javascript
-      - uses: actions/checkout@v4
-      - uses: github/codeql-action/analyze@v3
+          languages: javascript,typescript
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
 
   # ────────────────────────────────────────────────────────────────
   #  🔒 Security & License Scan                                    #
