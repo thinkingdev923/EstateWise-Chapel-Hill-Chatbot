@@ -844,6 +844,12 @@ For any questions or inquiries, please contact the [repository maintainer](https
 
 ---
 
+Thank you for checking out **EstateWise**! We hope you find it useful in your real estate journey. If you have any questions or feedback, feel free to reach out or contribute to the project. 🚀
+
+[🔗 Visit the Live App](https://estatewise.vercel.app)
+
+[📖 Read the Technical Documentation](TECH_DOCS.md)
+
 [📝 Go to Technical Documentation](TECH_DOCS.md)
 
 [⬆️ Back to Top](#table-of-contents)
