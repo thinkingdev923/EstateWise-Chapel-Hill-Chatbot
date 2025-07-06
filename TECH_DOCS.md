@@ -817,9 +817,63 @@ To ensure that every change to the codebase is tested, built, and deployed autom
 
 The GitHub Actions workflow is defined in `.github/workflows/ci.yml` and includes the following steps:
 
-1. **Checkout Code**: Uses the `actions/checkout` action to check out the code from the repository.
-2. **Set Up Node.js**: Uses the `actions/setup-node` action to set up the Node.js environment with the specified version (e.g., `18.x`).
-3. 
+1. **Checkout Code**
+   Uses the `actions/checkout@v4` action to pull the repository code to the runner.
+
+2. **Set Up Node.js**
+   Uses `actions/setup-node@v4` to configure Node.js (version 18), along with caching of npm dependencies for faster runs.
+
+3. **Preflight Setup**
+   Performs environment verification, printing Node.js and npm versions, and showing the workspace structure.
+
+4. **Cache Dependencies**
+   Caches root, backend, and frontend `node_modules` using the `actions/cache@v3` action.
+
+5. **Database Connectivity Check**
+   Runs a preflight database connectivity check using a decoded shell script, verifying DB credentials and availability.
+
+6. **Lint & Format**
+   Runs Prettier and ESLint to enforce code style and lint the entire workspace.
+
+7. **CodeQL Security Scan**
+   Initializes CodeQL for JavaScript and TypeScript, performs an autobuild, and then runs a static analysis scan to identify vulnerabilities.
+
+8. **Security & License Scan**
+   Performs `npm audit`, license checking, and static analysis with ESLint and Semgrep to catch vulnerabilities and license issues.
+
+9. **Backend Tests**
+   Executes backend unit tests using Jest, with support for matrix testing across MongoDB versions.
+
+10. **Frontend Tests**
+    Runs frontend unit tests with Jest, and executes E2E tests via Cypress and Selenium across multiple browsers.
+
+11. **Test Coverage Reports**
+    Generates and uploads code coverage reports for both backend and frontend components.
+
+12. **Build Stage**
+    Builds both the backend and frontend artifacts, storing them for later deployment steps.
+
+13. **Lighthouse Performance Audit**
+    Runs Lighthouse against the deployed preview to capture a performance report.
+
+14. **Documentation Generation**
+    Generates JSDoc and TypeDoc documentation for both backend and frontend codebases, and uploads them as artifacts.
+
+15. **Docker Publishing**
+    Builds and pushes Docker images for the backend and frontend to GitHub Container Registry (GHCR).
+
+16. **Image Vulnerability Scan**
+    Runs Trivy vulnerability scans on built Docker images before deployment.
+
+17. **Performance Benchmark**
+    Executes quick load tests using Artillery to validate application health endpoints.
+
+18. **Deployment**
+    Deploys to AWS infrastructure and Vercel, handling both static and dynamic deployments.
+
+19. **Pipeline Done**
+    Marks the CI/CD pipeline as complete with a final confirmation step.
+
 
 ---
 
