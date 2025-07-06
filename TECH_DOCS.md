@@ -813,6 +813,8 @@ A continuous integration and deployment (CI/CD) pipeline that automates the test
 **Why we use it:**
 To ensure that every change to the codebase is tested, built, and deployed automatically, reducing the risk of introducing bugs and ensuring a smooth deployment process.
 
+
+
 ---
 
 ## 14. Appendices
