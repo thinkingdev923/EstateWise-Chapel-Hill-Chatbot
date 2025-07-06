@@ -831,6 +831,8 @@ This project is licensed under the [MIT License](LICENSE).
 > [!CAUTION]
 > This project is provided for educational purposes only. Any use, including non-commercial or academic, must include proper attribution to the original creators. Unauthorized redistribution or commercial use without explicit permission is strictly prohibited.
 
+**Copyright © 2025 EstateWise Team. All rights reserved.**
+
 ## Contact
 
 For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository [here](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues). You're also welcome to join our ongoing discussions [at this link](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/discussions).
