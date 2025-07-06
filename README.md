@@ -40,6 +40,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
+- [Containerization](#containerization)
 - [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -177,7 +178,7 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - For security, this data isn’t included in the repo—please plug in your own.
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
-  - After cleaning, **30,772 properties** remain in the database, available for the chatbot to use.
+  - After cleaning, approx. **30,772 properties** remain in the database, available for the chatbot to use.
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial, quick Jupyter‑powered dive into the data.
   - Explore `EDA-CLI-Chatbot.ipynb` in the repo root for a more detailed and comprehensive analysis of the data, as well as a CLI version of our chatbot.
 
@@ -643,25 +644,28 @@ To view our live server data, go to [this URL](https://estatewise-backend.vercel
 
 ## GitHub Actions
 
-GitHub Actions is used for continuous integration and deployment (CI/CD) of the application. It automatically runs tests, builds the Docker images, and deploys the application to Vercel or AWS whenever changes are pushed to the main branch.
+GitHub Actions is used for continuous integration and deployment (CI/CD) of the application. It automatically runs tests, builds the Docker images, and deploys the application to Vercel or AWS whenever changes are pushed to the main branch or when pull requests are created.
 
 To view the GitHub Actions workflow, go to the [Actions tab](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/actions) of this repository. You can see the status of the latest runs, view logs, and check for any errors.
 
 Our pipeline is set up to run the following steps:
-- **Linting:** Runs ESLint to check for code quality and style issues.
-- **Testing:** Runs unit tests to ensure the application is functioning correctly.
-- **Building:** Builds the Docker images for the backend and frontend.
-- **Deploying:** Deploys the application to Vercel or AWS, depending on the configuration.
-- **Publishing:** Publishes the Docker images to GitHub Packages or AWS ECR.
-- **Monitoring:** Collects metrics and logs from the application for monitoring and debugging purposes.
-- **Notifications:** Sends notifications to the team via email or Slack when a build fails or succeeds.
-- **Code Coverage:** Runs code coverage reports to ensure the application is well-tested.
-- **Security Scanning:** Scans the code for security vulnerabilities using tools like Snyk or Dependabot.
-- **Dependency Updates:** Automatically updates dependencies to keep the application secure and up-to-date.
-- _and more..._
+
+* **Linting:** Runs ESLint to check for code quality and style issues, enforcing consistent standards across the codebase.
+* **Formatting:** Uses Prettier to automatically format code according to project style guidelines.
+* **Testing:** Executes unit tests for both the backend (Jest) and frontend (Jest), ensuring that all functionality works as expected.
+* **End-to-End Testing:** Runs Cypress and Selenium tests to validate user interactions in a real browser environment.
+* **Security Scanning:** Includes CodeQL analysis, `npm audit`, Semgrep, and license checks to detect known vulnerabilities and license conflicts.
+* **Build:** Compiles both the frontend and backend code, preparing optimized production artifacts.
+* **Database Connectivity Check:** Validates that environment database credentials are correct and that the app can reach its database instances.
+* **Performance Testing:** Runs Lighthouse for web performance metrics and Artillery for load testing of critical endpoints.
+* **Docker Publishing:** Builds and pushes Docker images for both the frontend and backend to GitHub Container Registry (GHCR).
+* **Vulnerability Scanning:** Uses Trivy to scan Docker images for security issues before deployment.
+* **Documentation Generation:** Builds JSDoc and TypeDoc documentation and stores the results as build artifacts.
+* **Deployment:** Automates infrastructure deployments to AWS and application deployments to Vercel.
+* **Final Confirmation:** Marks the pipeline as successfully completed after all previous steps pass.
 
 <p align="center">
-  <img src="img/gh.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
+  <img src="img/github-actions.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
 </p>
 
 This ensures that the application is always in a deployable state and that any issues are caught early in the development process.
@@ -794,6 +798,31 @@ The generated HTML will be in `docs-backend/` and `docs-frontend/`. Open the res
 
 For more details, see [jsdoc.app](https://jsdoc.app) and [typedoc.org](https://typedoc.org).
 
+## Containerization
+
+The application is containerized using Docker to ensure consistent, portable, and reproducible builds across different environments.
+
+* **Backend and Frontend Dockerfiles:**
+  The `backend/Dockerfile` and `frontend/Dockerfile` define how to build the container images for their respective services. They include steps to install dependencies, build the code, and configure the production servers.
+
+* **GitHub Actions Integration:**
+  As part of the CI/CD pipeline, the workflow automatically builds these Docker images after testing and linting have succeeded. It uses the `docker/build-push-action@v5` to build the images and then push them to GitHub Container Registry (GHCR).
+
+* **Image Scanning:**
+  Once the images are built and published, they are scanned for vulnerabilities using Trivy in the pipeline to catch any security issues before deployment.
+
+* **docker-compose Usage (Local):**
+  For local development or quick testing, a `docker-compose.yml` file is included. This file defines both the backend and frontend containers, along with their dependencies, allowing you to spin up the entire stack with a single command:
+
+  ```bash
+  docker-compose up --build
+  ```
+
+* **Deployment:**
+  In production, the images are pulled directly from GHCR and deployed to AWS infrastructure or Vercel, enabling a consistent artifact to run from local to production.
+
+This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
+
 ## Challenges & Future Improvements
 
 - **Data Quality:** Ensuring the quality and accuracy of the property data used for recommendations.
@@ -828,6 +857,8 @@ This project is licensed under the [MIT License](LICENSE).
 > [!CAUTION]
 > This project is provided for educational purposes only. Any use, including non-commercial or academic, must include proper attribution to the original creators. Unauthorized redistribution or commercial use without explicit permission is strictly prohibited.
 
+**Copyright © 2025 EstateWise Team. All rights reserved.**
+
 ## Contact
 
 For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository [here](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues). You're also welcome to join our ongoing discussions [at this link](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/discussions).
@@ -840,6 +871,12 @@ For any questions or inquiries, please contact the [repository maintainer](https
 - Huge thanks to the team members for their hard work and collaboration in building this project!
 
 ---
+
+Thank you for checking out **EstateWise**! We hope you find it useful in your real estate journey. If you have any questions or feedback, feel free to reach out or contribute to the project. 🏡🚀
+
+[🔗 Visit the Live App](https://estatewise.vercel.app)
+
+[📖 Read the Technical Documentation](TECH_DOCS.md)
 
 [📝 Go to Technical Documentation](TECH_DOCS.md)
 
