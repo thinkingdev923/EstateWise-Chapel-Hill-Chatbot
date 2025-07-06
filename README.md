@@ -661,7 +661,7 @@ Our pipeline is set up to run the following steps:
 - _and more..._
 
 <p align="center">
-  <img src="img/gh.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
+  <img src="img/github-actions.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
 </p>
 
 This ensures that the application is always in a deployable state and that any issues are caught early in the development process.
