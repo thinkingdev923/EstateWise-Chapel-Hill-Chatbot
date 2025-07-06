@@ -12,3 +12,7 @@ yarn-error.log*
 backend/.env
 backend/node_modules
 .vscode/*
+
+docs
+docs-backend
+docs-frontend
