@@ -68,7 +68,12 @@ Below, we outline the architecture, key components, and challenges faced during 
   - [12.1 Logging](#121-logging)
   - [12.2 Monitoring](#122-monitoring)
   - [12.3 Visualization](#123-visualization)
-- [13. Appendices](#13-appendices)
+- [13. GitHub Actions CI/CD Pipeline](#13-github-actions-cicd-pipeline)
+  - [13.1 Workflow Configuration](#131-workflow-configuration)
+  - [13.2 Build & Test Steps](#132-build--test-steps)
+  - [13.3 Deployment Steps](#133-deployment-steps)
+  - [13.4 Notifications & Reporting](#134-notifications--reporting)
+- [14. Appendices](#14-appendices)
   - [A. Environment Variables Reference](#a-environment-variables-reference)
   - [B. AI/ML Flow Chart](#b-aiml-flow-chart)
   - [C. Overall App’s Flow Diagram](#c-overall-apps-flow-diagram)
@@ -800,7 +805,9 @@ We use Winston for logging in the backend. The logging system is configured to l
 
 ---
 
-## 13. Appendices
+---
+
+## 14. Appendices
 
 Additional resources, diagrams, and references for developers and data scientists who are interested working on EstateWise.
 
