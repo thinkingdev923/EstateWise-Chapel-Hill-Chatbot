@@ -315,6 +315,49 @@ jobs:
             frontend/next.config.js
 
   # ────────────────────────────────────────────────────────────────
+  #  📚 6a. Documentation Artifacts                                #
+  # ────────────────────────────────────────────────────────────────
+  docs-generate:
+    name: "📚 Generate JSDoc & TypeDoc"
+    needs: [backend-build, frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Generate JSDoc
+        run: npx jsdoc -c jsdoc.json
+
+      - name: Generate TypeDoc Backend
+        run: npx typedoc --tsconfig backend/tsconfig.json backend/src --out docs-backend --entryPointStrategy expand
+
+      - name: Generate TypeDoc Frontend
+        run: npx typedoc --tsconfig frontend/tsconfig.json frontend --out docs-frontend --entryPointStrategy expand
+
+      - name: Upload JSDoc artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: jsdoc
+          path: docs/
+
+      - name: Upload TypeDoc backend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: typedoc-backend
+          path: docs-backend/
+
+      - name: Upload TypeDoc frontend artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: typedoc-frontend
+          path: docs-frontend/
+
+  # ────────────────────────────────────────────────────────────────
   #  🐳 6. GHCR Docker                                            #
   # ────────────────────────────────────────────────────────────────
   docker-backend:
