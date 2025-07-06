@@ -805,6 +805,14 @@ We use Winston for logging in the backend. The logging system is configured to l
 
 ---
 
+## 13. GitHub Actions CI/CD Pipeline
+
+**What it is:**
+A continuous integration and deployment (CI/CD) pipeline that automates the testing, building, and deployment of the EstateWise application.
+
+**Why we use it:**
+To ensure that every change to the codebase is tested, built, and deployed automatically, reducing the risk of introducing bugs and ensuring a smooth deployment process.
+
 ---
 
 ## 14. Appendices
