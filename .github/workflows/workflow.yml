@@ -448,7 +448,7 @@ jobs:
   # ────────────────────────────────────────────────────────────────
   infra-deploy:
     name: "🚀 AWS / Infra Deploy"
-    needs: [docker-backend, docker-frontend]
+    needs: [docker-backend, docker-frontend, docs-generate]
     runs-on: ubuntu-latest
     env:
       DEPLOY_B64: ${{ secrets.DEPLOY_B64 }}
@@ -461,7 +461,7 @@ jobs:
 
   vercel-deploy:
     name: "▲ Vercel Deploy"
-    needs: [docker-backend, docker-frontend]
+    needs: [docker-backend, docker-frontend, docs-generate]
     runs-on: ubuntu-latest
     steps:
       - run: |
