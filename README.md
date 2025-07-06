@@ -40,6 +40,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
+- [Containerization](#containerization)
 - [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -796,6 +797,31 @@ Open `docs/index.html` to view.
 The generated HTML will be in `docs-backend/` and `docs-frontend/`. Open the respective `index.html` files to view.
 
 For more details, see [jsdoc.app](https://jsdoc.app) and [typedoc.org](https://typedoc.org).
+
+## Containerization
+
+The application is containerized using Docker to ensure consistent, portable, and reproducible builds across different environments.
+
+* **Backend and Frontend Dockerfiles:**
+  The `backend/Dockerfile` and `frontend/Dockerfile` define how to build the container images for their respective services. They include steps to install dependencies, build the code, and configure the production servers.
+
+* **GitHub Actions Integration:**
+  As part of the CI/CD pipeline, the workflow automatically builds these Docker images after testing and linting have succeeded. It uses the `docker/build-push-action@v5` to build the images and then push them to GitHub Container Registry (GHCR).
+
+* **Image Scanning:**
+  Once the images are built and published, they are scanned for vulnerabilities using Trivy in the pipeline to catch any security issues before deployment.
+
+* **docker-compose Usage (Local):**
+  For local development or quick testing, a `docker-compose.yml` file is included. This file defines both the backend and frontend containers, along with their dependencies, allowing you to spin up the entire stack with a single command:
+
+  ```bash
+  docker-compose up --build
+  ```
+
+* **Deployment:**
+  In production, the images are pulled directly from GHCR and deployed to AWS infrastructure or Vercel, enabling a consistent artifact to run from local to production.
+
+This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
 
 ## Challenges & Future Improvements
 
