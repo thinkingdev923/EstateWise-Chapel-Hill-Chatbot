@@ -878,15 +878,15 @@ The GitHub Actions workflow is defined in `.github/workflows/ci.yml` and include
 
 To ensure the CI/CD pipeline runs smoothly, you need to configure the following secrets in your GitHub repository:
 
-| Name                   | Purpose                            |
-| ---------------------- | ---------------------------------- |
-| `MONGO_URI`            | MongoDB connection string          |
-| `GOOGLE_AI_API_KEY`    | Google Gemini & Embedding API key  |
-| `PINECONE_API_KEY`     | Pinecone service key               |
-| `PINECONE_ENVIRONMENT` | Pinecone environment identifier    |
-| `PINECONE_INDEX`       | Name of your Pinecone vector index |
-| `JWT_SECRET`           | Secret key for signing JWTs       |
-| additional secrets for Docker, AWS, and Vercel deployment as needed | ...| 
+| Name                                                                | Purpose                            |
+|---------------------------------------------------------------------|------------------------------------|
+| `MONGO_URI`                                                         | MongoDB connection string          |
+| `GOOGLE_AI_API_KEY`                                                 | Google Gemini & Embedding API key  |
+| `PINECONE_API_KEY`                                                  | Pinecone service key               |
+| `PINECONE_ENVIRONMENT`                                              | Pinecone environment identifier    |
+| `PINECONE_INDEX`                                                    | Name of your Pinecone vector index |
+| `JWT_SECRET`                                                        | Secret key for signing JWTs        |
+| additional secrets for Docker, AWS, and Vercel deployment as needed | ...                                | 
 
 
 
