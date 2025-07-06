@@ -648,17 +648,20 @@ GitHub Actions is used for continuous integration and deployment (CI/CD) of the 
 To view the GitHub Actions workflow, go to the [Actions tab](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/actions) of this repository. You can see the status of the latest runs, view logs, and check for any errors.
 
 Our pipeline is set up to run the following steps:
-- **Linting:** Runs ESLint to check for code quality and style issues.
-- **Testing:** Runs unit tests to ensure the application is functioning correctly.
-- **Building:** Builds the Docker images for the backend and frontend.
-- **Deploying:** Deploys the application to Vercel or AWS, depending on the configuration.
-- **Publishing:** Publishes the Docker images to GitHub Packages or AWS ECR.
-- **Monitoring:** Collects metrics and logs from the application for monitoring and debugging purposes.
-- **Notifications:** Sends notifications to the team via email or Slack when a build fails or succeeds.
-- **Code Coverage:** Runs code coverage reports to ensure the application is well-tested.
-- **Security Scanning:** Scans the code for security vulnerabilities using tools like Snyk or Dependabot.
-- **Dependency Updates:** Automatically updates dependencies to keep the application secure and up-to-date.
-- _and more..._
+
+* **Linting:** Runs ESLint to check for code quality and style issues, enforcing consistent standards across the codebase.
+* **Formatting:** Uses Prettier to automatically format code according to project style guidelines.
+* **Testing:** Executes unit tests for both the backend (Jest) and frontend (Jest), ensuring that all functionality works as expected.
+* **End-to-End Testing:** Runs Cypress and Selenium tests to validate user interactions in a real browser environment.
+* **Security Scanning:** Includes CodeQL analysis, `npm audit`, Semgrep, and license checks to detect known vulnerabilities and license conflicts.
+* **Build:** Compiles both the frontend and backend code, preparing optimized production artifacts.
+* **Database Connectivity Check:** Validates that environment database credentials are correct and that the app can reach its database instances.
+* **Performance Testing:** Runs Lighthouse for web performance metrics and Artillery for load testing of critical endpoints.
+* **Docker Publishing:** Builds and pushes Docker images for both the frontend and backend to GitHub Container Registry (GHCR).
+* **Vulnerability Scanning:** Uses Trivy to scan Docker images for security issues before deployment.
+* **Documentation Generation:** Builds JSDoc and TypeDoc documentation and stores the results as build artifacts.
+* **Deployment:** Automates infrastructure deployments to AWS and application deployments to Vercel.
+* **Final Confirmation:** Marks the pipeline as successfully completed after all previous steps pass.
 
 <p align="center">
   <img src="img/github-actions.png" alt="GitHub Actions CI/CD" width="100%" style="border-radius: 8px" />
