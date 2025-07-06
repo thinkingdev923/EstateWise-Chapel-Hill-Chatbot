@@ -92,6 +92,22 @@ jobs:
       - run: npm run format && npm run lint
 
   # ────────────────────────────────────────────────────────────────
+  #  🔒 CodeQL Security Scan                                       #
+  # ────────────────────────────────────────────────────────────────
+  codeql-scan:
+    name: "🔒 CodeQL Security Scan"
+    needs: [ lint-format ]
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/analyze@v3
+
+  # ────────────────────────────────────────────────────────────────
   #  🔒 Security & License Scan                                    #
   # ────────────────────────────────────────────────────────────────
   security-scan:
@@ -315,6 +331,38 @@ jobs:
             frontend/next.config.js
 
   # ────────────────────────────────────────────────────────────────
+  #  🔦 Lighthouse Performance Audit                               #
+  # ────────────────────────────────────────────────────────────────
+  lighthouse-audit:
+    name: "🔦 Lighthouse Performance Audit"
+    needs: [frontend-build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # install Chrome for Lighthouse
+      - uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: Install Lighthouse CLI
+        run: npm install -g lighthouse
+
+      - name: Run Lighthouse
+        run: |
+          npx lighthouse https://estatewise.vercel.app \
+            --output html \
+            --output-path=lh-report.html \
+            --chrome-flags="--headless" || true
+
+      - name: Upload Lighthouse report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: lh-report.html
+
+  # ────────────────────────────────────────────────────────────────
   #  📚 6a. Documentation Artifacts                                #
   # ────────────────────────────────────────────────────────────────
   docs-generate:
@@ -334,10 +382,22 @@ jobs:
         run: npx jsdoc -c jsdoc.json
 
       - name: Generate TypeDoc Backend
-        run: npx typedoc --tsconfig backend/tsconfig.json backend/src --out docs-backend --entryPointStrategy expand
+        run: |
+          npx typedoc \
+            --tsconfig backend/tsconfig.json \
+            --entryPointStrategy expand \
+            --skipErrorChecking \
+            backend/src \
+            --out docs-backend  
 
       - name: Generate TypeDoc Frontend
-        run: npx typedoc --tsconfig frontend/tsconfig.json frontend --out docs-frontend --entryPointStrategy expand
+        run: |
+          npx typedoc \
+            --tsconfig frontend/tsconfig.json \
+            --entryPointStrategy expand \
+            --skipErrorChecking \
+            frontend \
+            --out docs-frontend
 
       - name: Upload JSDoc artifacts
         uses: actions/upload-artifact@v4
@@ -429,7 +489,7 @@ jobs:
           exit-code: 0
 
   # ────────────────────────────────────────────────────────────────
-  #  ⚡ Performance Benchmark                                     #
+  #  ⚡ Performance Benchmark                                        #
   # ────────────────────────────────────────────────────────────────
   perf-test:
     name: "⚡ Performance Benchmark"
@@ -444,7 +504,7 @@ jobs:
           npx artillery quick --count 20 -n 50 http://localhost:5001/health || true
 
   # ────────────────────────────────────────────────────────────────
-  #  🚀 7. Deploy                                                #
+  #  🚀 7. Deploy                                                   #
   # ────────────────────────────────────────────────────────────────
   infra-deploy:
     name: "🚀 AWS / Infra Deploy"
@@ -471,7 +531,7 @@ jobs:
           echo "✅ Production: https://estatewise.vercel.app (build ${GITHUB_SHA::7})"
 
   # ────────────────────────────────────────────────────────────────
-  #  🎉 8. Pipeline Done                                        #
+  #  🎉 8. Pipeline Done                                           #
   # ────────────────────────────────────────────────────────────────
   done:
     name: "🎉 Pipeline Done"
