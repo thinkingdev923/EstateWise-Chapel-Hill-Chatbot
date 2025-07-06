@@ -888,8 +888,45 @@ To ensure the CI/CD pipeline runs smoothly, you need to configure the following 
 | `JWT_SECRET`                                                        | Secret key for signing JWTs        |
 | additional secrets for Docker, AWS, and Vercel deployment as needed | ...                                | 
 
+### 13.3 Monitoring and Troubleshooting
 
+**What it is:**
+This section describes how to monitor, debug, and troubleshoot the GitHub Actions CI/CD pipeline for the EstateWise application.
 
+**Monitoring the pipeline:**
+
+* **GitHub Actions Dashboard**
+  Navigate to the **Actions** tab in your GitHub repository to view real-time build and deployment progress, logs, and job status.
+
+* **Code Scanning Alerts**
+  Security issues identified by CodeQL or Trivy will appear under the repository’s **Security > Code scanning alerts** section.
+
+* **Artifacts**
+  Coverage reports, documentation, and build artifacts are uploaded at various pipeline stages and are accessible from the workflow run summary in the Actions dashboard.
+
+**Troubleshooting tips:**
+
+* **Workflow Failures**
+
+  * Inspect the job logs in the Actions tab for stack traces or error messages.
+  * Ensure environment variables and required secrets are correctly set up under **Settings > Secrets and variables**.
+  * Check that the correct Node.js version and package dependencies are defined in `package.json` and `package-lock.json`.
+
+* **Database or connectivity issues**
+
+  * Confirm that the `DB_*` secrets are valid and that the database is reachable from the GitHub runner.
+  * Validate that firewalls or network rules allow connections from GitHub-hosted runners.
+
+* **Docker and Deployment**
+
+  * If Docker pushes fail, verify that `GHCR` credentials are correct and that the user has permission to push packages.
+  * For AWS or Vercel deploy steps, confirm that deployment secrets are valid and permissions are correct.
+
+**Common troubleshooting commands:**
+
+* Re-run failed jobs from the GitHub Actions dashboard with the **Re-run jobs** button
+* Use `npm ci` locally to replicate dependency issues
+* Use `npm test`, `npm run lint`, or `npx typedoc` locally to reproduce test or documentation build failures
 
 ---
 
