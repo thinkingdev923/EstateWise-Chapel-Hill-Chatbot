@@ -813,6 +813,10 @@ A continuous integration and deployment (CI/CD) pipeline that automates the test
 **Why we use it:**
 To ensure that every change to the codebase is tested, built, and deployed automatically, reducing the risk of introducing bugs and ensuring a smooth deployment process.
 
+<p align="center">
+  <img src="img/gh.png" alt="GitHub Actions CI/CD Pipeline" width="800">
+</p>
+
 ### 13.1 Workflow Configuration
 
 The GitHub Actions workflow is defined in `.github/workflows/ci.yml` and includes the following steps:
