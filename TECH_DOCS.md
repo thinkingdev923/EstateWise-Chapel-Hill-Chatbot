@@ -817,6 +817,10 @@ To ensure that every change to the codebase is tested, built, and deployed autom
 
 The GitHub Actions workflow is defined in `.github/workflows/ci.yml` and includes the following steps:
 
+1. **Checkout Code**: Uses the `actions/checkout` action to check out the code from the repository.
+2. **Set Up Node.js**: Uses the `actions/setup-node` action to set up the Node.js environment with the specified version (e.g., `18.x`).
+3. 
+
 ---
 
 ## 14. Appendices
