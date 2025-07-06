@@ -31,10 +31,17 @@
     "backend": "cd backend && npm start",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
     "lint": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
-    "store": "cd backend && ts-node src/scripts/upsertProperties.ts"
+    "store": "cd backend && ts-node src/scripts/upsertProperties.ts",
+    "jsdoc": "jsdoc -c jsdoc.json",
+    "typedoc:backend": "typedoc --tsconfig backend/tsconfig.json backend/src --out docs-backend --entryPointStrategy expand",
+    "typedoc:frontend": "typedoc --tsconfig frontend/tsconfig.json frontend --out docs-frontend --entryPointStrategy expand"
   },
   "dependencies": {
     "prettier": "^3.4.2"
   },
-  "private": false
+  "private": false,
+  "devDependencies": {
+    "jsdoc": "^4.0.4",
+    "typedoc": "^0.28.7"
+  }
 }

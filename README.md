@@ -42,6 +42,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [GitHub Actions CI/CD](#github-actions)
 - [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
+- [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -94,6 +95,8 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
 ![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
 ![Markdown](https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white)
+![JSDoc](https://img.shields.io/badge/JSDoc-FF2B2B?style=for-the-badge&logo=json&logoColor=white)
+![TypeDoc](https://img.shields.io/badge/TypeDoc-2B7489?style=for-the-badge&logo=readthedocs&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -733,6 +736,65 @@ An OpenAPI specification file (`openapi.yaml`) is included in the root directory
 
 > [!TIP]
 > Note: It may not be the latest and most updated version of the API specification, so please refer to the [Swagger API Documentation](#swagger-api-documentation) for the most up-to-date information.
+
+## JSDoc & TypeDoc
+
+We use **JSDoc** and **TypeDoc** to generate developer-friendly documentation for the project.
+
+### JSDoc (for JavaScript)
+
+1. Install:
+
+   ```bash
+   npm install --save-dev jsdoc
+   ```
+
+2. Configure `jsdoc.json`:
+
+   ```json
+   {
+     "source": {
+       "include": ["backend", "frontend"],
+       "includePattern": ".js$"
+     },
+     "opts": {
+       "destination": "docs",
+       "recurse": true
+     }
+   }
+   ```
+
+3. Run:
+
+   ```bash
+   npx jsdoc -c jsdoc.json
+   ```
+
+Open `docs/index.html` to view.
+
+### TypeDoc (for TypeScript)
+
+1. Install:
+
+   ```bash
+   npm install --save-dev typedoc
+   ```
+
+2. Generate backend docs:
+
+   ```bash
+   npm run typedoc:backend
+   ```
+
+3. Generate frontend docs:
+
+   ```bash
+   npm run typedoc:frontend
+   ```
+
+The generated HTML will be in `docs-backend/` and `docs-frontend/`. Open the respective `index.html` files to view.
+
+For more details, see [jsdoc.app](https://jsdoc.app) and [typedoc.org](https://typedoc.org).
 
 ## Challenges & Future Improvements
 
