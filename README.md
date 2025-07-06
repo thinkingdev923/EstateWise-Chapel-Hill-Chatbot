@@ -12,9 +12,6 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
   </a>
 </p>
 
-> [!NOTE]
-> Built by [David Nguyen](https://sonnguyenhoang.com), Rikhil Fellner, Muskaan Joshi, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill. **© EstateWise Team, 2025.**
-
 ## Table of Contents
 
 - [Live App](#live-app)
