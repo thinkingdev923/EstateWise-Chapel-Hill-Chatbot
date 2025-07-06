@@ -177,7 +177,7 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - For security, this data isn’t included in the repo—please plug in your own.
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
-  - After cleaning, **30,772 properties** remain in the database, available for the chatbot to use.
+  - After cleaning, approx. **30,772 properties** remain in the database, available for the chatbot to use.
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial, quick Jupyter‑powered dive into the data.
   - Explore `EDA-CLI-Chatbot.ipynb` in the repo root for a more detailed and comprehensive analysis of the data, as well as a CLI version of our chatbot.
 
