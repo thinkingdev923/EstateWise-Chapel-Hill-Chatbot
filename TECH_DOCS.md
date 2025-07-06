@@ -1,13 +1,50 @@
 # EstateWise: AI‑Powered Real Estate Assistant for Chapel Hill, NC - AI/ML/Infrastructure Technical Documentation
 
-EstateWise is an AI‑powered real estate assistant focused on Chapel Hill, NC and surrounding areas. This document provides a deep dive into every component—from raw data ingestion to AI orchestration, delivery via a React/Next.js front‑end, and end‑to‑end deployment.
+**EstateWise** is an AI‑powered real estate assistant focused on Chapel Hill, NC and surrounding areas. This document provides a deep dive into every component—from raw data ingestion to AI orchestration, delivery via a React/Next.js front‑end, and end‑to‑end deployment.
 
-Below, we outline the architecture, key components, and challenges faced during development. This is intended for developers and data scientists interested in understanding the inner workings of EstateWise. We also provide a flowchart and various diagrams to visualize the architecture and data flow throughout the system.
+Below, we outline the architecture, key components, and challenges faced during development. This is intended for developers and data scientists interested in understanding the inner workings of **EstateWise**. We also provide a flowchart and various diagrams to visualize the architecture and data flow throughout the system.
 
-![Node.js](https://img.shields.io/badge/Node.js-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white) ![stream-json](https://img.shields.io/badge/stream--json-007ACC) ![Pinecone](https://img.shields.io/badge/Pinecone-%2300837A?logo=vectorworks&logoColor=white) ![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?logo=google&logoColor=white) ![React](https://img.shields.io/badge/React-61DAFB?logo=react&logoColor=white) ![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white) ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-38B2AC?logo=tailwind-css&logoColor=white) ![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-FFFFFF?logo=shadcnui&logoColor=000000) ![Framer Motion](https://img.shields.io/badge/Framer%20Motion-0055FF?logo=framer&logoColor=white) ![React Markdown](https://img.shields.io/badge/React--Markdown-000000?logo=markdown&logoColor=white) ![Express.js](https://img.shields.io/badge/Express.js-404D59?logo=express&logoColor=white) ![MongoDB](https://img.shields.io/badge/MongoDB-47A248?logo=mongodb&logoColor=white) ![Swagger](https://img.shields.io/badge/Swagger-85EA2D?logo=swagger&logoColor=black) ![Docker Compose](https://img.shields.io/badge/Docker%20Compose-2496ED?logo=docker&logoColor=white) ![Vercel](https://img.shields.io/badge/Vercel-000000?logo=vercel&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=github-actions&logoColor=white) ![Prometheus](https://img.shields.io/badge/Prometheus-FF6B00?logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?logo=grafana&logoColor=white) ![Sentry](https://img.shields.io/badge/Sentry-000000?logo=sentry&logoColor=white) ![node-lru-cache](https://img.shields.io/badge/node--lru--cache-339933?logo=node.js&logoColor=white) ![k‑Means](https://img.shields.io/badge/k--Means-FF4080) ![Mermaid](https://img.shields.io/badge/Mermaid-00A9E0?logo=mermaid&logoColor=white) ![JSON](https://img.shields.io/badge/JSON-000000?logo=json&logoColor=white) ![Winston](https://img.shields.io/badge/Winston-000000?logo=winston&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwind-css&logoColor=white)
+![Framer Motion](https://img.shields.io/badge/Framer%20Motion-000000?style=for-the-badge&logo=framer&logoColor=white)
+![Chart.js](https://img.shields.io/badge/Chart.js-F38B4A?style=for-the-badge&logo=chartdotjs&logoColor=white)
+![Shadcn UI](https://img.shields.io/badge/Shadcn%20UI-000000?style=for-the-badge&logo=shadcn/ui&logoColor=white)
+![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
+![Pinecone](https://img.shields.io/badge/Pinecone-FF6F61?style=for-the-badge&logo=googledataflow&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
+![Google AI](https://img.shields.io/badge/Google%20AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)
+![Amazon Web Services](https://img.shields.io/badge/Amazon%20Web%20Services-124568?style=for-the-badge&logo=task&logoColor=white)
+![Google Cloud Platform](https://img.shields.io/badge/Google%20Cloud%20Platform-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-623CE4?style=for-the-badge&logo=terraform&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Prometheus](https://img.shields.io/badge/Prometheus-E6512D?style=for-the-badge&logo=prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white)
+![Swagger](https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger&logoColor=white)
+![Postman](https://img.shields.io/badge/Postman-FF6C37?style=for-the-badge&logo=postman&logoColor=white)
+![Husky](https://img.shields.io/badge/Husky-6C6C6C?style=for-the-badge&logo=apachekylin&logoColor=white)
+![Jupyter Notebook](https://img.shields.io/badge/Jupyter%20Notebook-F37626?style=for-the-badge&logo=jupyter&logoColor=white)
+![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
+![Selenium WebDriver](https://img.shields.io/badge/Selenium%20WebDriver-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
+![Cypress](https://img.shields.io/badge/Cypress-17202C?style=for-the-badge&logo=cypress&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-2EA44F?style=for-the-badge&logo=github&logoColor=white)
+![Dependabot](https://img.shields.io/badge/Dependabot-blue?style=for-the-badge&logo=dependabot&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
+![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
+![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
+![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
+![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
+![Markdown](https://img.shields.io/badge/Markdown-000000?style=for-the-badge&logo=markdown&logoColor=white)
+![JSDoc](https://img.shields.io/badge/JSDoc-FF2B2B?style=for-the-badge&logo=json&logoColor=white)
+![TypeDoc](https://img.shields.io/badge/TypeDoc-2B7489?style=for-the-badge&logo=readthedocs&logoColor=white)
 
-> Built by Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill, Spring 2025.
-
+> [!IMPORTANT]
 > For a CLI version of the chatbot, as well as the EDA (Exploratory Data Analysis) of the properties data and interactive geospatial visualizations, check out the Jupyter notebooks in the root directory: [EDA-CLI-Chatbot.ipynb](EDA-CLI-Chatbot.ipynb). Alternatively, feel free to go to this [Colaboratory Notebook](https://colab.research.google.com/drive/1-Z3h0LUHl0v-e0RaZgwruL8q180Uk4Z-?usp=sharing) to directly view and run the code in this notebook & see the results in real time.
 
 ---
@@ -68,7 +105,12 @@ Below, we outline the architecture, key components, and challenges faced during 
   - [12.1 Logging](#121-logging)
   - [12.2 Monitoring](#122-monitoring)
   - [12.3 Visualization](#123-visualization)
-- [13. Appendices](#13-appendices)
+- [13. GitHub Actions CI/CD Pipeline](#13-github-actions-cicd-pipeline)
+  - [13.1 Workflow Configuration](#131-workflow-configuration)
+  - [13.2 Configuring Secrets](#132-configuring-secrets)
+  - [13.3 Monitoring & Troubleshooting](#133-monitoring-and-troubleshooting)
+  - [13.4 Deployment Rollback](#134-deployment-rollback)
+- [14. Appendices](#14-appendices)
   - [A. Environment Variables Reference](#a-environment-variables-reference)
   - [B. AI/ML Flow Chart](#b-aiml-flow-chart)
   - [C. Overall App’s Flow Diagram](#c-overall-apps-flow-diagram)
@@ -800,7 +842,179 @@ We use Winston for logging in the backend. The logging system is configured to l
 
 ---
 
-## 13. Appendices
+## 13. GitHub Actions CI/CD Pipeline
+
+**What it is:**
+A continuous integration and deployment (CI/CD) pipeline that automates the testing, building, and deployment of the EstateWise application.
+
+**Why we use it:**
+To ensure that every change to the codebase is tested, built, and deployed automatically, reducing the risk of introducing bugs and ensuring a smooth deployment process.
+
+<p align="center">
+  <img src="img/gh.png" alt="GitHub Actions CI/CD Pipeline" width="800">
+</p>
+
+### 13.1 Workflow Configuration
+
+The GitHub Actions workflow is defined in `.github/workflows/ci.yml` and includes the following steps:
+
+1. **Checkout Code**
+   Uses the `actions/checkout@v4` action to pull the repository code to the runner.
+
+2. **Set Up Node.js**
+   Uses `actions/setup-node@v4` to configure Node.js (version 18), along with caching of npm dependencies for faster runs.
+
+3. **Preflight Setup**
+   Performs environment verification, printing Node.js and npm versions, and showing the workspace structure.
+
+4. **Cache Dependencies**
+   Caches root, backend, and frontend `node_modules` using the `actions/cache@v3` action.
+
+5. **Database Connectivity Check**
+   Runs a preflight database connectivity check using a decoded shell script, verifying DB credentials and availability.
+
+6. **Lint & Format**
+   Runs Prettier and ESLint to enforce code style and lint the entire workspace.
+
+7. **CodeQL Security Scan**
+   Initializes CodeQL for JavaScript and TypeScript, performs an autobuild, and then runs a static analysis scan to identify vulnerabilities.
+
+8. **Security & License Scan**
+   Performs `npm audit`, license checking, and static analysis with ESLint and Semgrep to catch vulnerabilities and license issues.
+
+9. **Backend Tests**
+   Executes backend unit tests using Jest, with support for matrix testing across MongoDB versions.
+
+10. **Frontend Tests**
+    Runs frontend unit tests with Jest, and executes E2E tests via Cypress and Selenium across multiple browsers.
+
+11. **Test Coverage Reports**
+    Generates and uploads code coverage reports for both backend and frontend components.
+
+12. **Build Stage**
+    Builds both the backend and frontend artifacts, storing them for later deployment steps.
+
+13. **Lighthouse Performance Audit**
+    Runs Lighthouse against the deployed preview to capture a performance report.
+
+14. **Documentation Generation**
+    Generates JSDoc and TypeDoc documentation for both backend and frontend codebases, and uploads them as artifacts.
+
+15. **Docker Publishing**
+    Builds and pushes Docker images for the backend and frontend to GitHub Container Registry (GHCR).
+
+16. **Image Vulnerability Scan**
+    Runs Trivy vulnerability scans on built Docker images before deployment.
+
+17. **Performance Benchmark**
+    Executes quick load tests using Artillery to validate application health endpoints.
+
+18. **Deployment**
+    Deploys to AWS infrastructure and Vercel, handling both static and dynamic deployments.
+
+19. **Pipeline Done**
+    Marks the CI/CD pipeline as complete with a final confirmation step.
+
+### 13.2 Configuring Secrets
+
+To ensure the CI/CD pipeline runs smoothly, you need to configure the following secrets in your GitHub repository:
+
+| Name                                                                | Purpose                            |
+|---------------------------------------------------------------------|------------------------------------|
+| `MONGO_URI`                                                         | MongoDB connection string          |
+| `GOOGLE_AI_API_KEY`                                                 | Google Gemini & Embedding API key  |
+| `PINECONE_API_KEY`                                                  | Pinecone service key               |
+| `PINECONE_ENVIRONMENT`                                              | Pinecone environment identifier    |
+| `PINECONE_INDEX`                                                    | Name of your Pinecone vector index |
+| `JWT_SECRET`                                                        | Secret key for signing JWTs        |
+| additional secrets for Docker, AWS, and Vercel deployment as needed | ...                                | 
+
+### 13.3 Monitoring and Troubleshooting
+
+**What it is:**
+This section describes how to monitor, debug, and troubleshoot the GitHub Actions CI/CD pipeline for the EstateWise application.
+
+**Monitoring the pipeline:**
+
+* **GitHub Actions Dashboard**
+  Navigate to the **Actions** tab in your GitHub repository to view real-time build and deployment progress, logs, and job status.
+
+* **Code Scanning Alerts**
+  Security issues identified by CodeQL or Trivy will appear under the repository’s **Security > Code scanning alerts** section.
+
+* **Artifacts**
+  Coverage reports, documentation, and build artifacts are uploaded at various pipeline stages and are accessible from the workflow run summary in the Actions dashboard.
+
+**Troubleshooting tips:**
+
+* **Workflow Failures**
+
+  * Inspect the job logs in the Actions tab for stack traces or error messages.
+  * Ensure environment variables and required secrets are correctly set up under **Settings > Secrets and variables**.
+  * Check that the correct Node.js version and package dependencies are defined in `package.json` and `package-lock.json`.
+
+* **Database or connectivity issues**
+
+  * Confirm that the `DB_*` secrets are valid and that the database is reachable from the GitHub runner.
+  * Validate that firewalls or network rules allow connections from GitHub-hosted runners.
+
+* **Docker and Deployment**
+
+  * If Docker pushes fail, verify that `GHCR` credentials are correct and that the user has permission to push packages.
+  * For AWS or Vercel deploy steps, confirm that deployment secrets are valid and permissions are correct.
+
+**Common troubleshooting commands:**
+
+* Re-run failed jobs from the GitHub Actions dashboard with the **Re-run jobs** button
+* Use `npm ci` locally to replicate dependency issues
+* Use `npm test`, `npm run lint`, or `npx typedoc` locally to reproduce test or documentation build failures
+
+### 13.4 Deployment Rollback
+
+**What it is:**
+A strategy to revert the application to a previous stable version if a deployment introduces critical bugs or downtime.
+
+**Why it matters:**
+Rolling back quickly ensures minimal disruption for users and reduces operational risk.
+
+**How to roll back:**
+
+* **Vercel Rollback**
+
+  * Visit the Vercel dashboard for the `estatewise` project.
+  * Navigate to **Deployments**, identify a previous successful build, and promote it to production by clicking **Restore**.
+
+* **AWS Infrastructure Rollback**
+
+  * Use your infrastructure-as-code (IaC) tools (e.g., CloudFormation, Terraform) to redeploy the previous working stack definition.
+  * If using Docker images, redeploy the prior known working tag (e.g., `ghcr.io/owner/estatewise-app-frontend:previous`).
+
+* **Docker Images Rollback**
+
+  * If the latest pushed image is broken, redeploy an earlier image tagged as `latest` or use a SHA-tagged release:
+
+    ```bash
+    docker pull ghcr.io/your-org/estatewise-app-frontend:<previous-sha>
+    docker run ...
+    ```
+  * For Kubernetes or similar orchestrators, update the deployment to use the previous container image tag.
+
+**Checklist before rollback:**
+
+✅ Confirm the production issue is critical enough to warrant a rollback
+✅ Notify the team and stakeholders about the rollback
+✅ Review logs, alerts, and monitoring dashboards to confirm the nature of the failure
+✅ Validate that the prior deployment is healthy before promoting it
+
+**Post-rollback:**
+
+* Perform a root cause analysis (RCA)
+* Document lessons learned in your incident reports
+* Create issues or tasks to prevent similar failures in future releases
+
+---
+
+## 14. Appendices
 
 Additional resources, diagrams, and references for developers and data scientists who are interested working on EstateWise.
 
@@ -913,6 +1127,10 @@ Below is a simplified flow diagram of the entire application architecture, from 
 
 This UML sequence diagram illustrates the flow of data and interactions between the user, UI, API, agent, decision model, Pinecone, experts, and Gemini models:
 
+<p align="center">
+  <img src="img/sequence-diagram.png" alt="Mermaid Sequence Diagram" width="800">
+</p>
+
 ```mermaid
 sequenceDiagram
     participant User
@@ -947,7 +1165,7 @@ sequenceDiagram
     UI->>User: renderResponse()
 ```
 
-> Diagram not working? Paste the code into a compatible Mermaid editor, like [Mermaid Live Editor](https://mermaid-js.github.io/mermaid-live-editor/) or [Mermaid Preview](https://marketplace.visualstudio.com/items?itemName=vstirbu.vscode-mermaid-preview) to visualize it.
+> Diagram not working? Paste the code into a compatible Mermaid editor, like [Mermaid Live Editor](https://mermaid.live/edit#pako:eNqlVF1v2jAU_SuWHybQAk2B8mFpnVBbTX3ohtZ2laa8WMkl8UbszHZWGOK_79pxCgPelgeEfc895_rkOFuaqgwoowZ-1SBTuBU817xMJMGn4tqKVFRcWvJsQJ_ZvSfckM-wtv0fBleniPnCQy54JS7SgtsziBzwFzG6lnfGcgsvwoDfPQXfQiqMUHLuWdsVecBTrE7RCyEhVRJOK3frCrQ1juRB3SGwghWCyTtyU3Ahe2rZeypUnRdnZvgEpZDCtYZ_Xt0ksoE6p3rX18_3jBiQ2QMYw3PodEP1HmtoCiOLL49Pe1_IlpQNkuwaJIIc1PnAznjTqbQqK9ttZf0mNuwdYmSb0NrAQit32M0ttzyhjHwMAntkby90vsXqGi6WfGVg1-rxlSVHSPLBA5v64Uzte2AEU6Y3oUeAmZtHq4XMw2Giq7ibJPIIdFh8o24pD0avwig3SlpMJHlPNH_9CqZeWXM6U0gAI879F2GLvb-dQhir9CYiQfmYOsyBLx3OeOB9-k9BZNVHYjJrrQ9MyNkEkBHwO5jeEnQOmgj5W6Xc4ssNJ2-AvcMxPDRDfypEwTF3m9ItWQrJV084SBRkvgl4Nf-m1IV9EMeI1oGvrfu8uyuBGcYjgG4FO10a0VyLjDIXmojiPCV3S7p1rQm1BZTg0pfQjOufCU3kDnvwDn5XqmzbtLullHnTI1pXGXoavmJvu43yjaqlpWw09hyUbemasumoPx5OLi9nV8PpZDiLZxHdUHY5GvYH01k8mAwn8XgQT8e7iP7xqnF_OhnN8JnEw9l0MBoNdn8BkuDDBQ) or [Mermaid Preview](https://marketplace.visualstudio.com/items?itemName=vstirbu.vscode-mermaid-preview) to visualize it.
 
 ### E. Vector Schema & Metadata Example
 

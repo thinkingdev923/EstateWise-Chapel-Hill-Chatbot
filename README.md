@@ -12,9 +12,6 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
   </a>
 </p>
 
-> [!NOTE]
-> Built by [David Nguyen](https://sonnguyenhoang.com), Rikhil Fellner, Muskaan Joshi, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for the BUSI/COMP-488 course at UNC-Chapel Hill. **© EstateWise Team, 2025.**
-
 ## Table of Contents
 
 - [Live App](#live-app)
@@ -91,6 +88,7 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-2EA44F?style=for-the-badge&logo=github&logoColor=white)
 ![Dependabot](https://img.shields.io/badge/Dependabot-blue?style=for-the-badge&logo=dependabot&logoColor=white)
 ![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
+![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
 ![Git](https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white)
 ![ESLint](https://img.shields.io/badge/ESLint-4B3263?style=for-the-badge&logo=eslint&logoColor=white)
 ![Prettier](https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=black)
