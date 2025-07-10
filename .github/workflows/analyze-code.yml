@@ -91,10 +91,12 @@ jobs:
           XML=$(jq '.XML.code // 0' cloc-output.json)
           JSON=$(jq '.JSON.code // 0' cloc-output.json)
           YAML=$(jq '.YAML.code // 0' cloc-output.json)
+          SHELL=$(jq '."Bourne Shell".code // 0' cloc-output.json)
+          MAKE=$(jq '.make.code // 0' cloc-output.json)
 
           LISTED=$((JS + HTML + TS + JSX + PY + JAVA + GO + RUBY + CSS + PHP + CSHARP + VUE + \
                      JNB + CPP + SWIFT + C + DOCKER + R + HCL + SQL + RUST + KOTLIN + SCALA + \
-                     PERL + DART + XML + JSON + YAML))
+                     PERL + DART + XML + JSON + YAML + SHELL + MAKE))
           OTHER=$((TOTAL - LISTED))
 
           format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
@@ -127,6 +129,8 @@ jobs:
           echo "JSON             : $(format $JSON)"
           echo "XML              : $(format $XML)"
           echo "YAML             : $(format $YAML)"
+          echo "Bourne Shell     : $(format $SHELL)"
+          echo "Makefile         : $(format $MAKE)"
           echo ""
           echo "Other            : $(format $OTHER)"
           echo "-----------------------------------"
