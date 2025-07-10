@@ -1,0 +1,83 @@
+# Copyright (c) 2025 Son Nguyen
+
+name: Update Lines of Code
+
+on:
+  schedule:
+    - cron: "0 0 * * 0" # Runs weekly on Sunday at midnight (UTC)
+  workflow_dispatch:    # Allows manual trigger
+
+jobs:
+  count-lines:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Install required dependencies: jq (JSON processor), cloc (count lines of code), and locale settings
+      - name: Install Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq cloc locales
+          sudo locale-gen en_US.UTF-8
+
+      # Fetch and Clone Repositories (including private) and clone only the default branch
+      - name: Fetch and Clone Repositories
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          # Get a list of all owned repositories (including private) that are not forks
+          REPOS=$(curl -H "Authorization: token $GH_PAT" -s \
+            "https://api.github.com/user/repos?per_page=100&type=all" \
+            | jq -r '.[] | select(.fork == false) | .full_name') || echo "Error fetching repositories"
+
+          mkdir -p all-repos
+          cd all-repos
+
+          for REPO in $REPOS; do
+            REPO_URL="https://github.com/$REPO.git"
+            AUTHENTICATED_REPO=${REPO_URL/https:\/\/\//https:\/\/$GH_PAT@}
+
+            # Determine the default branch dynamically
+            DEFAULT_BRANCH=$(curl -H "Authorization: token $GH_PAT" -s \
+              "https://api.github.com/repos/$REPO" \
+              | jq -r '.default_branch')
+
+            echo "Cloning $REPO (branch: $DEFAULT_BRANCH)..."
+            git clone --branch "$DEFAULT_BRANCH" --single-branch \
+              "$AUTHENTICATED_REPO" "$(basename $REPO)-$DEFAULT_BRANCH" \
+              || echo "⚠️ Failed to clone $REPO."
+          done
+
+      # Run cloc to analyze lines of code, excluding non-source files
+      - name: Calculate Lines of Code
+        run: |
+          echo "Running cloc..."
+          cloc all-repos --exclude-ext=json,html,css,svg,md,py,ps1,scss --json > cloc-output.json
+
+      # Parse the JSON and print a human-readable breakdown
+      - name: Print Stats
+        run: |
+          TOTAL=$(jq '.SUM.code // 0' cloc-output.json)
+          JS=$(jq '.JavaScript.code // 0' cloc-output.json)
+          TS=$(jq '.TypeScript.code // 0' cloc-output.json)
+          JSX=$(jq '.JSX.code // 0' cloc-output.json)
+          CSHARP=$(jq '."C#".code // 0' cloc-output.json)
+          VUE=$(jq '."Vuejs Component".code // 0' cloc-output.json)
+          PHP=$(jq '.PHP.code // 0' cloc-output.json)
+          OTHER=$(( TOTAL - JS - TS - JSX - CSHARP - VUE - PHP ))
+
+          # Format numbers with commas
+          format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
+
+          echo "====== Lines of Code Summary ======"
+          echo "JavaScript : $(format $JS)"
+          echo "TypeScript : $(format $TS)"
+          echo "JSX        : $(format $JSX)"
+          echo "Vue.js     : $(format $VUE)"
+          echo "PHP        : $(format $PHP)"
+          echo "C#         : $(format $CSHARP)"
+          echo "Other      : $(format $OTHER)"
+          echo "-----------------------------------"
+          echo "Total Lines: $(format $TOTAL)"
