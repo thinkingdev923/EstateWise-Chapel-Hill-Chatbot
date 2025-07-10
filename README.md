@@ -582,7 +582,7 @@ EstateWise/
 │   ├── styles/               # CSS/SCSS files
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── ... (other config files, etc.)
+│   └── ... (other config files, tests, etc.)
 ├── backend/                   # Backend Express application
 │   ├── src/
 │   │   ├── controllers/      # API controllers and endpoints
@@ -592,9 +592,10 @@ EstateWise/
 │   │   └── middleware/       # Authentication, error handling, etc.
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── ... (other config files, etc.)
+│   └── ... (other config files, tests, etc.)
 ├── shell/                    # Shell scripts for deployment and setup
 ├── terraform/                # Terraform scripts for infrastructure as code
+├── gcp/                      # GCP deployment scripts
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
 ├── TECH_DOCS.md              # Detailed technical documentation (highly recommended to read)
