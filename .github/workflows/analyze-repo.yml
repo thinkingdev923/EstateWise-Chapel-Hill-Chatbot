@@ -1,6 +1,6 @@
 # Copyright (c) 2025 Son Nguyen
 
-name: Analyze Code for EstateWise Repository
+name: Analyze Lines of Code in EstateWise Repository
 
 on:
   push:
