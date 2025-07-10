@@ -25,10 +25,10 @@ jobs:
       # Fetch and Clone Repositories (including private) and clone only the default branch
       - name: Fetch and Clone Repositories
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Get a list of all owned repositories (including private) that are not forks
-          REPOS=$(curl -H "Authorization: token $GH_PAT" -s \
+          REPOS=$(curl -H "Authorization: token $GITHUB_TOKEN" -s \
             "https://api.github.com/user/repos?per_page=100&type=all" \
             | jq -r '.[] | select(.fork == false) | .full_name') || echo "Error fetching repositories"
 
@@ -36,17 +36,17 @@ jobs:
           cd all-repos
 
           for REPO in $REPOS; do
-            REPO_URL="https://github.com/$REPO.git"
-            AUTHENTICATED_REPO=${REPO_URL/https:\/\/\//https:\/\/$GH_PAT@}
+            # Use the Actions-provided token to clone
+            CLONE_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${REPO}.git"
 
             # Determine the default branch dynamically
-            DEFAULT_BRANCH=$(curl -H "Authorization: token $GH_PAT" -s \
+            DEFAULT_BRANCH=$(curl -H "Authorization: token $GITHUB_TOKEN" -s \
               "https://api.github.com/repos/$REPO" \
               | jq -r '.default_branch')
 
             echo "Cloning $REPO (branch: $DEFAULT_BRANCH)..."
             git clone --branch "$DEFAULT_BRANCH" --single-branch \
-              "$AUTHENTICATED_REPO" "$(basename $REPO)-$DEFAULT_BRANCH" \
+              "$CLONE_URL" "$(basename $REPO)-$DEFAULT_BRANCH" \
               || echo "⚠️ Failed to clone $REPO."
           done
 
