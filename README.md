@@ -594,6 +594,7 @@ EstateWise/
 │   ├── tsconfig.json
 │   └── ... (other config files, etc.)
 ├── shell/                    # Shell scripts for deployment and setup
+├── terraform/                # Terraform scripts for infrastructure as code
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
 ├── docker-compose.yml        # Docker configuration for backend and frontend
@@ -601,6 +602,7 @@ EstateWise/
 ├── openapi.yaml              # OpenAPI specification for API documentation
 ├── EDA-CLI-Chatbot.ipynb        # Jupyter notebook for CLI chatbot
 ├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
+├── Makefile                  # Makefile for build and deployment tasks
 └── ... (other config files, etc.)
 ```
 
