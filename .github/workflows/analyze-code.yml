@@ -1,6 +1,6 @@
 # Copyright (c) 2025 Son Nguyen
 
-name: Update Lines of Code
+name: Analyze Lines of Code in All Repos
 
 on:
   schedule:
@@ -8,8 +8,8 @@ on:
   workflow_dispatch:        # manual trigger
   push:
     branches:
-      - master             # on push to master
-  pull_request:            # on all PRs
+      - master              # on push to master
+  pull_request:             # on all PRs
 
 jobs:
   count-lines:
@@ -34,7 +34,7 @@ jobs:
             exit 1
           fi
 
-      - name: Fetch & clone all owned repos
+      - name: Fetch & clone all owned repos (public only)
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
@@ -91,19 +91,21 @@ jobs:
           XML=$(jq '.XML.code // 0' cloc-output.json)
           JSON=$(jq '.JSON.code // 0' cloc-output.json)
           YAML=$(jq '.YAML.code // 0' cloc-output.json)
+          SHELL=$(jq '."Bourne Shell".code // 0' cloc-output.json)
+          MAKE=$(jq '.make.code // 0' cloc-output.json)
 
           LISTED=$((JS + HTML + TS + JSX + PY + JAVA + GO + RUBY + CSS + PHP + CSHARP + VUE + \
                      JNB + CPP + SWIFT + C + DOCKER + R + HCL + SQL + RUST + KOTLIN + SCALA + \
-                     PERL + DART + XML + JSON + YAML))
+                     PERL + DART + XML + JSON + YAML + SHELL + MAKE))
           OTHER=$((TOTAL - LISTED))
 
           format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
 
           echo "====== Lines of Code Summary ======"
           echo "JavaScript       : $(format $JS)"
-          echo "HTML             : $(format $HTML)"
           echo "TypeScript       : $(format $TS)"
           echo "JSX              : $(format $JSX)"
+          echo "HTML             : $(format $HTML)"
           echo "Python           : $(format $PY)"
           echo "Java             : $(format $JAVA)"
           echo "Go               : $(format $GO)"
@@ -127,6 +129,8 @@ jobs:
           echo "JSON             : $(format $JSON)"
           echo "XML              : $(format $XML)"
           echo "YAML             : $(format $YAML)"
+          echo "Bourne Shell     : $(format $SHELL)"
+          echo "Makefile         : $(format $MAKE)"
           echo ""
           echo "Other            : $(format $OTHER)"
           echo "-----------------------------------"
