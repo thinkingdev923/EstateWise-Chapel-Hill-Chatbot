@@ -597,7 +597,7 @@ EstateWise/
 ├── terraform/                # Terraform scripts for infrastructure as code
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
-├── TECH_DOCS.md              # Detailed technical documentation
+├── TECH_DOCS.md              # Detailed technical documentation (highly recommended to read)
 ├── docker-compose.yml        # Docker configuration for backend and frontend
 ├── Dockerfile                # Dockerfile for application
 ├── openapi.yaml              # OpenAPI specification for API documentation
