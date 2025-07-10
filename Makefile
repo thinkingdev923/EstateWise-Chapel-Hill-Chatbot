@@ -1,3 +1,80 @@
+###############################################################################
+# Makefile for EstateWise Monorepo
+#
+# Description:
+#   This Makefile orchestrates installation, building, development, testing,
+#   data upsert, Docker workflows, and deployment for both the backend and
+#   frontend parts of the EstateWise intelligent estate assistant.
+#
+# Setup Requirements:
+#   1. Install Node.js (v16+) and npm.
+#   2. (For Docker targets) Install Docker Engine and docker-compose.
+#   3. Create a `.env` file in the backend directory containing:
+#        MONGO_URI=<your_mongo_uri>
+#        JWT_SECRET=<your_jwt_secret>
+#        GOOGLE_AI_API_KEY=<your_google_ai_api_key>
+#        PINECONE_API_KEY=<your_pinecone_api_key>
+#        PINECONE_INDEX=estatewise-index
+#   4. Ensure you have created the Pinecone index "estatewise-index" and that
+#      your data files are ready for upsert.
+#   5. Adjust BACKEND_DIR, FRONTEND_DIR, or SHELL_DIR variables below if your
+#      folder structure differs.
+#
+# Usage:
+#   make <target>
+#
+# Common targets:
+#   install           Install dependencies for both backend & frontend
+#   backend-install   Install only backend dependencies
+#   frontend-install  Install only frontend dependencies
+#
+#   backend-setup     Install, build & launch backend in dev mode
+#   frontend-setup    Install, build & launch frontend in dev mode
+#   run-local, dev    Run backend & frontend concurrently (via shell/run_local.sh)
+#
+#   build             Build production artifacts for both services
+#   build-backend     Build backend (npm run build)
+#   build-frontend    Build frontend (npm run build)
+#
+#   upsert            Upsert property data into Pinecone index
+#
+#   test              Run unit & integration tests (Jest, React Testing Library)
+#   lint              Run ESLint on backend & frontend
+#   format            Run Prettier/formatter on backend & frontend
+#
+#   docker-up         Start all services via Docker Compose
+#   docker-down       Stop Docker Compose services
+#   deploy            Build & launch via shell/deploy.sh
+#
+#   build-images      Build all Docker images (backend, crawler, newsletters)
+#   push-images       Push all Docker images to registry
+#
+#   backend-dev       Start backend in dev mode (npm run dev)
+#   frontend-dev      Start frontend in dev mode (npm run dev)
+#
+# Example Workflows:
+#   # Install everything
+#   make install
+#
+#   # Spin up local dev environment
+#   make dev
+#
+#   # Build production bundles
+#   make build
+#
+#   # Upsert data into Pinecone
+#   make upsert
+#
+#   # Bring services up with Docker
+#   make docker-up
+#
+#   # Run tests, lint & format
+#   make test
+#   make lint
+#   make format
+#
+###############################################################################
+
 # Default goal
 .DEFAULT_GOAL := help
 
