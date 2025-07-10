@@ -3,17 +3,13 @@
 name: Update Lines of Code
 
 on:
-  # Run weekly on Sunday at midnight (UTC)
   schedule:
-    - cron: "0 0 * * 0"
-  # Manual trigger
-  workflow_dispatch:
-  # Run on push to master
+    - cron: "0 0 * * 0"     # weekly on Sunday @ midnight UTC
+  workflow_dispatch:        # manual trigger
   push:
     branches:
-      - master
-  # Run on all pull requests
-  pull_request:
+      - master             # on push to master
+  pull_request:            # on all PRs
 
 jobs:
   count-lines:
@@ -29,14 +25,23 @@ jobs:
           sudo apt-get install -y jq cloc locales
           sudo locale-gen en_US.UTF-8
 
+      - name: Validate GH_PAT secret
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          if [ -z "$GH_PAT" ]; then
+            echo "❌ GH_PAT is not set! Create a repo secret named GH_PAT with a PAT that has repo scope."
+            exit 1
+          fi
+
       - name: Fetch & clone all owned repos
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          # List up to 100 repos you own (public + private), non-forks
-          REPOS=$(curl -sSL -H "Authorization: token $GH_PAT" \
-            "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100" \
-            | jq -r '.[] | select(.fork==false) | .full_name')
+          RESPONSE=$(curl -sSL -H "Authorization: token $GH_PAT" \
+            "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100")
+
+          REPOS=$(echo "$RESPONSE" | jq -r '.[].full_name')
 
           mkdir -p all-repos && cd all-repos
 
@@ -46,7 +51,8 @@ jobs:
               "https://api.github.com/repos/$REPO" \
               | jq -r '.default_branch // "main"')
             echo "Cloning $REPO (branch: $DEFAULT_BRANCH)…"
-            git clone --depth 1 --branch "$DEFAULT_BRANCH" "$CLONE_URL" "$(basename $REPO)" \
+            git clone --depth 1 --branch "$DEFAULT_BRANCH" \
+              "$CLONE_URL" "$(basename $REPO)" \
               || echo "⚠️ Failed to clone $REPO"
           done
 
@@ -63,7 +69,7 @@ jobs:
           CSHARP=$(jq '."C#".code // 0' cloc-output.json)
           VUE=$(jq '."Vuejs Component".code // 0' cloc-output.json)
           PHP=$(jq '.PHP.code // 0' cloc-output.json)
-          OTHER=$((TOTAL - JS - TS - JSX - CSHARP - VUE - PHP))
+          OTHER=$(( TOTAL - JS - TS - JSX - CSHARP - VUE - PHP ))
 
           format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
 
