@@ -1,9 +1,11 @@
-name: Update Lines of Code in Readme
+# Copyright (c) 2025 Son Nguyen
+
+name: Update Lines of Code
 
 on:
   schedule:
     - cron: "0 0 * * 0" # Runs weekly on Sunday at midnight (UTC)
-  workflow_dispatch: # Allows manual trigger
+  workflow_dispatch:    # Allows manual trigger
 
 jobs:
   count-lines:
@@ -25,93 +27,57 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          USERNAME="hoangsonww"
-
           # Get a list of all owned repositories (including private) that are not forks
           REPOS=$(curl -H "Authorization: token $GH_PAT" -s \
             "https://api.github.com/user/repos?per_page=100&type=all" \
             | jq -r '.[] | select(.fork == false) | .full_name') || echo "Error fetching repositories"
 
-          mkdir -p public-repos
-          cd public-repos
+          mkdir -p all-repos
+          cd all-repos
 
           for REPO in $REPOS; do
             REPO_URL="https://github.com/$REPO.git"
-            AUTHENTICATED_REPO=$(echo "$REPO_URL" | sed "s#https://#https://$GH_PAT@#g")
-          
-            # Determine the default branch dynamically and clone only that branch
+            AUTHENTICATED_REPO=${REPO_URL/https:\/\/\//https:\/\/$GH_PAT@}
+
+            # Determine the default branch dynamically
             DEFAULT_BRANCH=$(curl -H "Authorization: token $GH_PAT" -s \
               "https://api.github.com/repos/$REPO" \
               | jq -r '.default_branch')
 
-            echo "Cloning $REPO (default branch: $DEFAULT_BRANCH)..."
+            echo "Cloning $REPO (branch: $DEFAULT_BRANCH)..."
             git clone --branch "$DEFAULT_BRANCH" --single-branch \
               "$AUTHENTICATED_REPO" "$(basename $REPO)-$DEFAULT_BRANCH" \
-              || echo "Failed to clone $REPO."
+              || echo "⚠️ Failed to clone $REPO."
           done
 
-          # Run cloc to analyze lines of code, excluding non-source code files
-          echo "Calculating lines of code..."
-          mkdir -p ../output
-          cloc . --exclude-ext=json,html,css,svg,md,py,ps1,scss --json \
-            > ../output/cloc-output.json
-
-      # Commit and push the updated cloc-output.json and README.md to the current branch
-      - name: Commit and Push Output
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+      # Run cloc to analyze lines of code, excluding non-source files
+      - name: Calculate Lines of Code
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          echo "Running cloc..."
+          cloc all-repos --exclude-ext=json,html,css,svg,md,py,ps1,scss --json > cloc-output.json
 
-          # Format and update README
-          TOTAL_LINES=$(jq '.SUM.code // 0' output/cloc-output.json)
-          JS_LINES=$(jq '.JavaScript.code // 0' output/cloc-output.json)
-          TS_LINES=$(jq '.TypeScript.code // 0' output/cloc-output.json)
-          JSX_LINES=$(jq '.JSX.code // 0' output/cloc-output.json)
-          CSHARP_LINES=$(jq '."C#".code // 0' output/cloc-output.json)
-          VUE_LINES=$(jq '."Vuejs Component".code // 0' output/cloc-output.json)
-          PHP_LINES=$(jq '.PHP.code // 0' output/cloc-output.json)
-          OTHER_LINES=$((TOTAL_LINES - JS_LINES - TS_LINES - JSX_LINES - PHP_LINES - CSHARP_LINES - VUE_LINES))
+      # Parse the JSON and print a human-readable breakdown
+      - name: Print Stats
+        run: |
+          TOTAL=$(jq '.SUM.code // 0' cloc-output.json)
+          JS=$(jq '.JavaScript.code // 0' cloc-output.json)
+          TS=$(jq '.TypeScript.code // 0' cloc-output.json)
+          JSX=$(jq '.JSX.code // 0' cloc-output.json)
+          CSHARP=$(jq '."C#".code // 0' cloc-output.json)
+          VUE=$(jq '."Vuejs Component".code // 0' cloc-output.json)
+          PHP=$(jq '.PHP.code // 0' cloc-output.json)
+          OTHER=$(( TOTAL - JS - TS - JSX - CSHARP - VUE - PHP ))
 
-          # Function to format numbers with commas (ensuring proper locale settings)
-          format_number() {
-            export LC_ALL="en_US.UTF-8"
-            printf "%'d\n" $1
-          }
+          # Format numbers with commas
+          format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
 
-          FORMATTED_TOTAL=$(format_number $TOTAL_LINES)
-          FORMATTED_JS=$(format_number $JS_LINES)
-          FORMATTED_TS=$(format_number $TS_LINES)
-          FORMATTED_JSX=$(format_number $JSX_LINES)
-          FORMATTED_CSHARP=$(format_number $CSHARP_LINES)
-          FORMATTED_VUE=$(format_number $VUE_LINES)
-          FORMATTED_PHP=$(format_number $PHP_LINES)
-          FORMATTED_OTHER=$(format_number $OTHER_LINES)
-
-          CODE_BLOCK="\`\`\`
-          [ LANGUAGES BREAKDOWN ]
-
-          JavaScript   --> $FORMATTED_JS lines
-          TypeScript   --> $FORMATTED_TS lines
-          JSX          --> $FORMATTED_JSX lines
-          Vue.js       --> $FORMATTED_VUE lines
-          PHP          --> $FORMATTED_PHP lines
-          C#           --> $FORMATTED_CSHARP lines
-          Other        --> $FORMATTED_OTHER lines
-
-          [ TOTAL LINES OF CODE: $FORMATTED_TOTAL ]
-          \`\`\`"
-
-          # Update README.md by replacing the section between predefined comment markers
-          echo "$CODE_BLOCK" > temp_block.txt
-          sed -i '/<!-- LANGUAGES BREAKDOWN START -->/,/<!-- LANGUAGES BREAKDOWN END -->/{
-              //!d
-              /<!-- LANGUAGES BREAKDOWN START -->/r temp_block.txt
-          }' README.md
-
-          rm temp_block.txt
-
-          git add output/cloc-output.json README.md
-          git commit -m "chore: update README and cloc-output.json with latest code stats" || echo "No changes to commit"
-          git push origin HEAD
+          echo "====== Lines of Code Summary ======"
+          echo "JavaScript : $(format $JS)"
+          echo "TypeScript : $(format $TS)"
+          echo "JSX        : $(format $JSX)"
+          echo "Vue.js     : $(format $VUE)"
+          echo "PHP        : $(format $PHP)"
+          echo "C#         : $(format $CSHARP)"
+          echo "Other      : $(format $OTHER)"
+          echo "-----------------------------------"
+          echo "Total Lines: $(format $TOTAL)"
