@@ -1,6 +1,6 @@
 # Copyright (c) 2025 Son Nguyen
 
-name: Count Lines of Code in All Repos
+name: Analyze Lines of Code in All Repos
 
 on:
   schedule:
