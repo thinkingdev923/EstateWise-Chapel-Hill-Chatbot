@@ -593,6 +593,7 @@ EstateWise/
 │   ├── package.json
 │   ├── tsconfig.json
 │   └── ... (other config files, tests, etc.)
+├── data/                     # Additional data analytics scripts (Python and JS)
 ├── shell/                    # Shell scripts for deployment and setup
 ├── terraform/                # Terraform scripts for infrastructure as code
 ├── gcp/                      # GCP deployment scripts
