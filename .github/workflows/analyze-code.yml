@@ -8,8 +8,8 @@ on:
   workflow_dispatch:        # manual trigger
   push:
     branches:
-      - master             # on push to master
-  pull_request:            # on all PRs
+      - master              # on push to master
+  pull_request:             # on all PRs
 
 jobs:
   count-lines:
@@ -66,6 +66,7 @@ jobs:
           JS=$(jq '.JavaScript.code // 0' cloc-output.json)
           HTML=$(jq '.HTML.code // 0' cloc-output.json)
           TS=$(jq '.TypeScript.code // 0' cloc-output.json)
+          TSX=$(jq '.TSX.code // 0' cloc-output.json)
           JSX=$(jq '.JSX.code // 0' cloc-output.json)
           PY=$(jq '.Python.code // 0' cloc-output.json)
           JAVA=$(jq '.Java.code // 0' cloc-output.json)
@@ -94,7 +95,7 @@ jobs:
           SHELL=$(jq '."Bourne Shell".code // 0' cloc-output.json)
           MAKE=$(jq '.make.code // 0' cloc-output.json)
 
-          LISTED=$((JS + HTML + TS + JSX + PY + JAVA + GO + RUBY + CSS + PHP + CSHARP + VUE + \
+          LISTED=$((JS + HTML + TS + JSX + TSX + PY + JAVA + GO + RUBY + CSS + PHP + CSHARP + VUE + \
                      JNB + CPP + SWIFT + C + DOCKER + R + HCL + SQL + RUST + KOTLIN + SCALA + \
                      PERL + DART + XML + JSON + YAML + SHELL + MAKE))
           OTHER=$((TOTAL - LISTED))
@@ -103,9 +104,10 @@ jobs:
 
           echo "====== Lines of Code Summary ======"
           echo "JavaScript       : $(format $JS)"
-          echo "HTML             : $(format $HTML)"
           echo "TypeScript       : $(format $TS)"
+          echo "TSX              : $(format $TSX)"
           echo "JSX              : $(format $JSX)"
+          echo "HTML             : $(format $HTML)"
           echo "Python           : $(format $PY)"
           echo "Java             : $(format $JAVA)"
           echo "Go               : $(format $GO)"
