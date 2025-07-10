@@ -582,7 +582,7 @@ EstateWise/
 │   ├── styles/               # CSS/SCSS files
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── ... (other config files, etc.)
+│   └── ... (other config files, tests, etc.)
 ├── backend/                   # Backend Express application
 │   ├── src/
 │   │   ├── controllers/      # API controllers and endpoints
@@ -592,15 +592,20 @@ EstateWise/
 │   │   └── middleware/       # Authentication, error handling, etc.
 │   ├── package.json
 │   ├── tsconfig.json
-│   └── ... (other config files, etc.)
+│   └── ... (other config files, tests, etc.)
+├── data/                     # Additional data analytics scripts (Python and JS)
 ├── shell/                    # Shell scripts for deployment and setup
+├── terraform/                # Terraform scripts for infrastructure as code
+├── gcp/                      # GCP deployment scripts
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
+├── TECH_DOCS.md              # Detailed technical documentation (highly recommended to read)
 ├── docker-compose.yml        # Docker configuration for backend and frontend
 ├── Dockerfile                # Dockerfile for application
 ├── openapi.yaml              # OpenAPI specification for API documentation
 ├── EDA-CLI-Chatbot.ipynb        # Jupyter notebook for CLI chatbot
 ├── Initial-Data-Analysis.ipynb  # Jupyter notebook for initial data analysis
+├── Makefile                  # Makefile for build and deployment tasks
 └── ... (other config files, etc.)
 ```
 
