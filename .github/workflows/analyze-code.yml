@@ -58,7 +58,7 @@ jobs:
 
       - name: Calculate lines of code
         run: |
-          cloc all-repos --exclude-ext=json,html,css,svg,md,py,ps1,scss --json > cloc-output.json
+          cloc all-repos --json > cloc-output.json
 
       - name: Print stats
         run: |
