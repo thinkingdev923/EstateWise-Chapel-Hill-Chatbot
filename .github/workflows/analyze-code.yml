@@ -3,53 +3,58 @@
 name: Update Lines of Code
 
 on:
+  # Run weekly on Sunday at midnight (UTC)
   schedule:
-    - cron: "0 0 * * 0"  # weekly on Sunday @ midnight UTC
-  workflow_dispatch:     # manual trigger
+    - cron: "0 0 * * 0"
+  # Manual trigger
+  workflow_dispatch:
+  # Run on push to master
+  push:
+    branches:
+      - master
+  # Run on all pull requests
+  pull_request:
 
 jobs:
   count-lines:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
+      - name: Checkout workflow repo
         uses: actions/checkout@v3
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y jq cloc locales
           sudo locale-gen en_US.UTF-8
 
-      - name: Fetch and Clone Repositories
+      - name: Fetch & clone all owned repos
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          # List all owned repos (public + private), non-forks
-          REPOS=$(curl -H "Authorization: token $GH_PAT" -s \
-            "https://api.github.com/user/repos?per_page=100&type=all" \
+          # List up to 100 repos you own (public + private), non-forks
+          REPOS=$(curl -sSL -H "Authorization: token $GH_PAT" \
+            "https://api.github.com/user/repos?visibility=all&affiliation=owner&per_page=100" \
             | jq -r '.[] | select(.fork==false) | .full_name')
 
-          mkdir all-repos && cd all-repos
+          mkdir -p all-repos && cd all-repos
 
           for REPO in $REPOS; do
             CLONE_URL="https://x-access-token:$GH_PAT@github.com/$REPO.git"
-            DEFAULT_BRANCH=$(curl -H "Authorization: token $GH_PAT" -s \
+            DEFAULT_BRANCH=$(curl -sSL -H "Authorization: token $GH_PAT" \
               "https://api.github.com/repos/$REPO" \
-              | jq -r '.default_branch')
-
+              | jq -r '.default_branch // "main"')
             echo "Cloning $REPO (branch: $DEFAULT_BRANCH)…"
-            git clone --depth 1 --branch "$DEFAULT_BRANCH" \
-              "$CLONE_URL" "$(basename $REPO)"
+            git clone --depth 1 --branch "$DEFAULT_BRANCH" "$CLONE_URL" "$(basename $REPO)" \
+              || echo "⚠️ Failed to clone $REPO"
           done
 
-      - name: Calculate Lines of Code
+      - name: Calculate lines of code
         run: |
-          echo "Running cloc…"
-          cloc all-repos --exclude-ext=json,html,css,svg,md,py,ps1,scss --json \
-            > cloc-output.json
+          cloc all-repos --exclude-ext=json,html,css,svg,md,py,ps1,scss --json > cloc-output.json
 
-      - name: Print Stats
+      - name: Print stats
         run: |
           TOTAL=$(jq '.SUM.code // 0' cloc-output.json)
           JS=$(jq '.JavaScript.code // 0' cloc-output.json)
@@ -58,7 +63,7 @@ jobs:
           CSHARP=$(jq '."C#".code // 0' cloc-output.json)
           VUE=$(jq '."Vuejs Component".code // 0' cloc-output.json)
           PHP=$(jq '.PHP.code // 0' cloc-output.json)
-          OTHER=$(( TOTAL - JS - TS - JSX - CSHARP - VUE - PHP ))
+          OTHER=$((TOTAL - JS - TS - JSX - CSHARP - VUE - PHP))
 
           format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
 
