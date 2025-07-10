@@ -64,22 +64,71 @@ jobs:
         run: |
           TOTAL=$(jq '.SUM.code // 0' cloc-output.json)
           JS=$(jq '.JavaScript.code // 0' cloc-output.json)
+          HTML=$(jq '.HTML.code // 0' cloc-output.json)
           TS=$(jq '.TypeScript.code // 0' cloc-output.json)
           JSX=$(jq '.JSX.code // 0' cloc-output.json)
+          PY=$(jq '.Python.code // 0' cloc-output.json)
+          JAVA=$(jq '.Java.code // 0' cloc-output.json)
+          GO=$(jq '.Go.code // 0' cloc-output.json)
+          RUBY=$(jq '.Ruby.code // 0' cloc-output.json)
+          CSS=$(jq '.CSS.code // 0' cloc-output.json)
+          PHP=$(jq '.PHP.code // 0' cloc-output.json)
           CSHARP=$(jq '."C#".code // 0' cloc-output.json)
           VUE=$(jq '."Vuejs Component".code // 0' cloc-output.json)
-          PHP=$(jq '.PHP.code // 0' cloc-output.json)
-          OTHER=$(( TOTAL - JS - TS - JSX - CSHARP - VUE - PHP ))
+          JNB=$(jq '."Jupyter Notebook".code // 0' cloc-output.json)
+          CPP=$(jq '."C++".code // 0' cloc-output.json)
+          SWIFT=$(jq '.Swift.code // 0' cloc-output.json)
+          C=$(jq '.C.code // 0' cloc-output.json)
+          DOCKER=$(jq '.Dockerfile.code // 0' cloc-output.json)
+          R=$(jq '.R.code // 0' cloc-output.json)
+          HCL=$(jq '.HCL.code // 0' cloc-output.json)
+          SQL=$(jq '.SQL.code // 0' cloc-output.json)
+          RUST=$(jq '.Rust.code // 0' cloc-output.json)
+          KOTLIN=$(jq '.Kotlin.code // 0' cloc-output.json)
+          SCALA=$(jq '.Scala.code // 0' cloc-output.json)
+          PERL=$(jq '.Perl.code // 0' cloc-output.json)
+          DART=$(jq '.Dart.code // 0' cloc-output.json)
+          XML=$(jq '.XML.code // 0' cloc-output.json)
+          JSON=$(jq '.JSON.code // 0' cloc-output.json)
+          YAML=$(jq '.YAML.code // 0' cloc-output.json)
+
+          LISTED=$((JS + HTML + TS + JSX + PY + JAVA + GO + RUBY + CSS + PHP + CSHARP + VUE + \
+                     JNB + CPP + SWIFT + C + DOCKER + R + HCL + SQL + RUST + KOTLIN + SCALA + \
+                     PERL + DART + XML + JSON + YAML))
+          OTHER=$((TOTAL - LISTED))
 
           format() { export LC_ALL="en_US.UTF-8"; printf "%'d\n" "$1"; }
 
           echo "====== Lines of Code Summary ======"
-          echo "JavaScript : $(format $JS)"
-          echo "TypeScript : $(format $TS)"
-          echo "JSX        : $(format $JSX)"
-          echo "Vue.js     : $(format $VUE)"
-          echo "PHP        : $(format $PHP)"
-          echo "C#         : $(format $CSHARP)"
-          echo "Other      : $(format $OTHER)"
+          echo "JavaScript       : $(format $JS)"
+          echo "HTML             : $(format $HTML)"
+          echo "TypeScript       : $(format $TS)"
+          echo "JSX              : $(format $JSX)"
+          echo "Python           : $(format $PY)"
+          echo "Java             : $(format $JAVA)"
+          echo "Go               : $(format $GO)"
+          echo "Ruby             : $(format $RUBY)"
+          echo "CSS              : $(format $CSS)"
+          echo "PHP              : $(format $PHP)"
+          echo "C#               : $(format $CSHARP)"
+          echo "Vue.js           : $(format $VUE)"
+          echo ""
+          echo "Jupyter Notebook : $(format $JNB)"
+          echo "C++              : $(format $CPP)"
+          echo "Swift            : $(format $SWIFT)"
+          echo "C                : $(format $C)"
+          echo "Dockerfile       : $(format $DOCKER)"
+          echo "R                : $(format $R)"
+          echo "HCL              : $(format $HCL)"
+          echo "SQL              : $(format $SQL)"
+          echo ""
+          echo "Rust             : $(format $RUST)"
+          echo "Kotlin           : $(format $KOTLIN)"
+          echo "JSON             : $(format $JSON)"
+          echo "XML              : $(format $XML)"
+          echo "YAML             : $(format $YAML)"
+          echo ""
+          echo "Other            : $(format $OTHER)"
           echo "-----------------------------------"
-          echo "Total Lines: $(format $TOTAL)"
+          echo "Total Lines      : $(format $TOTAL)"
+      
