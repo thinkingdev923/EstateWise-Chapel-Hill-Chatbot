@@ -546,7 +546,38 @@ jobs:
   # ───────────────────────────────────────────────────────────────────────────────
   done:
     name: "🎉 Pipeline Done"
-    needs: [infra-deploy, vercel-deploy]
+    needs:
+      - infra-deploy
+      - vercel-deploy
     runs-on: ubuntu-latest
     steps:
-      - run: echo "✅ CI/CD pipeline completed successfully."
+      - name: Deployment Summary (log)
+        run: |
+          echo "::group::🏡 EstateWise Deployment Summary"
+          echo ""
+          echo "- 🌐 **Live App:** https://estatewise.vercel.app/"
+          echo "- 🏠 **Backend API:** https://estatewise-backend.vercel.app/"
+          echo "- 🐳 **Backend Image:** ghcr.io/${{ github.repository_owner }}/estatewise-app-backend:${{ github.sha }}"
+          echo "- 🐳 **Frontend Image:** ghcr.io/${{ github.repository_owner }}/estatewise-app-frontend:${{ github.sha }}"
+          echo "- 🚀 **Infrastructure:** AWS ECS (Terraform + Ansible)"
+          echo "- ☁️ **Frontend Hosting:** Vercel"
+          echo ""
+          echo "✅ All stages of the EstateWise CI/CD pipeline completed successfully!"
+          echo "::endgroup::"
+
+      - name: Write Summary to GitHub Step Summary
+        run: |
+          {
+            echo "## 🎉 EstateWise CI/CD Pipeline Complete"
+            echo ""
+            echo "| Item               | Details                                                            |"
+            echo "| ------------------ | ------------------------------------------------------------------ |"
+            echo "| **Live App**       | [https://estatewise.vercel.app/](https://estatewise.vercel.app/)   |"
+            echo "| **Backend API**    | [https://estatewise-backend.vercel.app/](https://estatewise-backend.vercel.app/) |"
+            echo "| **Backend Image**  | `ghcr.io/${{ github.repository_owner }}/estatewise-app-backend:${{ github.sha }}`   |"
+            echo "| **Frontend Image** | `ghcr.io/${{ github.repository_owner }}/estatewise-app-frontend:${{ github.sha }}`  |"
+            echo "| **Infrastructure** | AWS ECS (Terraform + Ansible)                                       |"
+            echo "| **Vercel Host**    | Frontend hosted on Vercel                                          |"
+            echo ""
+            echo "**Completed at** $(date -u +"%Y-%m-%dT%H:%M:%SZ") UTC"
+          } >> $GITHUB_STEP_SUMMARY
