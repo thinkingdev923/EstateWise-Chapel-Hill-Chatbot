@@ -1,5 +1,8 @@
 name: CI Build
 
+# Deprecated: This workflow is deprecated and will be removed in a future release.
+# See and use the workflow at .github/workflows/workflow.yml instead.
+
 on:
   push:
     branches: [ main ]
