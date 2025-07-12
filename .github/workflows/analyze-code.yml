@@ -3,7 +3,7 @@
 name: Analyze Lines of Code in All Repos
 
 # Note: This workflow is just for me to track the lines of code across all my repositories (@hoangsonww)!
-# Not really related to this repository, but useful for my personal stats.
+# Not really related to this repository, but useful for me to see my own personal stats.
 
 on:
   schedule:
