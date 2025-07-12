@@ -2,6 +2,8 @@
 
 name: Analyze Lines of Code in All Repos
 
+# Note: This workflow is just for me to track the lines of code across all my repositories (@hoangsonww)!
+
 on:
   schedule:
     - cron: "0 0 * * 0"     # weekly on Sunday @ midnight UTC
