@@ -15,6 +15,7 @@ env:
 jobs:
   # ────────────────────────────────────────────────────────────────
   #  ⚙️ 0. Preflight Setup                                         #
+  #   Makes sure the environment is ready for the pipeline to run. #
   # ────────────────────────────────────────────────────────────────
   preflight:
     name: "⚙️ Preflight Setup"
