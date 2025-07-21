@@ -1,1 +1,15 @@
-detect-secrets>=1.5.0
+[project]
+name = "EstateWise"
+version = "0.1.0"
+description = "Python package for EstateWise, a chatbot that helps users find real estate properties in Chapel Hill, NC."
+authors = [
+    { name="Son Nguyen", email="hoangson091104@gmail.com" },
+]
+dependencies = [
+    "detect-secrets==1.5.0",
+]
+
+[build-system]
+requires = ["setuptools>=42", "wheel", "tomli>=1.1.0"]
+build-backend = "setuptools.build_meta"
+
