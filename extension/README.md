@@ -2,10 +2,6 @@
 
 Embed the Estatewise chatbot directly into your VS Code editor and get instant property insights without ever leaving your workspace!
 
-<p align="center">
-  <img src="images/logo.png" alt="Estatewise Chat Extension Screenshot" width="45%">
-</p>
-
 ## Features
 
 - **One‑click access** to your Estatewise chatbot via the Command Palette.
