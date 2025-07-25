@@ -1,0 +1,101 @@
+{
+  "name": "estatewise-chat",
+  "displayName": "Estatewise Chat",
+  "description": "Chat with Estatewise about Chapel Hill real estate, directly in VS Code.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot.git"
+  },
+  "publisher": "Son Nguyen",
+  "author": "Son Nguyen",
+  "homepage": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot#readme",
+  "bugs": {
+    "url": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues"
+  },
+  "engines": {
+    "vscode": "^1.50.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:estatewiseChat.openChat"
+  ],
+  "main": "./out/extension.js",
+  "icon": "images/logo.png",
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Estatewise Chat",
+      "properties": {
+        "estatewiseChat.panelTitle": {
+          "type": "string",
+          "default": "Estatewise Chat",
+          "description": "Title of the chat panel."
+        },
+        "estatewiseChat.viewColumn": {
+          "type": "number",
+          "default": 1,
+          "enum": [
+            0,
+            1,
+            2,
+            3
+          ],
+          "enumDescriptions": [
+            "Active column",
+            "First column",
+            "Second column",
+            "Third column"
+          ],
+          "description": "Which editor column to open the chat panel in."
+        },
+        "estatewiseChat.retainContext": {
+          "type": "boolean",
+          "default": true,
+          "description": "Keep chat context alive when the panel is hidden."
+        },
+        "estatewiseChat.enableScripts": {
+          "type": "boolean",
+          "default": true,
+          "description": "Allow scripts in the chat Webview."
+        },
+        "estatewiseChat.iframeWidth": {
+          "type": "string",
+          "default": "100%",
+          "description": "CSS width of the chat iframe."
+        },
+        "estatewiseChat.iframeHeight": {
+          "type": "string",
+          "default": "100%",
+          "description": "CSS height of the chat iframe."
+        },
+        "estatewiseChat.openOnStartup": {
+          "type": "boolean",
+          "default": false,
+          "description": "Open the chat panel automatically when VS Code starts."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "estatewiseChat.openChat",
+        "title": "Estatewise Chat: Open Chat"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/node": "^12.20.55",
+    "@types/vscode": "^1.50.0",
+    "typescript": "^4.0.0",
+    "vsce": "^1.91.0"
+  }
+}

@@ -1,20 +1,20 @@
 /**
  * @jest-environment node
  */
-process.env.JWT_SECRET = 'irrelevant';
+process.env.JWT_SECRET = "irrelevant";
 
 /* ─── mock mongoose ───────────────────────────────────────────── */
 const ObjectIdMock = function (v) {
   if (!(this instanceof ObjectIdMock)) return v;
   return v;
 };
-jest.mock('mongoose', () => {
+jest.mock("mongoose", () => {
   const core = { Types: { ObjectId: ObjectIdMock } };
   return { __esModule: true, ...core, default: core };
 });
 
 /* ─── helpers ─────────────────────────────────────────────────── */
-const httpMocks = require('node-mocks-http');
+const httpMocks = require("node-mocks-http");
 const buildRes = () => ({
   status: jest.fn().mockReturnThis(),
   json: jest.fn().mockReturnThis(),
@@ -26,48 +26,50 @@ let findOneMock = jest.fn();
 
 function ConversationMock(data = {}) {
   Object.assign(this, data);
-  this._id = data._id || 'conv123';
+  this._id = data._id || "conv123";
   this.messages = data.messages || [];
-  this.expertWeights =
-    data.expertWeights || {
-      'Data Analyst': 1,
-      'Lifestyle Concierge': 1,
-      'Financial Advisor': 1,
-      'Neighborhood Expert': 1,
-      'Cluster Analyst': 1,
-    };
+  this.expertWeights = data.expertWeights || {
+    "Data Analyst": 1,
+    "Lifestyle Concierge": 1,
+    "Financial Advisor": 1,
+    "Neighborhood Expert": 1,
+    "Cluster Analyst": 1,
+  };
   this.save = saveMock;
   this.markModified = jest.fn();
 }
 ConversationMock.findOne = (...args) => findOneMock(...args);
-jest.mock('../src/models/Conversation.model', () => ConversationMock);
+jest.mock("../src/models/Conversation.model", () => ConversationMock);
 
 /* ─── Gemini service mock ────────────────────────────────────── */
 const chatWithEstateWise = jest
   .fn()
-  .mockResolvedValue({ finalText: 'bot reply', expertViews: { A: 0.5 } });
-jest.mock('../src/services/geminiChat.service', () => ({ chatWithEstateWise }));
+  .mockResolvedValue({ finalText: "bot reply", expertViews: { A: 0.5 } });
+jest.mock("../src/services/geminiChat.service", () => ({ chatWithEstateWise }));
 
 /* ─── controller under test ──────────────────────────────────── */
-const { chat, rateConversation } = require('../src/controllers/chat.controller');
+const {
+  chat,
+  rateConversation,
+} = require("../src/controllers/chat.controller");
 
 /* ═══════════════════════════════════════════════════════════════
    CHAT ENDPOINT TESTS
    ═══════════════════════════════════════════════════════════════ */
-describe('chat()', () => {
+describe("chat()", () => {
   let consoleSpy;
   beforeEach(() => {
     jest.clearAllMocks();
-    consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    consoleSpy = jest.spyOn(console, "error").mockImplementation(() => {});
   });
   afterEach(() => consoleSpy.mockRestore());
 
-  it('guest flow returns bot reply & weights', async () => {
+  it("guest flow returns bot reply & weights", async () => {
     const req = httpMocks.createRequest({
       body: {
-        message: 'hello',
-        history: [{ role: 'sys', parts: [{ text: 'init' }] }],
-        expertWeights: { 'Data Analyst': 2 },
+        message: "hello",
+        history: [{ role: "sys", parts: [{ text: "init" }] }],
+        expertWeights: { "Data Analyst": 2 },
       },
     });
     const res = buildRes();
@@ -76,55 +78,55 @@ describe('chat()', () => {
 
     expect(chatWithEstateWise).toHaveBeenCalledWith(
       [
-        { role: 'sys', parts: [{ text: 'init' }] },
-        { role: 'user', parts: [{ text: 'hello' }] },
+        { role: "sys", parts: [{ text: "init" }] },
+        { role: "user", parts: [{ text: "hello" }] },
       ],
-      'hello',
+      "hello",
       {},
-      expect.objectContaining({ 'Data Analyst': 2 })
+      expect.objectContaining({ "Data Analyst": 2 }),
     );
     expect(res.json).toHaveBeenCalledWith({
-      response: 'bot reply',
+      response: "bot reply",
       expertViews: { A: 0.5 },
-      expertWeights: expect.objectContaining({ 'Data Analyst': 2 }),
+      expertWeights: expect.objectContaining({ "Data Analyst": 2 }),
     });
   });
 
-  it('creates a new conversation for auth user', async () => {
+  it("creates a new conversation for auth user", async () => {
     findOneMock.mockResolvedValueOnce(null);
 
-    const req = httpMocks.createRequest({ body: { message: 'yo' } });
-    req.user = { id: 'u1' };
+    const req = httpMocks.createRequest({ body: { message: "yo" } });
+    req.user = { id: "u1" };
     const res = buildRes();
 
     await chat(req, res);
 
     expect(saveMock).toHaveBeenCalled();
     expect(chatWithEstateWise).toHaveBeenCalledWith(
-      [{ role: 'user', parts: [{ text: 'yo' }] }],
-      'yo',
+      [{ role: "user", parts: [{ text: "yo" }] }],
+      "yo",
       {},
-      expect.any(Object)
+      expect.any(Object),
     );
     expect(res.json).toHaveBeenCalledWith({
-      response: 'bot reply',
+      response: "bot reply",
       expertViews: { A: 0.5 },
-      convoId: 'conv123',
+      convoId: "conv123",
       expertWeights: expect.any(Object),
     });
   });
 
-  it('internal error → 500', async () => {
-    chatWithEstateWise.mockRejectedValueOnce(new Error('boom'));
-    const req = httpMocks.createRequest({ body: { message: 'oops' } });
-    req.user = { id: 'u1' };
+  it("internal error → 500", async () => {
+    chatWithEstateWise.mockRejectedValueOnce(new Error("boom"));
+    const req = httpMocks.createRequest({ body: { message: "oops" } });
+    req.user = { id: "u1" };
     const res = buildRes();
 
     await chat(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Error processing chat request',
+      error: "Error processing chat request",
     });
   });
 });
@@ -132,21 +134,21 @@ describe('chat()', () => {
 /* ═══════════════════════════════════════════════════════════════
    RATE-CONVERSATION TESTS
    ═══════════════════════════════════════════════════════════════ */
-describe('rateConversation()', () => {
+describe("rateConversation()", () => {
   beforeEach(() => jest.clearAllMocks());
 
-  it('guest thumbs-up → success', async () => {
-    const req = httpMocks.createRequest({ body: { rating: 'up' } });
+  it("guest thumbs-up → success", async () => {
+    const req = httpMocks.createRequest({ body: { rating: "up" } });
     const res = buildRes();
     await rateConversation(req, res);
     expect(res.json).toHaveBeenCalledWith({ success: true });
   });
 
-  it('guest thumbs-down adjusts weights', async () => {
+  it("guest thumbs-down adjusts weights", async () => {
     const req = httpMocks.createRequest({
       body: {
-        rating: 'down',
-        expertWeights: { X: 1, Y: 1, 'Cluster Analyst': 2 },
+        rating: "down",
+        expertWeights: { X: 1, Y: 1, "Cluster Analyst": 2 },
       },
     });
     const res = buildRes();
@@ -154,12 +156,12 @@ describe('rateConversation()', () => {
 
     const out = res.json.mock.calls[0][0];
     expect(out.success).toBe(true);
-    expect(out.expertWeights['Cluster Analyst']).toBe(1);
+    expect(out.expertWeights["Cluster Analyst"]).toBe(1);
   });
 
-  it('auth user missing convoId → 400', async () => {
-    const req = httpMocks.createRequest({ body: { rating: 'up' } });
-    req.user = { id: 'u1' };
+  it("auth user missing convoId → 400", async () => {
+    const req = httpMocks.createRequest({ body: { rating: "up" } });
+    req.user = { id: "u1" };
     const res = buildRes();
     await rateConversation(req, res);
     expect(res.status).toHaveBeenCalledWith(400);

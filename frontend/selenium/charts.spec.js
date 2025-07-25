@@ -1,15 +1,15 @@
-const { createDriver } = require('./driver.js');
-const { By, until } = require('selenium-webdriver');
+const { createDriver } = require("./driver.js");
+const { By, until } = require("selenium-webdriver");
 
 let expect;
 before(async () => {
-  ({ expect } = await import('chai'));
+  ({ expect } = await import("chai"));
 });
 
-describe('Charts dashboard', function () {
+describe("Charts dashboard", function () {
   this.timeout(30000);
   let driver;
-  const url = 'https://estatewise.vercel.app/charts';
+  const url = "https://estatewise.vercel.app/charts";
 
   before(async () => {
     driver = await createDriver();
@@ -20,42 +20,42 @@ describe('Charts dashboard', function () {
     await driver.quit();
   });
 
-  it('displays spinner, then renders chart cards', async () => {
+  it("displays spinner, then renders chart cards", async () => {
     await driver.get(url);
 
-    const spinner = await driver.findElement(By.css('.animate-spin'));
+    const spinner = await driver.findElement(By.css(".animate-spin"));
     expect(spinner).to.exist;
 
     await driver.wait(until.stalenessOf(spinner), 15000);
 
     const cards = await driver.findElements(
-      By.css('[data-cy="chart-card"], .Card')
+      By.css('[data-cy="chart-card"], .Card'),
     );
     expect(cards.length).to.be.greaterThan(0);
   });
 
-  it('toggles dark-mode and persists after reload', async () => {
+  it("toggles dark-mode and persists after reload", async () => {
     await driver.get(url);
     const toggle = await driver.findElement(
-      By.css('button[aria-label="Toggle theme"]')
+      By.css('button[aria-label="Toggle theme"]'),
     );
 
     await toggle.click();
-    let html = await driver.findElement(By.css('html'));
-    expect(await html.getAttribute('class')).to.include('dark');
+    let html = await driver.findElement(By.css("html"));
+    expect(await html.getAttribute("class")).to.include("dark");
 
     await driver.navigate().refresh();
-    html = await driver.findElement(By.css('html'));
-    expect(await html.getAttribute('class')).to.include('dark');
+    html = await driver.findElement(By.css("html"));
+    expect(await html.getAttribute("class")).to.include("dark");
   });
 
-  it('“Back to Chat” navigates to /chat', async () => {
+  it("“Back to Chat” navigates to /chat", async () => {
     await driver.get(url);
     await driver
       .findElement(
-        By.xpath("//a[contains(@href,'/chat')][contains(.,'Back to Chat')]")
+        By.xpath("//a[contains(@href,'/chat')][contains(.,'Back to Chat')]"),
       )
       .click();
-    await driver.wait(until.urlContains('/chat'));
+    await driver.wait(until.urlContains("/chat"));
   });
 });
