@@ -2,14 +2,32 @@
   "name": "estatewise-chat",
   "displayName": "Estatewise Chat",
   "description": "Chat with Estatewise about Chapel Hill real estate, directly in VS Code.",
-  "version": "0.0.1",
+  "version": "1.0.2",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot.git"
   },
-  "publisher": "Son Nguyen",
+  "publisher": "hoangsonw",
   "author": "Son Nguyen",
+  "keywords": [
+    "vscode",
+    "extension",
+    "chatbot",
+    "estatewise",
+    "chapel hill",
+    "real estate",
+    "webview",
+    "iframe",
+    "artificial intelligence",
+    "ai",
+    "machine learning",
+    "estate",
+    "property",
+    "housing",
+    "real estate agent",
+    "real estate market"
+  ],
   "homepage": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot#readme",
   "bugs": {
     "url": "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues"

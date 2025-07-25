@@ -14,6 +14,12 @@ Embed the Estatewise chatbot directly into your VS Code editor and get instant
 - **Customizable Webview options** (scripts enabled, context retention).
 - **Zero backend code** in the extension — all logic lives in the Estatewise app itself.
 
+## VS Code Marketplace
+
+Don't want to build it yourself? Search for "Estatewise Chat" in the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) and install it directly!
+
+Here is the link to it, directly: [Estatewise Chat Extension](https://marketplace.visualstudio.com/items?itemName=hoangsonw.estatewise-chat).
+
 ## Prerequisites
 
 - **VS Code** v1.50.0 or later  
@@ -106,12 +112,6 @@ Open **Settings** → **Extensions** → **Estatewise Chat** to configure:
 
 * **Blank panel**: ensure you’re online and that `https://estatewise.vercel.app/chat` is reachable.
 * **CSP errors**: check that the URL in `getWebviewContent()` matches exactly the iframe `src` and the CSP frame‑src directive.
-
-## Changelog
-
-* **0.0.1**
-
-  * Initial release: iframe Webview of Estatewise chatbot.
 
 ## License
 
