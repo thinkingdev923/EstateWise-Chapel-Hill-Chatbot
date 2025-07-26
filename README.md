@@ -847,7 +847,11 @@ We have developed a VSCode extension to enhance the development experience with 
 - **Easy Installation**  
   Install the `.vsix` package locally or grab it from the VS Code Marketplace, then start chatting with EstateWise without leaving your editor.
 
-For full installation and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
+<p align="center">
+  <img src="img/extension.png" alt="EstateWise VSCode Extension" width="100%" />
+</p>
+
+For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
 
 ## Challenges & Future Improvements
 
