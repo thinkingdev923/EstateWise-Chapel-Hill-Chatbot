@@ -223,6 +223,52 @@ Here's a high-level architecture flow diagram that shows the AI processing and e
   <img src="img/flowchart.png" alt="High-Level Architecture Flow Diagram" width="100%" />
 </p>
 
+#### Mermaid Diagram
+
+This diagram illustrates the flow of user messages through the backend processing, including authentication, loading conversation history, preparing AI agent input, and generating responses using a mixture of experts:
+
+<p align="center">
+  <img src="img/mermaid.png" alt="Mermaid Diagram" width="60%" />
+</p>
+
+```mermaid
+flowchart TD
+    UM["User Message"]
+    API["RESTful APIs"]
+    RME["Receive Message Event"]
+    BP["Backend Processing"]
+    Auth{"Is User Authenticated?"}
+    LMDB["Load Conversation History from MongoDB"]
+    LBrowser["Load Conversation History from Local Browser Storage"]
+    Prep["Prepare AI Agent Input\n(message + system history + system prompt)"]
+    AInput["AI Agent Input"]
+    Orchestration["Agent Tool Orchestration"]
+    UsePinecone{"Use Data from Pinecone?"}
+    QueryPinecone["Queries Vectorized Properties Data from Pinecone"]
+    NoPinecone["Proceed without RAG data from Pinecone"]
+    MOE["Mixture-of-Experts API Request Pipeline\n(6 specialized AI experts + 1 AI merger)"]
+    Generate["Generate Final Response\n(text + charts)"]
+    APIResp["API Request Response"]
+    Display["Display Response\n(Show Output in UI)"]
+    Rate{"User Rates Response?"}
+    Update["User Gives Thumbs Down\nNeed to Update Expert Weights\nGo Through Another API Request"]
+    End["User Gives Thumbs Up\nNo Update Needed"]
+
+    UM --> API --> RME --> BP --> Auth
+    Auth -- Yes --> LMDB
+    Auth -- No  --> LBrowser
+    LMDB --> Prep
+    LBrowser --> Prep
+    Prep --> AInput --> Orchestration --> UsePinecone
+    UsePinecone -- Yes --> QueryPinecone
+    UsePinecone -- No  --> NoPinecone
+    QueryPinecone --> MOE
+    NoPinecone   --> MOE
+    MOE --> Generate --> APIResp --> Display --> Rate
+    Rate -- Thumbs Down --> Update --> MOE
+    Rate -- Thumbs Up   --> End
+```
+
 #### Overall App Architecture Flow Diagram
 
 Below is a high-level diagram that illustrates the flow of the application, including user interactions, frontend and backend components, and data storage:
