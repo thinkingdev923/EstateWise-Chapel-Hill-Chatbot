@@ -41,6 +41,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Containerization](#containerization)
+- [VS Code Extension](#vs-code-extension)
 - [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
@@ -91,6 +92,7 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
 ![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
 ![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
+![VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-007ACC?style=for-the-badge&logo=gitextensions&logoColor=white) 
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -823,6 +825,34 @@ The application is containerized using Docker to ensure consistent, portable, an
 
 This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
 
+## VSCode Extension
+
+We have developed a VSCode extension to enhance the development experience with **EstateWise**. This extension provides features such as:
+
+- **Instant Chat Access**  
+  Open the EstateWise chatbot directly in VS Code via the Command Palette (`Estatewise Chat: Open Chat`).
+
+- **Persistent Webview Panel**  
+  Keeps your conversation context alive even when the panel is hidden or you switch files.
+
+- **Configurable Panel**  
+  Customize the panel title, target editor column, iframe width/height, script permissions, and auto‑open behavior via VS Code settings.
+
+- **Secure Embedding**  
+  Loads the chatbot through a sandboxed iframe with a strict Content‑Security‑Policy, so all logic remains safely hosted on `https://estatewise.vercel.app/chat`.
+
+- **Zero Backend Overhead**  
+  No extra server or API keys required in VS Code—everything runs through the existing EstateWise web app.
+
+- **Easy Installation**  
+  Install the `.vsix` package locally or grab it from the VS Code Marketplace, then start chatting with EstateWise without leaving your editor.
+
+<p align="center">
+  <img src="img/extension.png" alt="EstateWise VSCode Extension" width="100%" />
+</p>
+
+For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
+
 ## Challenges & Future Improvements
 
 - **Data Quality:** Ensuring the quality and accuracy of the property data used for recommendations.
@@ -865,11 +895,11 @@ For any questions or inquiries, please contact the [repository maintainer](https
 
 ## Acknowledgments
 
+- **SPECIAL THANKS** to: Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for their hard work and contributions to this project!
 - Thanks to the BUSI/COMP-488 course at UNC-Chapel Hill for the inspiration and opportunity to build this project.
   - Thanks to the professors and TAs for the comprehensive Chapel Hill real-estate datasets provided. Without them, we would not have been able to build this project.
-- Special thanks to our instructor and TA for their guidance and support throughout the course.
-- Huge thanks to the team members for their hard work and collaboration in building this project!
-
+  - Thanks to our instructor and TA for their guidance and support throughout the course.
+  
 ---
 
 Thank you for checking out **EstateWise**! We hope you find it useful in your real estate journey. If you have any questions or feedback, feel free to reach out or contribute to the project. 🏡🚀
