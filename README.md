@@ -265,10 +265,6 @@ flowchart TD
     Rate -- Thumbs Up   --> End
 ```
 
-<p align="center">
-  <img src="img/mermaid.png" alt="Mermaid Diagram" width="60%" />
-</p>
-
 #### Overall App Architecture Flow Diagram
 
 Below is a high-level diagram that illustrates the flow of the application, including user interactions, frontend and backend components, and data storage:
