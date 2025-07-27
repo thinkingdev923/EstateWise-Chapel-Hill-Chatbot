@@ -227,10 +227,6 @@ Here's a high-level architecture flow diagram that shows the AI processing and e
 
 This diagram illustrates the flow of user messages through the backend processing, including authentication, loading conversation history, preparing AI agent input, and generating responses using a mixture of experts:
 
-<p align="center">
-  <img src="img/mermaid.png" alt="Mermaid Diagram" width="60%" />
-</p>
-
 ```mermaid
 flowchart TD
     UM["User Message"]
@@ -268,6 +264,10 @@ flowchart TD
     Rate -- Thumbs Down --> Update --> MOE
     Rate -- Thumbs Up   --> End
 ```
+
+<p align="center">
+  <img src="img/mermaid.png" alt="Mermaid Diagram" width="60%" />
+</p>
 
 #### Overall App Architecture Flow Diagram
 
