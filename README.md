@@ -45,7 +45,6 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Containerization](#containerization)
 - [VS Code Extension](#vs-code-extension)
-- [Challenges & Future Improvements](#challenges--future-improvements)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
@@ -53,9 +52,9 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 
 ## Live App
 
-Visit the live app on **Vercel** at **[https://estatewise.vercel.app](https://estatewise.vercel.app/)** and explore the intelligent estate assistant!
+Visit the live app on **Vercel** at **[https://estatewise.vercel.app](https://estatewise.vercel.app/)** and explore the intelligent estate assistant! 🚀
 
-The backend API & its documentation are also available **[here](https://estatewise-backend.vercel.app/).**
+The backend API & its documentation are also available **[here](https://estatewise-backend.vercel.app/).** ✨
 
 _Feel free to use the app as a guest or sign up for an account to save your conversations!_
 
@@ -898,20 +897,6 @@ We have developed a VSCode extension to enhance the development experience with 
 
 **For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md).**
 
-## Challenges & Future Improvements
-
-- **Data Quality:** Ensuring the quality and accuracy of the property data used for recommendations.
-- **Performance Optimization:** Improving the speed and efficiency of the AI processing and response generation.
-- **User Experience:** Enhancing the user interface and experience based on user feedback.
-- **Vercel Infrastructure Limitations:** The current Vercel infrastructure has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different hosting solution for the backend in the future.
-  - Additionally, it imposes a limit of 60 seconds to process API requests, which may not be sufficient for some complex queries. Thus, it may cause timeouts for some requests.
-  - The user will be notified if the request times out, and the user will be prompted to try again later.
-- **AWS Limitation:** Although AWS was used to address the Vercel infrastructure limitations, it has its own set of limitations, such as the number of requests and the amount of data that can be processed (we intentionally limited our resources because we do NOT want our wallet to explode...)
-  - Also, the billing for AWS services can be complex and may lead to unexpected costs if not monitored carefully.
-  - Thus, we are limiting the number of requests and the amount of data that can be processed by the backend API to avoid unexpected costs.
-- **Gemini API Limitations:** The current Gemini API has limitations on the number of requests and the amount of data that can be processed. We may need to consider using a different AI solution in the future.
-  - Also, Google imposes rate limits on the number of requests that can be made to the Gemini API. If the rate limit is exceeded, the user will be notified and prompted to try again later.
-
 ## Contributing
 
 Contributions are welcome! Follow these steps:
@@ -924,6 +909,17 @@ Contributions are welcome! Follow these steps:
 4. **Push to the branch:**  
    `git push origin feature/your-feature-name`
 5. **Open a Pull Request** with a clear description of your changes.
+6. **Follow the project's coding standards:**  
+   - Use ESLint and Prettier for code formatting.
+   - Write tests for new features or bug fixes.
+   - Update documentation as needed.
+7. **Review and address feedback:**  
+   - Be responsive to comments on your pull request.
+   - Make necessary changes and push updates to the same branch.
+8. **Celebrate your contribution!**  
+   Once your pull request is merged, you will be recognized as a contributor to the project.
+
+This project follows the [Contributor Covenant Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating, you agree to abide by its terms.
 
 ## License
 
