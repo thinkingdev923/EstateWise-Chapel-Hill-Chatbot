@@ -870,33 +870,33 @@ The application is containerized using Docker to ensure consistent, portable, an
 
 This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
 
-## VSCode Extension
+## VS Code Extension
 
 We have developed a VSCode extension to enhance the development experience with **EstateWise**. This extension provides features such as:
 
 - **Instant Chat Access**  
-  Open the EstateWise chatbot directly in VS Code via the Command Palette (`Estatewise Chat: Open Chat`).
+  Open the EstateWise chatbot directly in VS Code via the Command Palette (`Estatewise Chat: Open Chat`).
 
 - **Persistent Webview Panel**  
   Keeps your conversation context alive even when the panel is hidden or you switch files.
 
 - **Configurable Panel**  
-  Customize the panel title, target editor column, iframe width/height, script permissions, and auto‑open behavior via VS Code settings.
+  Customize the panel title, target editor column, iframe width/height, script permissions, and auto‑open behavior via VS Code settings.
 
 - **Secure Embedding**  
   Loads the chatbot through a sandboxed iframe with a strict Content‑Security‑Policy, so all logic remains safely hosted on `https://estatewise.vercel.app/chat`.
 
 - **Zero Backend Overhead**  
-  No extra server or API keys required in VS Code—everything runs through the existing EstateWise web app.
+  No extra server or API keys required in VS Code—everything runs through the existing EstateWise web app.
 
 - **Easy Installation**  
-  Install the `.vsix` package locally or grab it from the VS Code Marketplace, then start chatting with EstateWise without leaving your editor.
+  Install the `.vsix` package locally or grab it from the VS Code Marketplace, then start chatting with EstateWise without leaving your editor.
 
 <p align="center">
   <img src="img/extension.png" alt="EstateWise VSCode Extension" width="100%" />
 </p>
 
-For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
+For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
 
 ## Challenges & Future Improvements
 

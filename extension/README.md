@@ -116,7 +116,7 @@ Open **Settings** → **Extensions** → **Estatewise Chat** to configure:
 | `estatewiseChat.enableScripts`| boolean  | `true`        | Allow scripts to run inside the Webview.                       |
 | `estatewiseChat.iframeWidth`  | string   | `100%`        | CSS width of the embedded chat iframe (e.g. `80%` or `600px`).  |
 | `estatewiseChat.iframeHeight` | string   | `100%`        | CSS height of the embedded chat iframe (e.g. `80%` or `500px`). |
-| `estatewiseChat.openOnStartup`| boolean  | `false`       | Open the chat panel automatically when VS Code starts.          |
+| `estatewiseChat.openOnStartup`| boolean  | `false`       | Open the chat panel automatically when VS Code starts.          |
 
 ## Troubleshooting
 
