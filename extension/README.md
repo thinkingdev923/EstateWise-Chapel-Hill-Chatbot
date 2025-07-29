@@ -1,6 +1,6 @@
-# Estatewise Chat – VS Code Extension
+# Estatewise Chat – VS Code Extension
 
-Embed the Estatewise chatbot directly into your VS Code editor and get instant property insights without ever leaving your workspace!
+Embed the Estatewise chatbot directly into your VS Code editor and get instant property insights without ever leaving your workspace!
 
 ## Features
 
@@ -16,13 +16,27 @@ Don't want to build it yourself? Search for "Estatewise Chat" in the [VS Code Ma
 
 Here is the link to it, directly: [Estatewise Chat Extension](https://marketplace.visualstudio.com/items?itemName=hoangsonw.estatewise-chat).
 
+## Launch with VS Code
+
+We also provide a `.vscode/launch.json` configuration to easily run and debug the extension in a new Extension Development Host instance. This allows you to test changes live without needing to repackage every time.
+
+To use it:
+
+1. Open the extension folder in VS Code.
+2. Press `F5` to launch the Extension Development Host. Alternatively, open the **Run and Debug** sidebar and select the "Run Extension" configuration.
+3. In the new host, open the Command Palette (Ctrl+Shift+P / Cmd+Shift+P) and run **Estatewise Chat: Open Chat**.
+4. The Estatewise chatbot will load in a side panel, ready for your queries.
+5. You can keep the panel open permanently or hide it; your chat context will be preserved.
+
+This setup allows you to develop and test the extension interactively, making it easy to iterate on features and fixes.
+
 ## Prerequisites
 
-- **VS Code** v1.50.0 or later  
+- **VS Code** v1.50.0 or later  
 - **Node.js** & **npm**  
 - **vsce** packaging tool (install with `npm install ‑g vsce`)
 
-## Installation
+## VSIX Installation
 
 1. **Clone this repo** and navigate into the extension folder:
   ```bash
@@ -57,7 +71,7 @@ Here is the link to it, directly: [Estatewise Chat Extension](https://marketplac
      ```bash
      code --install-extension estatewise-chat-0.0.1.vsix
      ```
-   * **VS Code UI**:
+   * **VS Code UI**:
      Open the Extensions view → click the “...” menu → **Install from VSIX** → select the generated `.vsix` file.
 
 ## Usage
@@ -79,7 +93,7 @@ Here is the link to it, directly: [Estatewise Chat Extension](https://marketplac
 
   Recompiles on file changes.
 
-* **Debug in VS Code**
+* **Debug in VS Code**
 
   1. Press F5 to launch a new Extension Development Host.
   2. In that host, open the Command Palette and run your command.
@@ -117,6 +131,6 @@ This extension is MIT‑licensed. See [LICENSE](../LICENSE) for details.
 
 ## About EstateWise
 
-EstateWise is a full‑stack AI/ML chatbot and data analytics platform for Chapel Hill real estate. To learn more about the underlying app—its architecture, AI techniques (RAG, Mixture‑of‑Experts, etc.), data analytics pipelines, and deployment—visit the main repo:
+EstateWise is a full‑stack AI/ML chatbot and data analytics platform for Chapel Hill real estate. To learn more about the underlying app—its architecture, AI techniques (RAG, Mixture‑of‑Experts, etc.), data analytics pipelines, and deployment—visit the main repo:
 
-👉 [hoangsonww/EstateWise‑Chapel‑Hill‑Chatbot](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot)
+👉 [hoangsonww/EstateWise‑Chapel‑Hill‑Chatbot](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot)

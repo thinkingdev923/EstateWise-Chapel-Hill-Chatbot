@@ -2,7 +2,7 @@
   "name": "estatewise-chat",
   "displayName": "Estatewise Chat",
   "description": "Chat with Estatewise about Chapel Hill real estate, directly in VS Code.",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "license": "MIT",
   "repository": {
     "type": "git",
