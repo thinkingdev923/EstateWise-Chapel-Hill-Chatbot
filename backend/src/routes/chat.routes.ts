@@ -120,7 +120,7 @@ router.post("/rate", rateConversation);
  *                   example: Sure, I can help you with property taxes. Could you provide more details?
  *                 expertViews:
  *                   type: object
- *                   description: Raw outputs from each expert model (for optional expert‑only view UI).
+ *                   description: Raw outputs from each expert model (for optional expert‑only view UI).
  *                   additionalProperties:
  *                     type: string
  *                 convoId:
