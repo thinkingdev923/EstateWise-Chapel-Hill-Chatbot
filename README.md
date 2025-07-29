@@ -924,6 +924,17 @@ Contributions are welcome! Follow these steps:
 4. **Push to the branch:**  
    `git push origin feature/your-feature-name`
 5. **Open a Pull Request** with a clear description of your changes.
+6. **Follow the project's coding standards:**  
+   - Use ESLint and Prettier for code formatting.
+   - Write tests for new features or bug fixes.
+   - Update documentation as needed.
+7. **Review and address feedback:**  
+   - Be responsive to comments on your pull request.
+   - Make necessary changes and push updates to the same branch.
+8. **Celebrate your contribution!**  
+   Once your pull request is merged, you will be recognized as a contributor to the project.
+
+This project follows the [Contributor Covenant Code of Conduct](.github/CODE_OF_CONDUCT.md). By participating, you agree to abide by its terms.
 
 ## License
 
