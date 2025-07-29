@@ -1,4 +1,4 @@
-# EstateWise – Your Intelligent Estate Assistant 🏡
+# EstateWise - Your Intelligent Estate Assistant 🏡
 
 **EstateWise** is a **full‑stack, monorepo AI/ML** **chatbot & data analytics project** built for real estates in _Chapel Hill, NC_ and the surrounding areas,
 featuring a sleek, responsive UI with smart, agentic AI capabilities powered by comprehensive data analysis and advanced machine learning techniques to help you find your dream home! 🏠✨
@@ -896,7 +896,7 @@ We have developed a VSCode extension to enhance the development experience with 
   <img src="img/extension.png" alt="EstateWise VSCode Extension" width="100%" />
 </p>
 
-For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md) or install from the Marketplace.
+**For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md).**
 
 ## Challenges & Future Improvements
 
@@ -940,7 +940,7 @@ For any questions or inquiries, please contact the [repository maintainer](https
 
 ## Acknowledgments
 
-- **SPECIAL THANKS** to: Rikhil Fellner, Muskaan Joshi, David Nguyen, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for their hard work and contributions to this project!
+- **SPECIAL THANKS** to: [David Nguyen](https://sonnguyenhoang.com), Rikhil Fellner, Muskaan Joshi, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for their hard work and contributions to this project!
 - Thanks to the BUSI/COMP-488 course at UNC-Chapel Hill for the inspiration and opportunity to build this project.
   - Thanks to the professors and TAs for the comprehensive Chapel Hill real-estate datasets provided. Without them, we would not have been able to build this project.
   - Thanks to our instructor and TA for their guidance and support throughout the course.
