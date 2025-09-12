@@ -79,9 +79,9 @@ sequenceDiagram
 ```mermaid
 flowchart TD
     CSV[Raw Property CSV] --> Clean[Data Cleaning & Normalization]
-    Clean --> Embed[Generate 1,536‑dim Embeddings]
-    Embed --> Batch[Batch Upsert (50)]
-    Batch --> PineconeStore[(Pinecone Index)]
+    Clean --> Embed[Generate 1536-dim Embeddings]
+    Embed --> Upsert[Batch Upsert (size=50)]
+    Upsert --> PineconeStore[(Pinecone Index)]
     PineconeStore -->|KNN| Query
 ```
 
@@ -135,6 +135,67 @@ pie title Core Technologies
     "Pinecone" : 10
     "Infrastructure & CI/CD" : 15
 ```
+
+## Core Data Models
+```mermaid
+erDiagram
+    USER ||--o{ CONVERSATION : owns
+    CONVERSATION ||--o{ MESSAGE : includes
+    USER ||--o{ FAVORITE : marks
+    PROPERTY ||--o{ LISTING : contains
+    FAVORITE }o--|| PROPERTY : references
+```
+The models mirror the MongoDB collections:
+- **USER** documents store credentials and profile info.
+- **CONVERSATION** threads group chat **MESSAGE** documents.
+- **PROPERTY** data powers listings and user **FAVORITE** relationships.
+
+## Authentication Flow
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI as Next.js
+    participant API
+    participant DB as MongoDB
+    User->>UI: Enter email/password
+    UI->>API: POST /api/auth/login
+    API->>DB: Validate credentials
+    DB-->>API: User record
+    API-->>UI: Set-Cookie JWT
+    UI-->>User: Authenticated session
+```
+Key aspects:
+- Passwords are salted and hashed with bcrypt before storage.
+- JWT tokens are HttpOnly cookies to mitigate XSS.
+
+## CI/CD Workflow
+```mermaid
+flowchart LR
+    Dev[Developer] --> PR[Pull Request]
+    PR --> Actions[GitHub Actions]
+    Actions --> Test[Unit & E2E Tests]
+    Actions --> Lint[Lint & Type Check]
+    Actions --> Build[Docker/Next.js Builds]
+    Build --> DeployECS[ECS Deploy]
+    Build --> DeployVercel[Vercel Deploy]
+    DeployECS --> Monitor[Prometheus]
+```
+
+## Scalability & Resilience
+- Stateless backend containers on **AWS ECS** allow horizontal scaling.
+- **MongoDB Atlas** provides replica sets and automated failover.
+- **Pinecone** handles vector index sharding and replication.
+- Rate limiting and circuit breakers protect against API abuse and downstream failures.
+
+## Developer Workflow
+- Local services are orchestrated via `docker-compose` for parity with production.
+- `make` targets wrap common tasks like linting, testing, and building images.
+- TypeDoc and JSDoc generate API documentation for backend and frontend respectively.
+
+## Future Enhancements
+- Incorporate real-time WebSocket updates for collaborative search.
+- Add multi-region deployment with traffic steering.
+- Expand expert models for mortgage and school district analysis.
 
 ---
 This document serves as a top‑to‑bottom reference for EstateWise’s architecture, from data ingestion to deployment.
