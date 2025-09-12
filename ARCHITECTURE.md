@@ -80,9 +80,9 @@ sequenceDiagram
 flowchart TD
     CSV[Raw Property CSV] --> Clean[Data Cleaning & Normalization]
     Clean --> Embed[Generate 1536-dim Embeddings]
-    Embed --> Upsert[Batch Upsert (size=50)]
+    Embed --> Upsert[Batch Upsert size=50]
     Upsert --> PineconeStore[(Pinecone Index)]
-    PineconeStore -->|KNN| Query
+    PineconeStore -->|KNN| Query[Query]
 ```
 
 ## Deployment & Infrastructure
