@@ -10,6 +10,9 @@ variables:
   containerRegistry: $(CONTAINER_REGISTRY)
   dockerRegistryServiceConnection: $(DOCKER_REGISTRY_SERVICE_CONNECTION)
   appName: estatewise-backend
+  cosmosAccount: $(COSMOS_ACCOUNT)
+  storageAccount: $(STORAGE_ACCOUNT)
+  appInsights: $(APP_INSIGHTS)
 
 pool:
   vmImage: ubuntu-latest
@@ -47,3 +50,13 @@ stages:
                   --resource-group $(resourceGroup) \
                   --plan $(appName)-plan \
                   --deployment-container-image-name $(containerRegistry)/$(imageRepository):$(tag)
+
+                COSMOS_CONN=$(az cosmosdb keys list --name $(cosmosAccount) --resource-group $(resourceGroup) --type connection-strings --query connectionStrings[0].connectionString -o tsv)
+                STORAGE_CONN=$(az storage account show-connection-string --name $(storageAccount) --resource-group $(resourceGroup) -o tsv)
+                APPINSIGHTS_KEY=$(az monitor app-insights component show --app $(appInsights) --resource-group $(resourceGroup) --query instrumentationKey -o tsv)
+                APPINSIGHTS_CONN=$(az monitor app-insights component show --app $(appInsights) --resource-group $(resourceGroup) --query connectionString -o tsv)
+
+                az webapp config appsettings set \
+                  --name $(appName) \
+                  --resource-group $(resourceGroup) \
+                  --settings MONGO_URI=$COSMOS_CONN AZURE_STORAGE_CONNECTION_STRING=$STORAGE_CONN APPINSIGHTS_INSTRUMENTATIONKEY=$APPINSIGHTS_KEY APPLICATIONINSIGHTS_CONNECTION_STRING=$APPINSIGHTS_CONN
