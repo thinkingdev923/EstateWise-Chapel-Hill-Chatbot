@@ -76,6 +76,7 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)
 ![Amazon Web Services](https://img.shields.io/badge/Amazon%20Web%20Services-124568?style=for-the-badge&logo=task&logoColor=white)
 ![Google Cloud Platform](https://img.shields.io/badge/Google%20Cloud%20Platform-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Microsoft Azure](https://img.shields.io/badge/Microsoft%20Azure-0078D4?style=for-the-badge&logo=microsoftazure&logoColor=white)
 ![Terraform](https://img.shields.io/badge/Terraform-623CE4?style=for-the-badge&logo=terraform&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
@@ -478,6 +479,10 @@ Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks
 
   - **Prometheus + Grafana** on AWS ECS (or GKE) for metrics collection and dashboards.
   - **CloudWatch** (AWS) / **Cloud Logging** (GCP) for logs, alarms, and alerts.
+
+### Azure Deployment
+
+Infrastructure and deployment scripts for Microsoft Azure live in the [`azure/`](azure/) directory. Provision resources with Bicep and deploy the backend using the provided script or Azure Pipelines workflow.
 
 ![AWS](https://img.shields.io/badge/Deployed%20on%20AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white)
 ![GCP](https://img.shields.io/badge/Deployed%20on%20GCP-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
