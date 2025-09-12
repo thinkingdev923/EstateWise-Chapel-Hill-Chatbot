@@ -1,0 +1,49 @@
+trigger:
+  - main
+
+variables:
+  imageRepository: estatewise/backend
+  dockerfilePath: backend/Dockerfile
+  tag: $(Build.SourceVersion)
+  azureSubscription: $(AZURE_SUBSCRIPTION)
+  resourceGroup: $(RESOURCE_GROUP)
+  containerRegistry: $(CONTAINER_REGISTRY)
+  dockerRegistryServiceConnection: $(DOCKER_REGISTRY_SERVICE_CONNECTION)
+  appName: estatewise-backend
+
+pool:
+  vmImage: ubuntu-latest
+
+stages:
+  - stage: Build
+    displayName: Build and Push
+    jobs:
+      - job: Build
+        steps:
+          - task: Docker@2
+            displayName: Build and push image
+            inputs:
+              command: buildAndPush
+              repository: $(imageRepository)
+              dockerfile: $(dockerfilePath)
+              containerRegistry: $(dockerRegistryServiceConnection)
+              tags: |
+                $(tag)
+
+  - stage: Deploy
+    displayName: Deploy to Web App
+    dependsOn: Build
+    jobs:
+      - job: Deploy
+        steps:
+          - task: AzureCLI@2
+            inputs:
+              azureSubscription: $(azureSubscription)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                az webapp create \
+                  --name $(appName) \
+                  --resource-group $(resourceGroup) \
+                  --plan $(appName)-plan \
+                  --deployment-container-image-name $(containerRegistry)/$(imageRepository):$(tag)
