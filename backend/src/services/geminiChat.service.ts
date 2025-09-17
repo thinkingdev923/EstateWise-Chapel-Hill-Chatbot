@@ -4,7 +4,11 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 import lib from "../utils/lib";
-import { queryPropertiesAsString, queryProperties, RawQueryResult } from "../scripts/queryProperties";
+import {
+  queryPropertiesAsString,
+  queryProperties,
+  RawQueryResult,
+} from "../scripts/queryProperties";
 import { isNeo4jEnabled } from "../graph/neo4j.client";
 import { getSimilarByZpid } from "../graph/graph.service";
 
@@ -228,8 +232,12 @@ export async function chatWithEstateWise(
           if (similars.length) {
             const lines = similars.map((s, i) => {
               const a = s.property;
-              const addr = [a.streetAddress, a.city, a.state, a.zipcode].filter(Boolean).join(", ");
-              const why = s.reasons.length ? ` (because: ${s.reasons.join(", ")})` : "";
+              const addr = [a.streetAddress, a.city, a.state, a.zipcode]
+                .filter(Boolean)
+                .join(", ");
+              const why = s.reasons.length
+                ? ` (because: ${s.reasons.join(", ")})`
+                : "";
               return `${i + 1}. ${addr} — $${a.price ?? "N/A"}${why}`;
             });
             graphContext = `\nGraph Similarities (top 5):\n${lines.join("\n")}`;

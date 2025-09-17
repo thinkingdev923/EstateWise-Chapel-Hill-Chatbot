@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { similarByZpid, explainPropertyPath, neighborhoodStats } from "../controllers/graph.controller";
+import {
+  similarByZpid,
+  explainPropertyPath,
+  neighborhoodStats,
+} from "../controllers/graph.controller";
 
 const router = Router();
 
@@ -75,4 +79,3 @@ router.get("/explain", explainPropertyPath);
 router.get("/neighborhood/:name", neighborhoodStats);
 
 export default router;
-

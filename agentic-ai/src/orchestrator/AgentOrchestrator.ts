@@ -1,5 +1,5 @@
-import { Agent, AgentContext, AgentMessage } from '../core/types.js';
-import { ToolClient } from '../mcp/ToolClient.js';
+import { Agent, AgentContext, AgentMessage } from "../core/types.js";
+import { ToolClient } from "../mcp/ToolClient.js";
 
 export class AgentOrchestrator {
   private agents: Agent[] = [];
@@ -24,11 +24,23 @@ export class AgentOrchestrator {
         const tool = (msg.data as any)?.tool;
         if (tool?.name) {
           try {
-            const result = await this.toolClient.callTool(tool.name, tool.args || {});
-            const textBlock = result?.content?.find((c: any) => c.type === 'text')?.text || JSON.stringify(result);
-            history.push({ from: agent.role, content: `Tool ${tool.name} result`, data: { result, resultText: textBlock } });
+            const result = await this.toolClient.callTool(
+              tool.name,
+              tool.args || {},
+            );
+            const textBlock =
+              result?.content?.find((c: any) => c.type === "text")?.text ||
+              JSON.stringify(result);
+            history.push({
+              from: agent.role,
+              content: `Tool ${tool.name} result`,
+              data: { result, resultText: textBlock },
+            });
           } catch (err: any) {
-            history.push({ from: agent.role, content: `Tool ${tool.name} error: ${err?.message || String(err)}` });
+            history.push({
+              from: agent.role,
+              content: `Tool ${tool.name} error: ${err?.message || String(err)}`,
+            });
           }
         }
       }
@@ -38,4 +50,3 @@ export class AgentOrchestrator {
     return history;
   }
 }
-

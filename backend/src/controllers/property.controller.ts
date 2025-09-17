@@ -453,25 +453,25 @@ export async function getPropertyData(req: Request, res: Response) {
     const raw = await queryProperties(q, rawTopK);
 
     // Map raw results to Listing objects
-  const allListings: Listing[] = raw.map((r) => {
-    const m = r.metadata as any;
-    const addr = JSON.parse(m.address || "{}");
-    return {
-      id: r.id,
-      score: r.score || 0,
-      price: Number(m.price) || 0,
-      bedrooms: Number(m.bedrooms) || 0,
-      bathrooms: Number(m.bathrooms) || 0,
-      livingArea: Number(m.livingArea) || 0,
-      yearBuilt: Number(m.yearBuilt) || 0,
-      homeType: String(m.homeType || ""),
-      homeStatus: String(m.homeStatus || ""),
-      city: String(m.city || ""),
-      zipcode: String(addr.zipcode || ""),
-      latitude: m.latitude != null ? Number(m.latitude) : undefined,
-      longitude: m.longitude != null ? Number(m.longitude) : undefined,
-    };
-  });
+    const allListings: Listing[] = raw.map((r) => {
+      const m = r.metadata as any;
+      const addr = JSON.parse(m.address || "{}");
+      return {
+        id: r.id,
+        score: r.score || 0,
+        price: Number(m.price) || 0,
+        bedrooms: Number(m.bedrooms) || 0,
+        bathrooms: Number(m.bathrooms) || 0,
+        livingArea: Number(m.livingArea) || 0,
+        yearBuilt: Number(m.yearBuilt) || 0,
+        homeType: String(m.homeType || ""),
+        homeStatus: String(m.homeStatus || ""),
+        city: String(m.city || ""),
+        zipcode: String(addr.zipcode || ""),
+        latitude: m.latitude != null ? Number(m.latitude) : undefined,
+        longitude: m.longitude != null ? Number(m.longitude) : undefined,
+      };
+    });
 
     // Filter out any listings where yearBuilt is 0
     let listings = allListings.filter((l) => l.yearBuilt !== 0);
@@ -526,7 +526,8 @@ export async function getPropertiesByIds(req: Request, res: Response) {
     try {
       // Try via Pinecone metadata
       const fetchRes = await index.fetch(ids);
-      const vectors = (fetchRes as any).records || (fetchRes as any).vectors || {};
+      const vectors =
+        (fetchRes as any).records || (fetchRes as any).vectors || {};
       listings = Object.entries(vectors).map(([id, rec]: any) => {
         const m = rec?.metadata || {};
         // metadata.address is JSON string in our pipeline
@@ -559,9 +560,16 @@ export async function getPropertiesByIds(req: Request, res: Response) {
     }
 
     // Fallback to Mongo if needed or to enrich
-    if (listings.length === 0 || listings.some((l) => l.latitude == null || l.longitude == null)) {
-      const zpidsNum = ids.map((s) => Number(s)).filter((n) => Number.isFinite(n));
-      const docs = await Property.find({ zpid: { $in: zpidsNum } }).limit(zpidsNum.length);
+    if (
+      listings.length === 0 ||
+      listings.some((l) => l.latitude == null || l.longitude == null)
+    ) {
+      const zpidsNum = ids
+        .map((s) => Number(s))
+        .filter((n) => Number.isFinite(n));
+      const docs = await Property.find({ zpid: { $in: zpidsNum } }).limit(
+        zpidsNum.length,
+      );
       const byId = new Map<number, any>();
       docs.forEach((d) => byId.set(d.zpid, d));
       listings = ids.map((id) => {
@@ -608,8 +616,20 @@ export async function lookupZpids(req: Request, res: Response) {
     const baths = req.query.baths != null ? Number(req.query.baths) : undefined;
     const limit = Math.min(Number(req.query.limit || 10), 50);
 
-    if (!address && !city && !state && !zipcode && beds == null && baths == null) {
-      return res.status(400).json({ error: "Provide at least one filter (address, city, state, zipcode, beds, baths)" });
+    if (
+      !address &&
+      !city &&
+      !state &&
+      !zipcode &&
+      beds == null &&
+      baths == null
+    ) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "Provide at least one filter (address, city, state, zipcode, beds, baths)",
+        });
     }
 
     const parts: string[] = [];
@@ -625,7 +645,9 @@ export async function lookupZpids(req: Request, res: Response) {
     const matches = raw.map((r) => {
       const m = r.metadata as any;
       let addr: any = {};
-      try { addr = m.address ? JSON.parse(m.address) : {}; } catch {}
+      try {
+        addr = m.address ? JSON.parse(m.address) : {};
+      } catch {}
       return {
         id: r.id,
         zpid: m.zpid != null ? Number(m.zpid) : Number(r.id),

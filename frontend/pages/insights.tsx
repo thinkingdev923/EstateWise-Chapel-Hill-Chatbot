@@ -1475,12 +1475,10 @@ function NeighborhoodForceGraph({
         ];
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const links = properties
-          .slice(0, 60)
-          .map((p: any) => ({
-            source: hoodNode.id,
-            target: `z:${p.zpid || p.id}`,
-          }));
+        const links = properties.slice(0, 60).map((p: any) => ({
+          source: hoodNode.id,
+          target: `z:${p.zpid || p.id}`,
+        }));
 
         const g = svg.append("g");
 

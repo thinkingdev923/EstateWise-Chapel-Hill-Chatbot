@@ -1,8 +1,13 @@
-export type Role = 'planner' | 'graph-analyst' | 'property-analyst' | 'map-analyst' | 'reporter';
+export type Role =
+  | "planner"
+  | "graph-analyst"
+  | "property-analyst"
+  | "map-analyst"
+  | "reporter";
 
 export interface AgentMessage {
   from: Role;
-  to?: Role | 'all';
+  to?: Role | "all";
   content: string;
   data?: unknown;
 }
@@ -32,4 +37,3 @@ export interface Agent {
   role: Role;
   think(ctx: AgentContext): Promise<AgentMessage>;
 }
-

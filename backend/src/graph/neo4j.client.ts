@@ -29,7 +29,10 @@ export function getSession(mode: "READ" | "WRITE" = "READ"): Session {
   return getDriver().session({ database: db, defaultAccessMode: accessMode });
 }
 
-export async function runRead<T = any>(cypher: string, params: Record<string, any> = {}): Promise<T[]> {
+export async function runRead<T = any>(
+  cypher: string,
+  params: Record<string, any> = {},
+): Promise<T[]> {
   const session = getSession("READ");
   try {
     const res = await session.run(cypher, params);
@@ -39,7 +42,10 @@ export async function runRead<T = any>(cypher: string, params: Record<string, an
   }
 }
 
-export async function runWrite<T = any>(cypher: string, params: Record<string, any> = {}): Promise<T[]> {
+export async function runWrite<T = any>(
+  cypher: string,
+  params: Record<string, any> = {},
+): Promise<T[]> {
   const session = getSession("WRITE");
   try {
     const res = await session.run(cypher, params);
@@ -65,4 +71,3 @@ export async function closeNeo4j(): Promise<void> {
     driver = null;
   }
 }
-

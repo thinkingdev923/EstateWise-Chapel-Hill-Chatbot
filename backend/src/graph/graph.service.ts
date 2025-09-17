@@ -21,7 +21,10 @@ export interface SimilarWithReason {
   reasons: string[];
 }
 
-export async function getSimilarByZpid(zpid: number, limit = 10): Promise<SimilarWithReason[]> {
+export async function getSimilarByZpid(
+  zpid: number,
+  limit = 10,
+): Promise<SimilarWithReason[]> {
   const rows = await runRead(
     `
     MATCH (p:Property {zpid: $zpid})
@@ -62,7 +65,10 @@ export async function getSimilarByZpid(zpid: number, limit = 10): Promise<Simila
   });
 }
 
-export async function explainPath(fromZpid: number, toZpid: number): Promise<{ nodes: GraphProperty[]; rels: { type: string }[] } | null> {
+export async function explainPath(
+  fromZpid: number,
+  toZpid: number,
+): Promise<{ nodes: GraphProperty[]; rels: { type: string }[] } | null> {
   const rows = await runRead(
     `
     MATCH p=allShortestPaths( (a:Property {zpid:$from})-[:IN_ZIP|IN_NEIGHBORHOOD|SIMILAR_TO*1..3]-(b:Property {zpid:$to}) )
@@ -75,13 +81,20 @@ export async function explainPath(fromZpid: number, toZpid: number): Promise<{ n
   const record = rows[0] as any;
   const path = record.p;
   const nodes: GraphProperty[] = path.segments
-    ? [path.start, ...path.segments.map((s: any) => s.end)].map((n: any) => n.properties)
+    ? [path.start, ...path.segments.map((s: any) => s.end)].map(
+        (n: any) => n.properties,
+      )
     : [];
-  const rels = path.segments ? path.segments.map((s: any) => ({ type: s.relationship.type })) : [];
+  const rels = path.segments
+    ? path.segments.map((s: any) => ({ type: s.relationship.type }))
+    : [];
   return { nodes, rels };
 }
 
-export async function getNeighborhoodStats(name: string, limit = 50): Promise<{
+export async function getNeighborhoodStats(
+  name: string,
+  limit = 50,
+): Promise<{
   count: number;
   avgPrice: number | null;
   avgArea: number | null;
@@ -94,7 +107,8 @@ export async function getNeighborhoodStats(name: string, limit = 50): Promise<{
     `,
     { name, limit },
   );
-  if (!rows.length) return { count: 0, avgPrice: null, avgArea: null, properties: [] };
+  if (!rows.length)
+    return { count: 0, avgPrice: null, avgArea: null, properties: [] };
   const r = rows[0] as any;
   return {
     count: Number(r.count ?? 0),
@@ -103,4 +117,3 @@ export async function getNeighborhoodStats(name: string, limit = 50): Promise<{
     properties: (r.properties || []) as GraphProperty[],
   };
 }
-

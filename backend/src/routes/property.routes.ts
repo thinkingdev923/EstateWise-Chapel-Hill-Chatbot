@@ -1,5 +1,9 @@
 import { Router } from "express";
-import { getPropertyData, getPropertiesByIds, lookupZpids } from "../controllers/property.controller";
+import {
+  getPropertyData,
+  getPropertiesByIds,
+  lookupZpids,
+} from "../controllers/property.controller";
 
 const router = Router();
 
@@ -121,7 +125,6 @@ const router = Router();
  *         description: Server error - Failed to fetch property data.
  */
 router.get("/", getPropertyData);
-
 
 router.get("/by-ids", getPropertiesByIds);
 
