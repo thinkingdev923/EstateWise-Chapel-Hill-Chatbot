@@ -142,9 +142,9 @@ function BreakdownChart({
             labels: { color: fontColor },
           },
           tooltip: {
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         maintainAspectRatio: false,
@@ -161,9 +161,9 @@ function BreakdownChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       c.update();
     });
@@ -229,9 +229,9 @@ function RateSensitivityChart({
           legend: { labels: { color: fontColor } },
           tooltip: {
             callbacks: { label: (ctx) => `$${ctx.parsed.y?.toLocaleString()}` },
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         scales: {
@@ -262,9 +262,9 @@ function RateSensitivityChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scales: any = c.options.scales;
@@ -340,9 +340,9 @@ function DownPaymentImpactChart({
           legend: { labels: { color: fontColor } },
           tooltip: {
             callbacks: { label: (ctx) => `$${ctx.parsed.y?.toLocaleString()}` },
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         scales: {
@@ -370,9 +370,9 @@ function DownPaymentImpactChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scales: any = c.options.scales;

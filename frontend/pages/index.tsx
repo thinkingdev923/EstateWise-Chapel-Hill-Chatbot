@@ -398,21 +398,36 @@ export default function Home() {
                   aria-label="Start Chat"
                   title="Start Chat"
                 >
+                  <BotMessageSquare className="w-5 h-5" />
                   Explore Properties
                 </Button>
               </Link>
             </AnimatedInView>
             <AnimatedInView delay={0.5}>
-              <Link href="/insights">
-                <Button
-                  variant="secondary"
-                  className="mt-3 rounded-full px-8 py-4 text-lg cursor-pointer"
-                  aria-label="Insights & Tools"
-                  title="Insights & Tools"
-                >
-                  Insights & Tools
-                </Button>
-              </Link>
+              <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
+                <Link href="/insights">
+                  <Button
+                    variant="default"
+                    className="rounded-full px-8 py-4 text-lg cursor-pointer shadow-md"
+                    aria-label="Insights & Tools"
+                    title="Insights & Tools"
+                  >
+                    <BarChart3 className="w-5 h-5" />
+                    Insights & Tools
+                  </Button>
+                </Link>
+                <Link href="/map">
+                  <Button
+                    variant="secondary"
+                    className="rounded-full px-8 py-4 text-lg cursor-pointer shadow-md"
+                    aria-label="Properties Map"
+                    title="Properties Map"
+                  >
+                    <MapPin className="w-5 h-5" />
+                    Properties Map
+                  </Button>
+                </Link>
+              </div>
             </AnimatedInView>
             <AnimatedInView delay={0.6}>
               <Link href="#features">
@@ -421,7 +436,7 @@ export default function Home() {
                   aria-label="Learn More"
                   title="Learn More"
                 >
-                  Learn More <ArrowDown className="w-5 h-5 inline-block ml-2" />
+                  Learn More <ArrowDown className="w-5 h-5 inline-block" />
                 </Button>
               </Link>
             </AnimatedInView>
