@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "estatewise": {
+      "command": "npx",
+      "args": ["tsx", "mcp/src/server.ts"],
+      "env": {
+        "API_BASE_URL": "https://estatewise-backend.vercel.app"
+      }
+    }
+  }
+}

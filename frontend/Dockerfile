@@ -1,38 +1,42 @@
-# Stage 1: Build the application
-FROM node:18-alpine AS builder
-
-# Set the working directory inside the container
+# ---------- Stage 1: Build ----------
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Copy package files and install dependencies
-# If you use a lockfile (e.g., package-lock.json or yarn.lock), copy them as well.
+# Install deps with cache for speed
 COPY package*.json ./
-RUN npm install
+RUN --mount=type=cache,target=/root/.npm npm ci
 
-# Copy the remaining application files to the container
+# Copy source
 COPY . .
 
-# Build the Next.js application (ignore build errors & always succeed)
-RUN npm run build || true
+# Force Next.js to ignore ESLint & TS errors during build.
+# We drop a next.config.js that takes precedence over next.config.ts.
+# If you need to preserve existing config, merge it manually later.
+RUN printf "module.exports = { eslint: { ignoreDuringBuilds: true }, typescript: { ignoreBuildErrors: true } };\n" > next.config.js
 
-# Stage 2: Create the production image
-FROM node:18-alpine
+# Optional: silence telemetry in CI
+ENV NEXT_TELEMETRY_DISABLED=1
 
+# Build (will succeed even with lint/TS errors)
+RUN npm run build
+
+# ---------- Stage 2: Runtime ----------
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Copy only production dependencies' definitions
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Only production deps
 COPY package*.json ./
+RUN --mount=type=cache,target=/root/.npm npm ci --omit=dev
 
-# Install only production dependencies
-RUN npm install --production
-
-# Copy the built Next.js output and any public assets from the builder stage
+# Copy build output & public assets
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/next.config.ts ./
 
-# Expose the port that the Next.js app uses (default is 3000)
+# Keep the override config with the runtime image (safe; build already baked in)
+COPY --from=builder /app/next.config.js ./
+
 EXPOSE 3000
-
-# Start the application using the "start" script defined in package.json
 CMD ["npm", "start"]

@@ -60,6 +60,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
+    "d3": "^7.9.0",
     "framer-motion": "^12.7.3",
     "js-cookie": "^3.0.5",
     "katex": "^0.16.22",
@@ -81,6 +82,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/d3": "^7.4.3",
     "@types/jest": "^30.0.0",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^20.19.4",

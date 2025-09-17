@@ -19,12 +19,14 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
   - [AI Techniques](#ai-techniques)
 - [Features](#features)
 - [Architecture](#architecture)
+  - [Detailed Diagram](#detailed-diagram)
   - [Backend](#backend)
   - [Frontend](#frontend)
   - [High-Level Architecture Flow Diagrams](#high-level-architecture-flow-diagrams)
     - [AI Architecture Flow Diagram](#ai-architecture-flow-diagram)
     - [Mermaid UML Diagram](#mermaid-diagram)
     - [Overall App Architecture Flow Diagram](#overall-app-architecture-flow-diagram)
+    - [Neo4j Graph Integration](#neo4j-graph-integration)
 - [Setup & Installation](#setup--installation)
   - [Backend Setup](#backend-setup)
   - [Frontend Setup](#frontend-setup)
@@ -44,6 +46,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Containerization](#containerization)
+- [MCP Server](#mcp-server)
 - [VS Code Extension](#vs-code-extension)
 - [Contributing](#contributing)
 - [License](#license)
@@ -96,6 +99,12 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
 ![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
 ![VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-007ACC?style=for-the-badge&logo=gitextensions&logoColor=white) 
+![Neo4j](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-6E56CF?style=for-the-badge)
+![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
+![D3.js](https://img.shields.io/badge/D3.js-F9A03C?style=for-the-badge&logo=d3&logoColor=white)
+![OpenAPI](https://img.shields.io/badge/OpenAPI-6E6E6E?style=for-the-badge&logo=openapiinitiative&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -158,6 +167,20 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
 
   - k‑Means clustering groups similar properties for more focused suggestions.
   - kNN & Cosine Similarity (via Pinecone) finds the closest matches to your query in real time.
+  - Graph traversal (via Neo4j) adds explainable relationships like same neighborhood/zip and vector‑similar links, enabling statements like “Recommended because it’s in the same neighborhood and similar in price/size to a liked home.”
+
+- **Insights & Tools Page**  
+  A dedicated page at `/insights` with:
+  - Explain Relationship: shortest graph path between two homes (ZIP/Neighborhood/Similarity edges) with a mini node‑edge diagram.
+  - Graph Similar Properties: reasoned similarities (same neighborhood/zip/similar‑to) with a radial node graph.
+  - Neighborhood Stats: counts and averages for a named neighborhood.
+  - Mortgage & Affordability tools: interactive breakdown + quick utilities.
+
+- **Map Page**  
+  A map view at `/map` that displays properties with markers:
+  - Accepts `?zpids=123,456` to show specific homes only.
+  - If no `zpids`, accepts `?q=` to search and caps to a safe max (200) for performance.
+  - Chat replies auto‑include a “View on Map” link when Zillow property links are present.
 
 - **Smooth Animations**  
   Engaging transitions and micro‑interactions powered by Framer Motion.
@@ -187,6 +210,71 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
 
 ## Architecture
 
+### Detailed Diagram
+
+```mermaid
+graph LR
+  %% Frontend
+  subgraph Frontend
+    Chat["/chat - Chat UI + charts"]
+    Insights["/insights - Graph tools + calculators"]
+    Map["/map - Leaflet map"]
+  end
+
+  %% Backend
+  subgraph Backend
+    ChatAPI["POST /api/chat"]
+    RateAPI["POST /api/chat/rate"]
+    PropsAPI["GET /api/properties"]
+    ByIdsAPI["GET /api/properties/by-ids"]
+    SimAPI["GET /api/graph/similar/:zpid"]
+    ExplAPI["GET /api/graph/explain"]
+    HoodAPI["GET /api/graph/neighborhood/:name"]
+  end
+
+  %% Services
+  subgraph Services
+    Gemini["Google Gemini"]
+    Pinecone["Pinecone Index"]
+    Neo4j["Neo4j Aura"]
+    Mongo["MongoDB Atlas"]
+    Redis["Redis Cache"]
+    Prom["Prometheus"]
+  end
+
+  %% Ingestion
+  subgraph Ingestion
+    Clean["cleanProperties.ts"]
+    Upsert["upsertProperties.ts"]
+    IngestGraph["ingestNeo4j.ts"]
+  end
+
+  %% Frontend → Backend
+  Chat --> ChatAPI
+  Chat --> RateAPI
+  Insights --> SimAPI
+  Insights --> ExplAPI
+  Insights --> HoodAPI
+  Map --> PropsAPI
+  Map --> ByIdsAPI
+
+  %% Backend → Services
+  ChatAPI --> Gemini
+  ChatAPI --> Pinecone
+  ChatAPI -. optional .-> Neo4j
+  PropsAPI --> Pinecone
+  ByIdsAPI --> Pinecone
+  ByIdsAPI --> Mongo
+  SimAPI --> Neo4j
+  ExplAPI --> Neo4j
+  HoodAPI --> Neo4j
+
+  %% Ingestion → Stores
+  Clean --> Mongo
+  Upsert --> Pinecone
+  IngestGraph --> Neo4j
+```
+
 **EstateWise** is built with a modern, full-stack architecture consisting of two major parts:
 
 ### Backend
@@ -194,6 +282,7 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
 - **Express.js & TypeScript:** A robust backend API that handles authentication, conversation management, and AI chat processing.
 - **MongoDB:** Database for storing user data, conversation histories, and more.
 - **Pinecone:** A managed vector database for fast, real‑time property retrieval using kNN and cosine similarity.
+- **Neo4j (Graph DB):** Models explicit relationships (neighborhoods, zip codes, property‑to‑property similarities). New endpoints under `/api/graph` power explainable recommendations and path explanations.
 - **Redis:** Caching layer for quick access to frequently used data and to improve performance.
 - **JWT Authentication:** Secure user sessions using JSON Web Tokens.
 - **Integration with AI & RAG:** Communicates with AI APIs and uses **Google Gemini API & Pinecone** for advanced property recommendation logic.
@@ -305,12 +394,12 @@ Below is a high-level diagram that illustrates the flow of the application, incl
            ┌───────────┴────────────┐
            │                        │
            ▼                        ▼
-┌─────────────────┐       ┌─────────────────┐
-│   MongoDB       │       │ Pinecone Vector │
-│ (User Data,     │◄─────►│   Database      │
-│  Convo History) │       │ (Knowledge Base)│
-└─────────────────┘       └─────────────────┘
-           ▲
+┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
+│   MongoDB       │       │ Pinecone Vector │       │ Neo4j Graph DB  │
+│ (User Data,     │◄─────►│   Database      │◄─────►│ (relationships, │
+│  Convo History) │       │ (Knowledge Base)│       │ explainability) │
+└─────────────────┘       └─────────────────┘       └─────────────────┘
+           ▲                                            
            │
            │  (Utilizes stored data & docs)
            │
@@ -338,6 +427,8 @@ Below is a high-level diagram that illustrates the flow of the application, incl
          │   AI responses              │
          │ - Reinforcement learning    │
          │   for expert weights        │
+         │ - Caching with Redis        │
+         │ - and more...               │
          └─────────────┬───────────────┘
                        │
                        ▼
@@ -354,6 +445,36 @@ Below is a high-level diagram that illustrates the flow of the application, incl
          │ - Visualizations of data    │
          └─────────────────────────────┘
 ```
+
+#### Neo4j Graph Integration
+
+- What it adds
+  - Explicit relationship modeling: `(Property)‑[:IN_ZIP|IN_NEIGHBORHOOD]->(...)` and optional `(:Property)‑[:SIMILAR_TO]->(:Property)`.
+  - New API endpoints under `/api/graph` for explainable recommendations and path explanations.
+  - Optional graph context appended to chat responses for better explainability when Neo4j is configured.
+
+- Configure (env)
+  - `NEO4J_ENABLE=true`
+  - `NEO4J_URI=neo4j+s://<your-instance-id>.databases.neo4j.io`
+  - `NEO4J_USERNAME=neo4j`
+  - `NEO4J_PASSWORD=<paste-once-admin-password>`
+  - `NEO4J_DATABASE=neo4j` (optional)
+
+- Ingest data
+  - `cd backend`
+  - `npm run graph:ingest` (uses `INGEST_LIMIT` to cap batch)
+
+- Endpoints
+  - `GET /api/graph/similar/:zpid?limit=10` → graph‑based similar properties + reasons (same neighborhood/zip, similar edge).
+  - `GET /api/graph/explain?from=<zpid>&to=<zpid>` → shortest path explanation between two properties.
+  - `GET /api/graph/neighborhood/:name?limit=50` → stats + sample properties in a neighborhood.
+
+Note: The graph layer is optional. If not configured, the API gracefully responds with 503 for graph routes and the chat pipeline skips graph context.
+
+Example managed credentials
+- Username: `neo4j`
+- Password: paste your one‑time admin password from Neo4j Aura (e.g., the one you saved when provisioning)
+- URI: from your Neo4j Aura instance (e.g., `neo4j+s://<id>.databases.neo4j.io`)
 
 ## Setup & Installation
 
@@ -461,8 +582,11 @@ Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks
 
   - **AWS ECS (Fargate)**: Containerized Node/TypeScript API hosted on ECS behind an Application Load Balancer, with autoscaling.
   - **GCP Cloud Run**: Serverless container deployment option via Cloud Build; autoscaling to zero when idle.
+  - **Microsoft Azure**: Another option for hosting the backend with easy scaling.
   - **Vercel** (Backup): Node server largely stateless, can run on Vercel for smaller workloads.
-  - _Env vars_ managed in Secrets Manager (AWS) or Secret Manager (GCP).
+  - **Docker**: Containerized backend for consistent environments across dev, test, and prod.
+  - **Load Balancing & SSL**: ALB (AWS) or Cloud Load Balancing (GCP) with managed SSL certs for secure HTTPS.
+  - **Secrets Management**: Vault (HashiCorp), AWS Secrets Manager, or GCP Secret Manager for sensitive config.
 
 - **Frontend**
 
@@ -474,6 +598,9 @@ Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks
 
   - **MongoDB Atlas**: Global, fully managed MongoDB for user data and chat histories.
   - **Pinecone**: Managed vector database for RAG-based property retrieval.
+  - **MongoDB Atlas**: Fully managed, global MongoDB for user data and chat histories.
+  - **Neo4j Aura**: Managed Neo4j graph database for relationship modeling and explainable recommendations.
+  - **Redis**: Managed Redis (Elasticache on AWS, Memorystore on GCP) for caching and performance.
 
 - **Monitoring & Logging**
 
@@ -484,11 +611,11 @@ Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks
 
 Infrastructure and deployment scripts for Microsoft Azure live in the [`azure/`](azure/) directory. Provision resources with Bicep and deploy the backend using the provided script or Azure Pipelines workflow.
 
-![AWS](https://img.shields.io/badge/Deployed%20on%20AWS-232F3E?style=for-the-badge&logo=task&logoColor=white)
-![GCP](https://img.shields.io/badge/Deployed%20on%20GCP-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
-![Azure](https://img.shields.io/badge/Deployed%20on%20Azure-232F3E?style=for-the-badge&logo=micropython&logoColor=white)
+![AWS](https://img.shields.io/badge/Compatible_With%20AWS-232F3E?style=for-the-badge&logo=task&logoColor=white)
+![GCP](https://img.shields.io/badge/Compatible_With%20GCP-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
+![Azure](https://img.shields.io/badge/Compatible_With%20Azure-232F3E?style=for-the-badge&logo=micropython&logoColor=white)
 ![Terraform](https://img.shields.io/badge/IaC%20with%20Terraform-623CE4?style=for-the-badge&logo=terraform&logoColor=white)
-![Vercel](https://img.shields.io/badge/Deployed%20on%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
+![Vercel](https://img.shields.io/badge/Deployed_On%20Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)
 ![GitHub Actions](https://img.shields.io/badge/CI/CD%20with%20GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 ![Cloud Build](https://img.shields.io/badge/CI/CD%20with%20Cloud%20Build-4285F4?style=for-the-badge&logo=googlecloud&logoColor=white)
 ![MongoDB Atlas](https://img.shields.io/badge/Using%20MongoDB%20Atlas-47A248?style=for-the-badge&logo=mongodb&logoColor=white)
@@ -506,6 +633,20 @@ Infrastructure and deployment scripts for Microsoft Azure live in the [`azure/`]
   Switch between dark and light modes with smooth background transitions.
 - **Search & Management:**  
   Easily search through your conversation history and manage your saved conversations from the sidebar.
+- **Insights & Tools Page:**  
+  Access graph-based tools and mortgage calculators to assist in your property search.
+- **Map Page:**  
+  View properties on an interactive map with markers, search functionality, and links to Zillow listings.
+- **Visualizations Page:**  
+  Explore aggregate charts and insights for all Chapel Hill properties.
+- **Expert View:**  
+  Toggle between the combined AI response and individual expert responses (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) to see different perspectives on your query.
+- **Interactive Charts:**  
+  View dynamic charts generated by the AI based on your queries, embedded directly in the chat interface.
+- **Smooth Animations:**  
+  Enjoy engaging transitions and micro-interactions powered by Framer Motion.
+- **Responsive Design:**  
+  The app is optimized for desktop, tablet, and mobile devices, ensuring a seamless experience across
 - **Guest Mode:**  
   Use the app as a guest without creating an account. Conversations will still be saved locally in the browser.
 - **Rating System:**  
@@ -518,6 +659,7 @@ Infrastructure and deployment scripts for Microsoft Azure live in the [`azure/`]
   Quickly search your conversation history for keywords, topics, or specific properties.
 - **Visualizations:**  
   View interactive charts and graphs generated by the AI based on your queries. The visualizations page provides aggregate charts and insights for all Chapel Hill properties.
+- and so much more...
 
 > [!CAUTION]
 > Note: The expert view feature is ONLY available for new messages. If you load a conversation from either the local storage or the database, the expert view feature will not be available, and only the combined response will be shown.
@@ -582,6 +724,19 @@ EstateWise features a modern, animated, and fully responsive user interface buil
 
 ## API Endpoints
 
+### Graph
+
+- **GET** `/api/graph/similar/:zpid?limit=10` – Find similar properties via explicit relationships with reasons (same neighborhood/zip, vector similarity edge when present).
+- **GET** `/api/graph/explain?from=<zpid>&to=<zpid>` – Return the shortest path (≤3 hops) between two homes over `IN_ZIP|IN_NEIGHBORHOOD|SIMILAR_TO`.
+- **GET** `/api/graph/neighborhood/:name?limit=50` – Neighborhood stats and a sample list of properties.
+
+Graph endpoints are available when Neo4j is configured; otherwise they respond with `503`.
+
+### Properties (Map Helpers)
+
+- **GET** `/api/properties` – Search Pinecone and return listings with lat/lon; accepts `q` and `topK`.
+- **GET** `/api/properties/by-ids?ids=123,456` – Return listings by ZPIDs (enriches from Pinecone metadata, falls back to Mongo for lat/lon).
+
 ### Authentication
 
 - **POST** `/api/auth/signup` – Create a new user.
@@ -644,6 +799,7 @@ EstateWise/
 ├── shell/                    # Shell scripts for deployment and setup
 ├── terraform/                # Terraform scripts for infrastructure as code
 ├── gcp/                      # GCP deployment scripts
+├── mcp/                      # Model Context Protocol server (tools over stdio)
 ├── .env                      # Environment variables for development
 ├── README.md                 # This file
 ├── TECH_DOCS.md              # Detailed technical documentation (highly recommended to read)
@@ -874,6 +1030,44 @@ The application is containerized using Docker to ensure consistent, portable, an
   In production, the images are pulled directly from GHCR and deployed to AWS infrastructure or Vercel, enabling a consistent artifact to run from local to production.
 
 This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
+
+## MCP Server
+
+Bring EstateWise data and graph tools to MCP-compatible clients (e.g., IDEs or assistants that support the Model Context Protocol) via the `mcp/` package.
+
+![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logp=zod&logoColor=white)
+
+- Location: `mcp/`
+- Transport: stdio (compatible with typical MCP client launchers)
+- Tools exposed:
+  - `properties.search(q: string, topK?: number)`
+  - `properties.byIds(ids: Array<string | number>)`
+  - `graph.similar(zpid: number, limit?: number)`
+  - `graph.explain(from: number, to: number)`
+  - `graph.neighborhood(name: string, limit?: number)`
+  - `map.linkForZpids(ids: Array<string | number>)`
+
+Env vars (in `mcp/.env`)
+- `API_BASE_URL` (default: `https://estatewise-backend.vercel.app`)
+- `FRONTEND_BASE_URL` (default: `https://estatewise.vercel.app`)
+
+Local development
+```
+cd mcp
+npm install
+npm run dev
+```
+
+Build & run
+```
+cd mcp
+npm run build
+npm start
+```
+
+Notes
+- The MCP server returns text content; JSON payloads are stringified for portability across clients.
+- Graph tools require the backend to have Neo4j configured; otherwise they may return 503 from the API.
 
 ## VS Code Extension
 

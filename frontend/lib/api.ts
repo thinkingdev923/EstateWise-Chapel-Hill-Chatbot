@@ -143,3 +143,83 @@ export async function searchConversations(
   }
   return await res.json();
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// Graph API
+// ────────────────────────────────────────────────────────────────────────────
+
+export async function graphSimilar(zpid: number, limit = 10) {
+  const url = `${API_BASE_URL}/api/graph/similar/${zpid}?limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Graph similar failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function graphExplain(fromZpid: number, toZpid: number) {
+  const url = `${API_BASE_URL}/api/graph/explain?from=${fromZpid}&to=${toZpid}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Graph explain failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function graphNeighborhood(name: string, limit = 50) {
+  const url = `${API_BASE_URL}/api/graph/neighborhood/${encodeURIComponent(name)}?limit=${limit}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `Graph neighborhood failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+// Properties API
+export async function getPropertiesByIds(zpids: (string | number)[]) {
+  const ids = zpids.map(String).join(",");
+  const url = `${API_BASE_URL}/api/properties/by-ids?ids=${encodeURIComponent(ids)}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `by-ids failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+export async function searchPropertiesForMap(q: string, topK = 200) {
+  const url = `${API_BASE_URL}/api/properties?q=${encodeURIComponent(q)}&topK=${topK}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `properties search failed (${res.status})`);
+  }
+  return await res.json();
+}
+
+// Lookup ZPIDs by address/city/state/zip and optional beds/baths
+export async function lookupZpid(params: {
+  address?: string;
+  city?: string;
+  state?: string;
+  zipcode?: string;
+  beds?: number;
+  baths?: number;
+  limit?: number;
+}) {
+  const qp = new URLSearchParams();
+  Object.entries(params).forEach(([k, v]) => {
+    if (v !== undefined && v !== null && String(v).trim() !== "")
+      qp.set(k, String(v));
+  });
+  const url = `${API_BASE_URL}/api/properties/lookup?${qp.toString()}`;
+  const res = await fetch(url);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || `lookup failed (${res.status})`);
+  }
+  return await res.json();
+}
