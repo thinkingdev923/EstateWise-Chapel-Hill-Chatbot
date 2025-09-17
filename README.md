@@ -449,9 +449,15 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 
 #### Neo4j Graph Integration
 
+The graph database layer is optional. If enabled, it adds explicit relationship modeling between properties, neighborhoods, and zip codes,
+
 <p align="center">
   <img src="img/neo4j.png" alt="Neo4j Graph Integration" width="100%" />
 </p>
+
+The graph layer enhances explainability by allowing the AI to reference relationships like "same neighborhood" or "similar properties" in its recommendations.
+
+**Neo4j integration details:**
 
 - What it adds
   - Explicit relationship modeling: `(Property)‑[:IN_ZIP|IN_NEIGHBORHOOD]->(...)` and optional `(:Property)‑[:SIMILAR_TO]->(:Property)`.
