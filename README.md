@@ -1093,6 +1093,13 @@ Bring EstateWise data, graphs, analytics, and utilities to MCP‑compatible clie
   - Map: `map.linkForZpids`, `map.buildLinkByQuery`
   - Utilities & Finance: `util.extractZpids`, `util.zillowLink`, `util.summarize`, `util.parseGoal`, `finance.mortgage`, `finance.affordability`, `finance.schedule`
 
+```mermaid
+flowchart LR
+  Client[IDE or Assistant MCP Client] -- stdio --> Server[MCP Server]
+  Server -->|properties, graph, analytics, map, util, finance| API[Backend API]
+  Server -->|deep links| Frontend[Frontend map]
+```
+
 Env vars (in `mcp/.env`)
 - `API_BASE_URL` (default: `https://estatewise-backend.vercel.app`)
 - `FRONTEND_BASE_URL` (default: `https://estatewise.vercel.app`)
@@ -1147,17 +1154,17 @@ Notes
 
 ```mermaid
 flowchart LR
-  Goal --> Planner --> Coordinator
-  Coordinator -->|parseGoal| util.parseGoal
-  Coordinator -->|lookup| properties.lookup
-  Coordinator -->|search| properties.search
-  Coordinator -->|analytics| analytics.summarizeSearch
-  Coordinator -->|graph| graph.explain
-  Coordinator -->|rank| DedupeRanking
-  Coordinator -->|map| map.linkForZpids
-  Coordinator -->|finance| finance.mortgage
-  Coordinator -->|compliance| Compliance
-  Compliance --> Reporter
+    Goal --> Planner --> Coordinator
+    Coordinator -->|parseGoal| UPG["util.parseGoal"]
+    Coordinator -->|lookup| PL["properties.lookup"]
+    Coordinator -->|search| PS["properties.search"]
+    Coordinator -->|analytics| AS["analytics.summarizeSearch"]
+    Coordinator -->|graph| GE["graph.explain"]
+    Coordinator -->|rank| DR["DedupeRanking"]
+    Coordinator -->|map| MLZ["map.linkForZpids"]
+    Coordinator -->|finance| FM["finance.mortgage"]
+    Coordinator -->|compliance| Compliance
+    Compliance --> Reporter
 ```
 
 For details and examples, see [agentic-ai/README.md](agentic-ai/README.md).
