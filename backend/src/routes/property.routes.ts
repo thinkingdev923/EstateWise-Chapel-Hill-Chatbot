@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getPropertyData } from "../controllers/property.controller";
+import { getPropertyData, getPropertiesByIds, lookupZpids } from "../controllers/property.controller";
 
 const router = Router();
 
@@ -121,5 +121,44 @@ const router = Router();
  *         description: Server error - Failed to fetch property data.
  */
 router.get("/", getPropertyData);
+
+
+router.get("/by-ids", getPropertiesByIds);
+
+/**
+ * @swagger
+ * /api/properties/lookup:
+ *   get:
+ *     summary: Lookup candidate properties and ZPIDs by address/city/state/zip and optional beds/baths
+ *     tags: [Properties]
+ *     parameters:
+ *       - in: query
+ *         name: address
+ *         schema: { type: string }
+ *       - in: query
+ *         name: city
+ *         schema: { type: string }
+ *       - in: query
+ *         name: state
+ *         schema: { type: string }
+ *       - in: query
+ *         name: zipcode
+ *         schema: { type: string }
+ *       - in: query
+ *         name: beds
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: baths
+ *         schema: { type: integer }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Compact list of candidate properties including ZPIDs
+ *       400:
+ *         description: Missing filters
+ */
+router.get("/lookup", lookupZpids);
 
 export default router;

@@ -4,11 +4,9 @@ import {
   HarmBlockThreshold,
 } from "@google/generative-ai";
 import lib from "../utils/lib";
-import {
-  queryPropertiesAsString,
-  queryProperties,
-  RawQueryResult,
-} from "../scripts/queryProperties";
+import { queryPropertiesAsString, queryProperties, RawQueryResult } from "../scripts/queryProperties";
+import { isNeo4jEnabled } from "../graph/neo4j.client";
+import { getSimilarByZpid } from "../graph/graph.service";
 
 /**
  * Chain-of-Thought prompt to guide the models.
@@ -220,11 +218,34 @@ export async function chatWithEstateWise(
       .map((r, i) => `- Property ID ${r.id}: cluster ${clusterAssignments[i]}`)
       .join("\n");
 
+    // Optionally fetch graph-based similar properties for explainability
+    let graphContext = "";
+    try {
+      if (isNeo4jEnabled()) {
+        const top = rawResults[0]?.metadata?.zpid;
+        if (top != null) {
+          const similars = await getSimilarByZpid(Number(top), 5);
+          if (similars.length) {
+            const lines = similars.map((s, i) => {
+              const a = s.property;
+              const addr = [a.streetAddress, a.city, a.state, a.zipcode].filter(Boolean).join(", ");
+              const why = s.reasons.length ? ` (because: ${s.reasons.join(", ")})` : "";
+              return `${i + 1}. ${addr} — $${a.price ?? "N/A"}${why}`;
+            });
+            graphContext = `\nGraph Similarities (top 5):\n${lines.join("\n")}`;
+          }
+        }
+      }
+    } catch (_) {
+      // Graph is optional; ignore errors
+    }
+
     combinedPropertyContext = `
       ${propertyContext}
 
       Cluster Assignments:
       ${clusterContext}
+      ${graphContext}
     `.trim();
   } else {
     combinedPropertyContext = "";
