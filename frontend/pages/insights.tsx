@@ -1448,84 +1448,261 @@ The tool searches for connections through:
 }
 
 // ────────────────────────────────────────────────────────────────────────────
-// Simple SVG graph components (no external deps)
+// Graph components rendered with d3 force simulations
 // ────────────────────────────────────────────────────────────────────────────
 
 function PathGraph({ nodes, rels }: { nodes: GraphNode[]; rels: GraphRel[] }) {
-  const width = Math.max(320, nodes.length * 180);
-  const height = 120;
-  const radius = 16;
-  const positions = nodes.map((_, i) => ({
-    x: 40 + i * ((width - 80) / Math.max(1, nodes.length - 1)),
-    y: height / 2,
-  }));
+  const ref = useRef<SVGSVGElement>(null);
 
-  const labelFor = (n: GraphNode) => {
-    if (n.zpid) return `${n.streetAddress || "Property"}`;
-    if (n.code) return `ZIP ${n.code}`;
-    if (n.name) return `${n.name}`;
-    return "Node";
-  };
+  useEffect(() => {
+    if (!nodes?.length) {
+      if (ref.current) {
+        const empty = ref.current;
+        empty.innerHTML = "";
+      }
+      return;
+    }
 
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-36">
-      {/* Edges */}
-      {positions.slice(0, -1).map((p, i) => (
-        <g key={i}>
-          <line
-            x1={p.x}
-            y1={p.y}
-            x2={positions[i + 1].x}
-            y2={positions[i + 1].y}
-            stroke="#94a3b8"
-            strokeWidth={2}
-          />
-          <text
-            x={(p.x + positions[i + 1].x) / 2}
-            y={p.y - 10}
-            textAnchor="middle"
-            className="fill-muted-foreground text-[10px]"
-          >
-            {rels[i]?.type || "REL"}
-          </text>
-        </g>
-      ))}
-      {/* Nodes */}
-      {positions.map((p, i) => (
-        <g key={i}>
-          <circle
-            cx={p.x}
-            cy={p.y}
-            r={radius}
-            fill="#0ea5e9"
-            className="opacity-90"
-          />
-          <text
-            x={p.x}
-            y={p.y + 4}
-            textAnchor="middle"
-            className="fill-white text-[10px]"
-          >
-            {nodes[i].zpid
-              ? "Home"
-              : nodes[i].code
-                ? "ZIP"
-                : nodes[i].name
-                  ? "Hood"
-                  : "Node"}
-          </text>
-          <text
-            x={p.x}
-            y={p.y + 34}
-            textAnchor="middle"
-            className="fill-foreground text-[10px]"
-          >
-            {labelFor(nodes[i])}
-          </text>
-        </g>
-      ))}
-    </svg>
-  );
+    let simulation: undefined | { stop: () => void };
+    let themeObserver: MutationObserver | null = null;
+
+    (async () => {
+      if (!ref.current) return;
+
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d3: any = await import("d3");
+        const width = Math.max(520, nodes.length * 180);
+        const height = 240;
+        const margin = 60;
+
+        const describeNode = (n: GraphNode) => {
+          if (n.zpid) return `${n.streetAddress || "Property"}`;
+          if (n.code) return `ZIP ${n.code}`;
+          if (n.name) return `${n.name}`;
+          return "Node";
+        };
+
+        const typeFor = (n: GraphNode) => {
+          if (n.zpid) return "property";
+          if (n.code) return "zip";
+          if (n.name) return "neighborhood";
+          return "other";
+        };
+
+        const shortLabel = (n: GraphNode) => {
+          if (n.zpid) return "Home";
+          if (n.code) return "ZIP";
+          if (n.name) return "Hood";
+          return "Node";
+        };
+
+        const targetX = (idx: number) =>
+          nodes.length === 1
+            ? width / 2
+            : margin +
+              (idx * (width - margin * 2)) / Math.max(1, nodes.length - 1);
+
+        const dataNodes = nodes.map((node, idx) => ({
+          id: `path-node-${idx}`,
+          index: idx,
+          raw: node,
+          label: describeNode(node),
+          short: shortLabel(node),
+          type: typeFor(node),
+          targetX: targetX(idx),
+        }));
+
+        const dataLinks = rels
+          .slice(0, Math.max(0, nodes.length - 1))
+          .map((rel, idx) => ({
+            source: dataNodes[idx].id,
+            target: dataNodes[idx + 1].id,
+            label: rel?.type || "REL",
+          }));
+
+        const svg = d3.select(ref.current);
+        svg.selectAll("*").remove();
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        const g = svg.append("g");
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const zoomed = (event: any) => {
+          g.attr("transform", event.transform);
+        };
+        svg.call(d3.zoom().scaleExtent([0.5, 3]).on("zoom", zoomed));
+
+        const theme = () => {
+          const isDark = document.documentElement.classList.contains("dark");
+          return {
+            isDark,
+            text: isDark ? "#e5e7eb" : "#111827",
+            link: isDark ? "#475569" : "#cbd5e1",
+          };
+        };
+
+        const nodeColor = (type: string) => {
+          switch (type) {
+            case "property":
+              return "#0ea5e9";
+            case "zip":
+              return "#f97316";
+            case "neighborhood":
+              return "#22c55e";
+            default:
+              return "#64748b";
+          }
+        };
+
+        const link = g
+          .append("g")
+          .selectAll("line")
+          .data(dataLinks)
+          .join("line")
+          .attr("stroke", theme().link)
+          .attr("stroke-width", 1.8);
+
+        const linkLabels = g
+          .append("g")
+          .selectAll("text")
+          .data(dataLinks)
+          .join("text")
+          .attr("font-size", 10)
+          .attr("text-anchor", "middle")
+          .attr("fill", theme().text)
+          .attr("paint-order", "stroke")
+          .attr("stroke", theme().isDark ? "#0f172a" : "#f8fafc")
+          .attr("stroke-width", 2)
+          .text((d: { label: string }) => d.label);
+
+        const nodeGroup = g
+          .append("g")
+          .selectAll("g")
+          .data(dataNodes)
+          .join("g")
+          .call(
+            d3
+              .drag()
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on("start", (event: any, d: { fx?: number; fy?: number }) => {
+                if (!event.active && simulation)
+                  simulation.alphaTarget(0.3).restart();
+                d.fx = event.x;
+                d.fy = event.y;
+              })
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on("drag", (event: any, d: { fx?: number; fy?: number }) => {
+                d.fx = event.x;
+                d.fy = event.y;
+              })
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on(
+                "end",
+                (event: any, d: { fx?: number | null; fy?: number | null }) => {
+                  if (!event.active && simulation) simulation.alphaTarget(0);
+                  d.fx = null;
+                  d.fy = null;
+                },
+              ),
+          );
+
+        nodeGroup
+          .append("circle")
+          .attr("r", 24)
+          .attr("fill", (d: { type: string }) => nodeColor(d.type))
+          .attr("fill-opacity", 0.92);
+
+        nodeGroup
+          .append("text")
+          .attr("text-anchor", "middle")
+          .attr("dy", "0.35em")
+          .attr("fill", "#ffffff")
+          .attr("font-size", 11)
+          .attr("font-weight", 600)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .text((d: any) => d.short);
+
+        const nodeLabels = nodeGroup
+          .append("text")
+          .attr("text-anchor", "middle")
+          .attr("y", 36)
+          .attr("fill", theme().text)
+          .attr("font-size", 11)
+          .text((d: { label: string }) => d.label.slice(0, 40));
+
+        const applyTheme = () => {
+          const { text, link: linkColor, isDark } = theme();
+          link.attr("stroke", linkColor);
+          linkLabels
+            .attr("fill", text)
+            .attr("stroke", isDark ? "#0f172a" : "#f8fafc");
+          nodeLabels.attr("fill", text);
+        };
+        applyTheme();
+
+        themeObserver = new MutationObserver(() => applyTheme());
+        themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+
+        simulation = d3
+          .forceSimulation(dataNodes)
+          .force(
+            "link",
+            d3
+              .forceLink(dataLinks)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .id((d: any) => d.id)
+              .distance(140)
+              .strength(1),
+          )
+          .force("charge", d3.forceManyBody().strength(-220))
+          .force(
+            "collide",
+            d3.forceCollide().radius(() => 36),
+          )
+          .force("y", d3.forceY(height / 2).strength(0.6))
+          .force(
+            "x",
+            d3.forceX((d: { targetX: number }) => d.targetX).strength(0.9),
+          )
+          .on("tick", () => {
+            link
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x1", (d: any) => d.source.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("y1", (d: any) => d.source.y)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x2", (d: any) => d.target.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("y2", (d: any) => d.target.y);
+
+            linkLabels
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x", (d: any) => (d.source.x + d.target.x) / 2)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("y", (d: any) => (d.source.y + d.target.y) / 2 - 16);
+
+            nodeGroup.attr(
+              "transform",
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (d: any) => `translate(${d.x}, ${d.y})`,
+            );
+          });
+      } catch (err) {
+        console.error("Failed to render path graph", err);
+      }
+    })();
+
+    return () => {
+      simulation?.stop?.();
+      themeObserver?.disconnect();
+    };
+  }, [nodes, rels]);
+
+  return <svg ref={ref} className="w-full h-36" />;
 }
 
 function SimilarGraph({
@@ -1535,108 +1712,242 @@ function SimilarGraph({
   centerLabel: string;
   nodes: { id: string; label: string; reasons: string[] }[];
 }) {
-  const size = 360;
-  const cx = size / 2;
-  const cy = size / 2;
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const radius = 18;
-  const ring = size / 2 - 40;
-  const angleStep = (2 * Math.PI) / Math.max(1, nodes.length);
-  const colors = (reasons: string[]) => {
-    const hasHood = reasons.includes("same neighborhood");
-    const hasZip = reasons.includes("same zip code");
-    const hasVec = reasons.includes("vector similarity");
-    return hasVec
-      ? "#8b5cf6"
-      : hasHood
-        ? "#22c55e"
-        : hasZip
-          ? "#f59e0b"
-          : "#64748b";
-  };
+  const ref = useRef<SVGSVGElement>(null);
 
-  const positions = nodes.map((n, i) => ({
-    x: cx + ring * Math.cos(i * angleStep - Math.PI / 2),
-    y: cy + ring * Math.sin(i * angleStep - Math.PI / 2),
-  }));
+  useEffect(() => {
+    let simulation: undefined | { stop: () => void };
+    let themeObserver: MutationObserver | null = null;
 
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-80">
-      {/* Links */}
-      {positions.map((p, i) => (
-        <line
-          key={i}
-          x1={cx}
-          y1={cy}
-          x2={p.x}
-          y2={p.y}
-          stroke="#cbd5e1"
-          strokeWidth={1.5}
-        />
-      ))}
-      {/* Center node */}
-      <circle cx={cx} cy={cy} r={22} fill="#0ea5e9" />
-      <text
-        x={cx}
-        y={cy + 4}
-        textAnchor="middle"
-        className="fill-white text-[11px]"
-      >
-        Center
-      </text>
-      <text
-        x={cx}
-        y={cy + 32}
-        textAnchor="middle"
-        className="fill-foreground text-[10px]"
-      >
-        {centerLabel}
-      </text>
-      {/* Neighbor nodes */}
-      {positions.map((p, i) => (
-        <g key={i}>
-          <circle
-            cx={p.x}
-            cy={p.y}
-            r={16}
-            fill={colors(nodes[i].reasons)}
-            className="opacity-90"
-          />
-          <text
-            x={p.x}
-            y={p.y + 4}
-            textAnchor="middle"
-            className="fill-white text-[10px]"
-          >
-            {i + 1}
-          </text>
-          <text
-            x={p.x}
-            y={p.y + 28}
-            textAnchor="middle"
-            className="fill-foreground text-[10px] w-28"
-          >
-            {nodes[i].label?.slice(0, 18) || "Property"}
-          </text>
-        </g>
-      ))}
-      {/* Legend */}
-      <g>
-        <circle cx={16} cy={size - 48} r={6} fill="#22c55e" />
-        <text x={28} y={size - 44} className="fill-foreground text-[10px]">
-          same neighborhood
-        </text>
-        <circle cx={16} cy={size - 30} r={6} fill="#f59e0b" />
-        <text x={28} y={size - 26} className="fill-foreground text-[10px]">
-          same zip
-        </text>
-        <circle cx={120} cy={size - 48} r={6} fill="#8b5cf6" />
-        <text x={132} y={size - 44} className="fill-foreground text-[10px]">
-          vector similarity
-        </text>
-      </g>
-    </svg>
-  );
+    (async () => {
+      if (!ref.current) return;
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const d3: any = await import("d3");
+
+        const width = 480;
+        const height = 360;
+        const svg = d3.select(ref.current);
+        svg.selectAll("*").remove();
+        svg.attr("viewBox", `0 0 ${width} ${height}`);
+
+        const theme = () => {
+          const isDark = document.documentElement.classList.contains("dark");
+          return {
+            isDark,
+            text: isDark ? "#e5e7eb" : "#111827",
+            link: isDark ? "#475569" : "#cbd5e1",
+            legend: isDark ? "#e5e7eb" : "#111827",
+          };
+        };
+
+        const colorForReasons = (reasons: string[]) => {
+          if (reasons.includes("vector similarity")) return "#8b5cf6";
+          if (reasons.includes("same neighborhood")) return "#22c55e";
+          if (reasons.includes("same zip code")) return "#f59e0b";
+          return "#64748b";
+        };
+
+        const dataNodes = [
+          {
+            id: "center",
+            type: "center",
+            label: centerLabel || "Target",
+            reasons: [] as string[],
+          },
+          ...nodes.map((n, idx) => ({
+            id: n.id || `similar-${idx}`,
+            type: "similar",
+            label: n.label || "Property",
+            reasons: Array.isArray(n.reasons) ? n.reasons : [],
+            order: idx,
+          })),
+        ];
+
+        const dataLinks = nodes.map((n, idx) => ({
+          source: "center",
+          target: n.id || `similar-${idx}`,
+        }));
+
+        const g = svg.append("g");
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const zoomed = (event: any) => {
+          g.attr("transform", event.transform);
+        };
+        svg.call(d3.zoom().scaleExtent([0.6, 3]).on("zoom", zoomed));
+
+        const link = g
+          .append("g")
+          .selectAll("line")
+          .data(dataLinks)
+          .join("line")
+          .attr("stroke", theme().link)
+          .attr("stroke-width", 1.6);
+
+        const nodeGroup = g
+          .append("g")
+          .selectAll("g")
+          .data(dataNodes)
+          .join("g")
+          .call(
+            d3
+              .drag()
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on("start", (event: any, d: { fx?: number; fy?: number }) => {
+                if (!event.active && simulation)
+                  simulation.alphaTarget(0.3).restart();
+                d.fx = event.x;
+                d.fy = event.y;
+              })
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on("drag", (event: any, d: { fx?: number; fy?: number }) => {
+                d.fx = event.x;
+                d.fy = event.y;
+              })
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .on(
+                "end",
+                (event: any, d: { fx?: number | null; fy?: number | null }) => {
+                  if (!event.active && simulation) simulation.alphaTarget(0);
+                  d.fx = null;
+                  d.fy = null;
+                },
+              ),
+          );
+
+        nodeGroup
+          .append("circle")
+          .attr("r", (d: { type: string }) => (d.type === "center" ? 28 : 22))
+          .attr("fill", (d: { type: string; reasons: string[] }) =>
+            d.type === "center" ? "#0ea5e9" : colorForReasons(d.reasons),
+          )
+          .attr("fill-opacity", 0.92);
+
+        nodeGroup
+          .append("text")
+          .attr("text-anchor", "middle")
+          .attr("dy", "0.35em")
+          .attr("fill", "#ffffff")
+          .attr("font-size", 11)
+          .attr("font-weight", 600)
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .text((d: any) =>
+            d.type === "center" ? "Center" : `${(d.order ?? 0) + 1}`,
+          );
+
+        const nodeLabels = nodeGroup
+          .append("text")
+          .attr("text-anchor", "middle")
+          .attr("y", (d: { type: string }) => (d.type === "center" ? 42 : 36))
+          .attr("fill", theme().text)
+          .attr("font-size", 11)
+          .text((d: { label: string }) => d.label.slice(0, 40));
+
+        const legendGroup = svg
+          .append("g")
+          .attr("transform", "translate(16,16)");
+        const legendData = [
+          { label: "same neighborhood", color: "#22c55e", y: 8 },
+          { label: "same zip", color: "#f59e0b", y: 32 },
+          { label: "vector similarity", color: "#8b5cf6", y: 56 },
+        ];
+
+        legendGroup
+          .selectAll("circle")
+          .data(legendData)
+          .join("circle")
+          .attr("cx", 6)
+          .attr("cy", (d: { y: number }) => d.y)
+          .attr("r", 6)
+          .attr("fill", (d: { color: string }) => d.color);
+
+        legendGroup
+          .selectAll("text")
+          .data(legendData)
+          .join("text")
+          .attr("x", 18)
+          .attr("y", (d: { y: number }) => d.y + 4)
+          .attr("font-size", 10)
+          .attr("fill", theme().legend)
+          .text((d: { label: string }) => d.label);
+
+        const applyTheme = () => {
+          const { text, link: linkColor, legend } = theme();
+          link.attr("stroke", linkColor);
+          nodeLabels.attr("fill", text);
+          legendGroup.selectAll("text").attr("fill", legend);
+        };
+
+        applyTheme();
+
+        themeObserver = new MutationObserver(() => applyTheme());
+        themeObserver.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
+
+        const ringRadius = Math.max(80, Math.min(width, height - 140) / 2);
+        const centerY = height / 2 - 20;
+
+        simulation = d3
+          .forceSimulation(dataNodes)
+          .force(
+            "link",
+            d3
+              .forceLink(dataLinks)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .id((d: any) => d.id)
+              .distance(140)
+              .strength(0.9),
+          )
+          .force("charge", d3.forceManyBody().strength(-180))
+          .force(
+            "collide",
+            d3
+              .forceCollide()
+              .radius((d: { type: string }) => (d.type === "center" ? 46 : 32)),
+          )
+          .force(
+            "radial",
+            d3
+              .forceRadial(
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (d: any) => (d.type === "center" ? 0 : ringRadius),
+                width / 2,
+                centerY,
+              )
+              .strength(0.9),
+          )
+          .force("center", d3.forceCenter(width / 2, centerY))
+          .on("tick", () => {
+            link
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x1", (d: any) => d.source.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("y1", (d: any) => d.source.y)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x2", (d: any) => d.target.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("y2", (d: any) => d.target.y);
+
+            nodeGroup.attr(
+              "transform",
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (d: any) => `translate(${d.x}, ${d.y})`,
+            );
+          });
+      } catch (err) {
+        console.error("Failed to render similar graph", err);
+      }
+    })();
+
+    return () => {
+      simulation?.stop?.();
+      themeObserver?.disconnect();
+    };
+  }, [centerLabel, nodes]);
+
+  return <svg ref={ref} className="w-full h-80" />;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
