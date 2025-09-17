@@ -624,12 +624,10 @@ export async function lookupZpids(req: Request, res: Response) {
       beds == null &&
       baths == null
     ) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "Provide at least one filter (address, city, state, zipcode, beds, baths)",
-        });
+      return res.status(400).json({
+        error:
+          "Provide at least one filter (address, city, state, zipcode, beds, baths)",
+      });
     }
 
     const parts: string[] = [];
