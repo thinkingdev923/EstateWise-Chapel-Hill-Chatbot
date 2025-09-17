@@ -1,29 +1,46 @@
 # EstateWise MCP Server
 
-Badges: ![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
 
 This package exposes EstateWise property, graph, charts, map, and utility tools over the Model Context Protocol (MCP). It lets MCP‑compatible clients (IDEs, assistants, agents) call tools like property search, graph similarity, chart extraction, and deep‑link generation via a simple stdio transport.
 
 - Location: `mcp/`
-- Transport: stdio
+- Transport: `stdio`
 - SDK: `@modelcontextprotocol/sdk`
+
+## Overview
+
+The MCP server wraps the existing EstateWise backend API and frontend map viewer to provide a rich set of tools for real estate research. It can be launched from any MCP‑compatible client, such as IDE plugins (e.g., Claude Desktop) or agent frameworks (e.g., Agentic AI).
+
+You can feel free to use this server with your own MCP client or the provided example client (`src/client.ts`). However, you will need to deploy your own MCP server instance if you no longer want to use everything locally.
 
 ## Quick Start
 
-Prerequisites
+Getting started is easy. Follow the steps below to install dependencies, build the server, and run it.
+
+### Prerequisites
 - Node.js 18+ (recommended 20+)
+- npm
+- (Optional) `tsx` for development mode (`npm install -g tsx`)
 
-Install
-- `cd mcp && npm install`
+### Install
+```bash
+cd mcp
+npm install
+```
 
-Development (watch mode)
-- `npm run dev`
+### Development (watch mode)
+```bash
+npm run dev
+```
 
-Build and run
-- `npm run build`
-- `npm start`
+### Build & Run
+```bash
+npm run build
+npm start
+```
 
-Environment
+### Environment
 - Copy `.env.example` to `.env` and adjust as needed.
 - Variables:
   - `API_BASE_URL` (default: `https://estatewise-backend.vercel.app`)
@@ -34,57 +51,196 @@ Environment
 All tools validate inputs with Zod and return content blocks per MCP. For maximum compatibility, JSON payloads are returned as stringified text.
 
 - Properties
-- `properties.search(q: string, topK?: number)`
-  - Description: Search properties via Pinecone‑backed API. Returns listings and charts.
-  - Example call args:
-    ```json
-    { "q": "3 bed in Chapel Hill", "topK": 5 }
-    ```
-- `properties.searchAdvanced({ city?, zipcode?, minPrice?, maxPrice?, beds?, baths?, topK? })`
-  - Description: Build a textual query from filters; returns listings and charts.
-  - Example: `{ "city": "Chapel Hill", "beds": 3, "topK": 50 }`
-- `properties.byIds(ids: Array<string | number>)`
-  - Description: Fetch property metadata by Zillow IDs (ZPIDs).
-  - Example call args:
-    ```json
-    { "ids": ["1234567", 2345678] }
-    ```
-- `properties.sample(topK?: number)` – Small bootstrap sample (`q=homes`, defaults to 50)
-- Graph
-- `graph.similar(zpid: number, limit?: number)`
-  - Description: Graph‑based similar properties for a given ZPID. Reasons included.
-  - Example call args:
-    ```json
-    { "zpid": 1234567, "limit": 10 }
-    ```
-- `graph.explain(from: number, to: number)`
-  - Description: Explain the shortest path between two properties (ZIP/Neighborhood/Similarity).
-  - Example call args:
-    ```json
-    { "from": 1234567, "to": 7654321 }
-    ```
-- `graph.neighborhood(name: string, limit?: number)`
-  - Description: Neighborhood stats and sample properties.
-  - Example call args:
-    ```json
-    { "name": "Northside", "limit": 50 }
-    ```
-- `graph.similarityBatch(zpids: number[], limit?: number)` – Aggregates similars for multiple ZPIDs
+  - `properties.search(q: string, topK?: number)`
+    - Search properties via Pinecone‑backed API. Returns listings and charts.
+    - Example: `{ "q": "3 bed in Chapel Hill", "topK": 5 }`
+  - `properties.searchAdvanced({ city?, zipcode?, minPrice?, maxPrice?, beds?, baths?, topK? })`
+    - Build a textual query from filters; returns listings and charts.
+    - Example: `{ "city": "Chapel Hill", "beds": 3, "topK": 50 }`
+  - `properties.lookup({ address?, city?, state?, zipcode?, beds?, baths?, limit? })`
+    - Find ZPIDs by address/city/state/ZIP and optional beds/baths.
+    - Example: `{ "city": "Chapel Hill", "state": "NC", "beds": 3 }`
+  - `properties.byIds(ids: Array<string | number>)`
+    - Fetch property metadata by ZPID(s). Example: `{ "ids": ["1234567", 2345678] }`
+  - `properties.sample(topK?: number)` – Small bootstrap sample (`q=homes`, defaults to 50)
 
-- Charts
-- `charts.priceHistogram(q: string, topK?: number)` – Extract the price histogram series for the query
+- Graph
+  - `graph.similar(zpid: number, limit?: number)` – Similar properties for a ZPID
+  - `graph.explain(from: number, to: number)` – Explain path between two ZPIDs
+  - `graph.neighborhood(name: string, limit?: number)` – Neighborhood stats/samples
+  - `graph.similarityBatch(zpids: number[], limit?: number)` – Batch similars
+  - `graph.comparePairs(zpids: number[])` – Explain up to 4 adjacent pairs from a list
+  - `graph.pathMatrix(zpids: number[], limitPairs?: number)` – Explain paths for adjacent pairs across a list
+
+- Charts & Analytics
+  - `charts.priceHistogram(q: string, topK?: number)` – Price distribution series
+  - `analytics.summarizeSearch(q: string, topK?: number)` – Medians for price/sqft/$psf/beds/baths
+  - `analytics.groupByZip(q: string, topK?: number)` – Counts and median price by ZIP
+  - `analytics.distributions(q: string, topK?: number, buckets?: number)` – Quartiles and histograms for price/sqft
 
 - Map
-- `map.linkForZpids(ids: Array<string | number>)`
-  - Description: Return a deep‑link to the EstateWise map page for given ZPIDs.
-  - Example call args:
-    ```json
-    { "ids": [1234567, 2345678, 3456789] }
-    ```
+  - `map.linkForZpids(ids: Array<string | number>)` – Deep link to `/map` with zpids
+  - `map.buildLinkByQuery({ q: string })` – Deep link to `/map?q=...`
 
-Notes
+- Utilities & Finance
+  - `util.extractZpids({ text })` – Extract ZPIDs from free text (Zillow URLs or raw ids)
+  - `util.zillowLink({ zpid })` – Build a Zillow home URL
+  - `util.summarize({ text, maxLen? })` – Trim string for quick display
+  - `util.parseGoal({ text })` – Parse a goal into coarse filters (city/state/zip, beds/baths, price, APR, years, ZPIDs)
+  - `finance.mortgage({ price, downPct?, apr?, years?, taxRatePct?, insMonthly?, hoaMonthly? })` – Monthly payment breakdown
+  - `finance.affordability({ monthlyBudget? | annualIncome?, maxDtiPct?, downPct?, apr?, years?, taxRatePct?, insMonthly?, hoaMonthly? })` – Estimate max affordable price
+- `finance.schedule({ price, downPct?, apr?, years?, months? })` – First N months of amortization schedule
+
+```mermaid
+flowchart LR
+  Client[IDE/Assistant MCP Client] -- stdio --> Server[MCP Server]
+  Server -->|properties, graph, analytics, map, util, finance| API[Backend API]
+  Server -->|deep links| Frontend[Frontend /map]
+```
+
+### Notes
 - Graph tools depend on Neo4j being configured in the backend; otherwise the backend responds with `503`.
 - Returns use `{ type: 'text', text: '...' }` content blocks; parse JSON text in the client if needed.
+
+## Architecture
+
+The MCP server acts as a bridge between the client (IDE or assistant) and the EstateWise backend API and frontend. It listens for tool calls over stdio, validates inputs, makes HTTP requests to the backend, and returns results as MCP content blocks.
+
+The architecture is illustrated below.
+
+```mermaid
+flowchart LR
+  subgraph Client Side
+    C[IDE / Assistant\nMCP Client]
+  end
+  subgraph EstateWise
+    S[MCP Server\nNode.js + TS]
+    B[(Backend API)]
+    F[Frontend /map]
+  end
+
+  C -- stdio --> S
+  S -- HTTP --> B
+  S -- Deep links --> F
+
+  C -. listTools/callTool .-> S
+```
+
+The typical flow for a client calling a tool is as follows:
+
+```mermaid
+sequenceDiagram
+  participant C as MCP Client (IDE/Agent)
+  participant S as MCP Server (EstateWise)
+  participant B as Backend API
+  participant F as Frontend /map
+
+  C->>S: listTools
+  S-->>C: tools[]
+  C->>S: callTool properties.lookup (filters)
+  S->>B: GET /api/properties/lookup?...filters
+  B-->>S: 200 JSON
+  S-->>C: content: text(JSON)
+  C->>F: open /map?zpids=...
+```
+
+## Tool Call Lifecycle
+
+The lifecycle of a tool call within the MCP server involves several steps, including argument validation, API request construction, fetching data, and response handling. The flow is as follows:
+
+```mermaid
+flowchart TD
+    A["callTool name+args"] --> B{"Validate args Zod"}
+    B -->|invalid| X["Throw error"]
+    B -->|valid| C["Build API URL"]
+    C --> D["fetch"]
+    D --> E{"res ok"}
+    E -->|no| Err["Read error JSON and compose"]
+    Err --> R1["Return content: text(error)"]
+    E -->|yes| P["Parse JSON"]
+    P --> W["Wrap as MCP content"]
+    W --> R2["Return to client"]
+```
+
+## Tool Category Map
+
+The MCP server organizes tools into several categories: Properties, Graph, Analytics, Map, Utilities, and Finance. Each category contains related tools that clients can call.
+
+```mermaid
+classDiagram
+  class MCPServer
+  class Properties {
+    search(q, topK)
+    searchAdvanced(filters)
+    lookup(filters)
+    byIds(ids)
+    sample(topK)
+  }
+  class Graph {
+    similar(zpid, limit)
+    explain(from, to)
+    neighborhood(name, limit)
+    similarityBatch(zpids, limit)
+    comparePairs(zpids)
+    pathMatrix(zpids, limitPairs)
+  }
+  class Analytics {
+    summarizeSearch(q, topK)
+    groupByZip(q, topK)
+    distributions(q, topK, buckets)
+  }
+  class Map {
+    linkForZpids(ids)
+    buildLinkByQuery(q)
+  }
+  class Util {
+    extractZpids(text)
+    zillowLink(zpid)
+    summarize(text, maxLen)
+    parseGoal(text)
+  }
+  class Finance {
+    mortgage(price, downPct, apr, years,...)
+    affordability(monthlyBudget|annualIncome,...)
+    schedule(price, downPct, apr, years, months)
+  }
+  MCPServer --> Properties
+  MCPServer --> Graph
+  MCPServer --> Analytics
+  MCPServer --> Map
+  MCPServer --> Util
+  MCPServer --> Finance
+```
+
+## Typical Flows
+
+The following diagrams illustrate typical flows for calling specific tools.
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant S as MCP Server
+  participant B as Backend
+
+  C->>S: callTool properties.lookup (city, state, beds)
+  S->>B: GET /api/properties/lookup?...filters
+  B-->>S: 200 JSON
+  S-->>C: content: text(JSON)
+```
+
+The graph similarity tool call flow:
+
+```mermaid
+sequenceDiagram
+  participant C as Client
+  participant S as MCP Server
+  participant B as Backend
+
+  C->>S: callTool graph.similar (zpid, limit)
+  S->>B: GET /api/graph/similar/{zpid}?limit={limit}
+  B-->>S: 200 JSON
+  S-->>C: content: text(JSON)
+```
 
 ## Example Client (Node.js)
 
@@ -94,18 +250,30 @@ A minimal stdio client is provided to help you explore tools locally.
 - Build output: `dist/client.js`
 
 Run (dev, auto‑spawn server)
-- `npm run client:dev` → lists tools
+```bash
+npm run client:dev # lists tools
+```
 
 Run (built)
-- `npm run build`
-- `npm run client` → lists tools
-- Call a tool:
-  - `npm run client:call -- properties.search '{"q":"3 bed in Chapel Hill","topK":3}'`
-  - `npm run client:call -- graph.similar '{"zpid":1234567,"limit":5}'`
-  - `npm run client:call -- charts.priceHistogram '{"q":"Chapel Hill 3 bed"}'`
-  - `npm run client:call -- util.extractZpids '{"text":"... 123456_zpid ... 987654"}'`
-  - Parse JSON text into pretty JSON:
-    - `npm run client:call:parse -- properties.search '{"q":"3 bed in Chapel Hill","topK":2}'`
+```bash
+npm run build
+npm run client        # lists tools
+
+# Call a tool
+npm run client:call -- properties.search '{"q":"3 bed in Chapel Hill","topK":3}'
+npm run client:call -- graph.similar '{"zpid":1234567,"limit":5}'
+npm run client:call -- charts.priceHistogram '{"q":"Chapel Hill 3 bed"}'
+npm run client:call -- util.extractZpids '{"text":"... 123456_zpid ... 987654"}'
+npm run client:call -- properties.lookup '{"city":"Chapel Hill","state":"NC","beds":3}'
+npm run client:call -- analytics.summarizeSearch '{"q":"Chapel Hill 3 bed"}'
+npm run client:call -- finance.affordability '{"annualIncome":180000,"apr":6.5,"downPct":20}'
+npm run client:call -- analytics.distributions '{"q":"Chapel Hill 3 bed","buckets":12}'
+npm run client:call -- finance.schedule '{"price":650000,"apr":6.25,"years":30,"months":6}'
+npm run client:call -- graph.pathMatrix '{"zpids":[1234567,2345678,3456789]}'
+
+# Parse JSON text into pretty JSON
+npm run client:call:parse -- properties.search '{"q":"3 bed in Chapel Hill","topK":2}'
+```
 
 Programmatic usage (excerpt)
 ```ts
@@ -132,7 +300,8 @@ const result = await client.callTool({
 
 Below are example configurations for stdio‑based MCP clients. Consult your client's documentation for the correct file path and reload instructions.
 
-- Claude Desktop (example snippet)
+**Claude Desktop (example snippet)**
+
   ```json
   {
     "mcpServers": {
@@ -148,7 +317,8 @@ Below are example configurations for stdio‑based MCP clients. Consult your cli
   }
   ```
 
-- Generic MCP launcher
+**Generic MCP launcher**
+
   ```json
   {
     "name": "estatewise-mcp",
@@ -165,6 +335,8 @@ Below are example configurations for stdio‑based MCP clients. Consult your cli
 
 ## Directory Layout
 
+The project structure is as follows:
+
 ```
 ./mcp
 ├─ src/
@@ -178,6 +350,8 @@ Below are example configurations for stdio‑based MCP clients. Consult your cli
 
 ## Scripts
 
+The following npm scripts are available:
+
 - `npm run dev` – Start MCP server with tsx (dev)
 - `npm run build` – TypeScript build to `dist/`
 - `npm start` – Run built server (`node dist/server.js`)
@@ -186,6 +360,8 @@ Below are example configurations for stdio‑based MCP clients. Consult your cli
 - `npm run client:call` – Built client: call a tool (`npm run client:call -- <tool> '<json>'`)
 
 ## Troubleshooting
+
+Troubleshooting tips for common issues:
 
 - Tool not listed
   - Ensure the server built successfully and you’re connecting to the built output (`dist/server.js`).
@@ -198,19 +374,14 @@ Below are example configurations for stdio‑based MCP clients. Consult your cli
 
 ## Security
 
+The MCP server makes outbound HTTP requests to the configured backend API. Follow these best practices:
+
 - Do not commit secrets. Use `.env` locally; copy from `.env.example`.
 - The server makes HTTP requests to the configured backend URL; validate and pin this in trusted environments.
+- Run in isolated environments if exposing to untrusted clients.
+- Validate and sanitize all inputs; tools use Zod for argument validation.
+- Log and monitor usage for anomalies.
 
 ## License
- - `map.buildLinkByQuery(q: string)` – Return a deep‑link `/map?q=...`
-
-- Utilities
-- `util.extractZpids(text: string)` – Extract ZPIDs from text or Zillow URLs
-- `util.zillowLink(zpid: number)` – Build a Zillow homedetails link
-- `util.summarize(text: string, maxLen?: number)` – Truncate summary (quick text post‑processing)
-
-- Conversations (auth required)
-- `conversations.list(token: string)`
-- `conversations.search(token: string, q: string)`
 
 This package is part of the EstateWise monorepo and inherits the repository license.

@@ -1,9 +1,15 @@
-import { Agent, AgentContext, AgentMessage } from "../core/types.js";
+import {
+  Agent,
+  AgentContext,
+  AgentMessage,
+  Blackboard,
+} from "../core/types.js";
 import { ToolClient } from "../mcp/ToolClient.js";
 
 export class AgentOrchestrator {
   private agents: Agent[] = [];
   private toolClient = new ToolClient();
+  private blackboard: Blackboard = { zpids: [] };
 
   register(...agents: Agent[]) {
     this.agents.push(...agents);
@@ -13,7 +19,11 @@ export class AgentOrchestrator {
   async run(goal: string, rounds = 4): Promise<AgentMessage[]> {
     await this.toolClient.start();
     const history: AgentMessage[] = [];
-    const ctx = ((): AgentContext => ({ goal, history }))();
+    const ctx = ((): AgentContext => ({
+      goal,
+      history,
+      blackboard: this.blackboard,
+    }))();
 
     for (let i = 0; i < rounds; i++) {
       for (const agent of this.agents) {
@@ -24,10 +34,7 @@ export class AgentOrchestrator {
         const tool = (msg.data as any)?.tool;
         if (tool?.name) {
           try {
-            const result = await this.toolClient.callTool(
-              tool.name,
-              tool.args || {},
-            );
+            const result = await this.callWithRetry(tool.name, tool.args || {});
             const textBlock =
               result?.content?.find((c: any) => c.type === "text")?.text ||
               JSON.stringify(result);
@@ -36,6 +43,7 @@ export class AgentOrchestrator {
               content: `Tool ${tool.name} result`,
               data: { result, resultText: textBlock },
             });
+            this.updateBlackboard(tool.name, textBlock);
           } catch (err: any) {
             history.push({
               from: agent.role,
@@ -48,5 +56,104 @@ export class AgentOrchestrator {
 
     await this.toolClient.stop();
     return history;
+  }
+
+  private async callWithRetry(name: string, args: Record<string, unknown>) {
+    try {
+      return await this.toolClient.callTool(name, args);
+    } catch (e) {
+      // simple one-time retry
+      return await this.toolClient.callTool(name, args);
+    }
+  }
+
+  // Best-effort normalization of tool outputs into the shared blackboard
+  private updateBlackboard(toolName: string, text: string) {
+    const tryParse = () => {
+      try {
+        return JSON.parse(text);
+      } catch {
+        return null;
+      }
+    };
+    const data = tryParse();
+    switch (toolName) {
+      case "util.parseGoal": {
+        if (data) {
+          this.blackboard.parsed = data;
+          const z = (data.zpids || []) as number[];
+          this.mergeZpids(z);
+        }
+        break;
+      }
+      case "properties.lookup": {
+        const matches = data?.matches || [];
+        const z: number[] = matches
+          .map((m: any) => Number(m.zpid ?? m.id))
+          .filter((n: number) => Number.isFinite(n));
+        this.mergeZpids(z);
+        break;
+      }
+      case "properties.search": {
+        const items = Array.isArray(data?.results)
+          ? data.results
+          : data?.properties || [];
+        const z: number[] = items
+          .map((m: any) => Number(m.zpid ?? m.id))
+          .filter((n: number) => Number.isFinite(n));
+        this.mergeZpids(z);
+        break;
+      }
+      case "analytics.summarizeSearch": {
+        if (!this.blackboard.analytics) this.blackboard.analytics = {} as any;
+        this.blackboard.analytics.summary = data?.summary ?? data ?? null;
+        break;
+      }
+      case "analytics.groupByZip": {
+        if (!this.blackboard.analytics) this.blackboard.analytics = {} as any;
+        this.blackboard.analytics.groups = data?.groups ?? data ?? null;
+        break;
+      }
+      case "graph.explain": {
+        if (!this.blackboard.pairs) this.blackboard.pairs = [];
+        this.blackboard.pairs.push(data ?? { raw: text });
+        break;
+      }
+      case "graph.similar": {
+        const sims = data?.results || data?.similar || [];
+        const z: number[] = sims
+          .map((m: any) => Number(m?.property?.zpid ?? m?.zpid ?? m?.id))
+          .filter((n: number) => Number.isFinite(n));
+        this.mergeZpids(z);
+        break;
+      }
+      case "graph.comparePairs": {
+        if (!this.blackboard.pairs) this.blackboard.pairs = [];
+        const arr = data?.pairs || [];
+        for (const p of arr) this.blackboard.pairs.push(p);
+        break;
+      }
+      case "map.linkForZpids":
+      case "map.buildLinkByQuery": {
+        // Both return a URL string as text
+        this.blackboard.mapLink = text.trim();
+        break;
+      }
+      case "finance.mortgage": {
+        this.blackboard.mortgage = data ?? { raw: text };
+        break;
+      }
+      case "finance.affordability": {
+        this.blackboard.affordability = data ?? { raw: text };
+        break;
+      }
+      default:
+        break;
+    }
+  }
+
+  private mergeZpids(list: number[]) {
+    const set = new Set([...(this.blackboard.zpids || []), ...list]);
+    this.blackboard.zpids = Array.from(set).slice(0, 200);
   }
 }
