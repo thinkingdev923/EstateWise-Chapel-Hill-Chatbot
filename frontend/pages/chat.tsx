@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -28,6 +28,8 @@ import {
   ChevronLeft,
   LogOut,
   BarChart3,
+  MapPin,
+  GitBranch,
   ThumbsUp,
   ThumbsDown,
   ChevronDown,
@@ -40,6 +42,7 @@ import {
   Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -469,19 +472,53 @@ const markdownComponents = {
       {children}
     </del>
   ),
-  // Custom Link
+  // Custom Link: render external links as chips and, for Zillow property links,
+  // append an inline map icon that opens our map page for that specific ZPID.
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  a: ({ children, href, ...props }: any) => (
-    <a
-      href={href}
-      className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium hover:bg-blue-200 max-w-full break-words"
-      target="_blank"
-      rel="noopener noreferrer"
-      {...props}
-    >
-      {children}
-    </a>
-  ),
+  a: ({ children, href, ...props }: any) => {
+    const isZillow =
+      typeof href === "string" &&
+      /https?:\/\/www\.zillow\.com\/homedetails\/(\d+)_zpid\//.test(href);
+
+    let zpid: string | null = null;
+    if (isZillow && typeof href === "string") {
+      const m = href.match(/homedetails\/(\d+)_zpid/);
+      if (m && m[1]) zpid = m[1];
+    }
+
+    return (
+      <span className="inline-flex items-center gap-1 align-middle">
+        <a
+          href={href}
+          className="inline-block bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm font-medium hover:bg-blue-200 max-w-full break-words"
+          target="_blank"
+          rel="noopener noreferrer"
+          {...props}
+        >
+          {children}
+        </a>
+        {zpid && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                asChild
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 ml-0.5"
+                aria-label="View this property on the map"
+                title="View this property on the map"
+              >
+                <Link href={`/map?zpids=${encodeURIComponent(zpid)}`}>
+                  <MapPin className="w-4 h-4" />
+                </Link>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>View on map</TooltipContent>
+          </Tooltip>
+        )}
+      </span>
+    );
+  },
 };
 
 // ----------------------------------------------------------
@@ -552,7 +589,7 @@ const DarkModeToggle: React.FC = () => {
   return (
     <button
       onClick={toggleDarkMode}
-      className="p-1 cursor-pointer transition-none hover:text-primary"
+      className="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 cursor-pointer transition-none hover:text-primary"
       aria-label="Toggle Dark Mode"
       title="Toggle Dark Mode"
     >
@@ -585,7 +622,7 @@ const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-md h-16">
+    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-md h-16 overflow-x-auto whitespace-nowrap">
       <div className="flex items-center gap-2">
         {!sidebarVisible && (
           <button
@@ -602,27 +639,57 @@ const TopBar: React.FC<TopBarProps> = ({
         </span>
       </div>
       <div className="flex items-center gap-4 relative">
-        <Link href="/charts" legacyBehavior>
-          <a
-            className="flex items-center gap-1 hover:text-primary"
-            title="Charts"
-          >
-            <BarChart3 className="w-5 h-5" />
-          </a>
-        </Link>
-        <DarkModeToggle />
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/charts" className="hover:text-primary" aria-label="Charts">
+              <BarChart3 className="w-5 h-5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Charts</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/insights" className="hover:text-primary" aria-label="Insights">
+              <GitBranch className="w-5 h-5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Insights</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link href="/map" className="hover:text-primary" aria-label="Map">
+              <MapPin className="w-5 h-5" />
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent>Map</TooltipContent>
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span>
+              <DarkModeToggle />
+            </span>
+          </TooltipTrigger>
+          <TooltipContent>Toggle theme</TooltipContent>
+        </Tooltip>
         {isAuthed ? (
           <>
-            <Button
-              onClick={() => window.location.reload()}
-              variant="outline"
-              className="flex items-center gap-1 transition-none cursor-pointer"
-              title="New Conversation"
-            >
-              <PlusCircle className="w-5 h-5" />
-              New Conversation
-            </Button>
-            <Button
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => window.location.reload()}
+                  variant="outline"
+                  className="transition-none cursor-pointer p-2 h-9 w-9"
+                  aria-label="New Conversation"
+                  title="New Conversation"
+                >
+                  <PlusCircle className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>New conversation</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
               variant="outline"
               onClick={() => {
                 document.cookie =
@@ -634,19 +701,27 @@ const TopBar: React.FC<TopBarProps> = ({
               title="Log Out"
             >
               <LogOut className="w-5 h-5" />
-            </Button>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Sign out</TooltipContent>
+            </Tooltip>
           </>
         ) : (
           <div className="flex items-center gap-2">
             <div className="relative">
-              <button
-                onClick={handleAuthIconClick}
-                className="p-1 cursor-pointer hover:text-primary"
-                aria-label="User Menu"
-                title="User Menu"
-              >
-                <UserIcon className="w-5 h-5" />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleAuthIconClick}
+                    className="p-1 cursor-pointer hover:text-primary"
+                    aria-label="User Menu"
+                    title="User Menu"
+                  >
+                    <UserIcon className="w-5 h-5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>Account</TooltipContent>
+              </Tooltip>
               {authMenuOpen && (
                 <div className="absolute right-0 mt-2 w-40 bg-card rounded shadow-lg py-2 z-50">
                   <Link href="/login">
@@ -672,20 +747,24 @@ const TopBar: React.FC<TopBarProps> = ({
                 </div>
               )}
             </div>
-            <Button
-              onClick={() => {
-                localStorage.removeItem("estateWiseChat");
-                toast.success("Conversation deleted successfully");
-                window.location.reload();
-              }}
-              variant="outline"
-              className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer ml-2"
-              title="Delete Conversation"
-              aria-label="Delete Conversation"
-            >
-              <Trash2 className="w-5 h-5" />
-              Delete Conversation
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  onClick={() => {
+                    localStorage.removeItem("estateWiseChat");
+                    toast.success("Conversation deleted successfully");
+                    window.location.reload();
+                  }}
+                  variant="outline"
+                  className="transition-none text-red-500 hover:bg-red-500/10 cursor-pointer p-2 h-9 w-9"
+                  aria-label="Delete Conversation"
+                  title="Delete Conversation"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete conversation</TooltipContent>
+            </Tooltip>
           </div>
         )}
       </div>
@@ -1658,6 +1737,18 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
         ? msg.text
         : msg.expertViews[view];
 
+    const zpidsFromText = useMemo(() => {
+      const re = /https?:\/\/www\.zillow\.com\/homedetails\/(\d+)_zpid\//g;
+      const out: string[] = [];
+      let m: RegExpExecArray | null;
+      const src = (displayedText || "").toString();
+      while ((m = re.exec(src)) !== null) {
+        const z = m[1];
+        if (z && !out.includes(z)) out.push(z);
+      }
+      return out;
+    }, [displayedText]);
+
     const upColor =
       ratings[idx] === "up" ? "text-green-600" : "hover:text-green-600";
     const downColor =
@@ -1685,61 +1776,82 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
           >
             {text.replace(/\\_/g, "_")}
           </ReactMarkdown>
-
           {msg.role === "model" && (
-            <div className="flex items-center justify-between mt-1 mb-1">
-              {/* dropdown */}
-              <div className="relative text-xs">
-                {msg.expertViews ? (
-                  <>
-                    <button
-                      onClick={() => setPickerOpen((o) => !o)}
+            <div className="flex items-center justify-between mt-2 mb-1">
+              {/* left cluster: map-all + dropdown */}
+              <div className="flex items-center gap-2">
+                {zpidsFromText.length > 0 && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full shadow-sm"
+                        aria-label={`View ${zpidsFromText.length} properties on map`}
+                        title="View all on map"
+                      >
+                        <Link href={`/map?zpids=${encodeURIComponent(zpidsFromText.join(","))}`}>
+                          <MapPin className="w-4 h-4" />
+                          <span className="ml-1">Map {zpidsFromText.length}</span>
+                        </Link>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View all on map</TooltipContent>
+                  </Tooltip>
+                )}
+                <div className="relative text-xs">
+                  {msg.expertViews ? (
+                    <>
+                      <button
+                        onClick={() => setPickerOpen((o) => !o)}
                       className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50 cursor-pointer"
                       title="Select Expert View"
                       aria-label="Select Expert View"
-                    >
-                      {view === "Combined" ? "Combined (Default)" : view}{" "}
-                      <ChevronDown className="w-3 h-3" />
-                    </button>
-                    <AnimatePresence>
-                      {pickerOpen && (
-                        <motion.div
-                          ref={pickerRef}
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.95 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute left-0 mt-1 min-w-max bg-card border border-border divide-y divide-border rounded-md shadow-md z-50"
-                        >
-                          {["Combined", ...Object.keys(msg.expertViews)].map(
-                            (opt) => (
-                              <div
-                                key={opt}
-                                onClick={() => {
-                                  setView(opt);
-                                  setPickerOpen(false);
-                                }}
-                                className={`px-3 py-2 cursor-pointer whitespace-nowrap ${
-                                  view === opt
-                                    ? "bg-primary/10 text-foreground"
-                                    : "hover:bg-muted"
-                                }`}
-                              >
-                                {opt === "Combined"
-                                  ? "Combined (Default)"
-                                  : opt}
-                              </div>
-                            ),
-                          )}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </>
-                ) : (
-                  <div className="px-2 py-1 border border-border rounded-md bg-muted text-foreground">
-                    Combined (Default)
-                  </div>
-                )}
+                      >
+                        {view === "Combined" ? "Combined (Default)" : view}{" "}
+                        <ChevronDown className="w-3 h-3" />
+                      </button>
+                      <AnimatePresence>
+                        {pickerOpen && (
+                          <motion.div
+                            ref={pickerRef}
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute left-0 mt-1 min-w-max bg-card border border-border divide-y divide-border rounded-md shadow-md z-50"
+                          >
+                            {["Combined", ...Object.keys(msg.expertViews)].map(
+                              (opt) => (
+                                <div
+                                  key={opt}
+                                  onClick={() => {
+                                    setView(opt);
+                                    setPickerOpen(false);
+                                  }}
+                                  className={`px-3 py-2 cursor-pointer whitespace-nowrap ${
+                                    view === opt
+                                      ? "bg-primary/10 text-foreground"
+                                      : "hover:bg-muted"
+                                  }`}
+                                >
+                                  {opt === "Combined"
+                                    ? "Combined (Default)"
+                                    : opt}
+                                </div>
+                              ),
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  ) : (
+                    <div className="px-2 py-1 border border-border rounded-md bg-muted text-foreground">
+                      Combined (Default)
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* thumbs btns */}

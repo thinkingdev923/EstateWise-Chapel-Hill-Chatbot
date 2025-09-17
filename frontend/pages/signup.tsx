@@ -40,6 +40,7 @@ export default function SignUpPage() {
     // Validate that password and confirmation match
     if (password !== confirmPassword) {
       setErrorMsg("Passwords do not match.");
+      toast.error("Passwords do not match");
       return;
     }
 

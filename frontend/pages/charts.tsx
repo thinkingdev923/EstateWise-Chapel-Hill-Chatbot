@@ -12,13 +12,8 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Sun,
-  Moon,
-  ChevronLeft,
-  BarChart3,
-  MessageCircleMore,
-} from "lucide-react";
+import { Sun, Moon, ChevronLeft, BarChart3, MessageCircleMore, MapPin, GitBranch } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
@@ -56,7 +51,7 @@ const DarkModeToggle: React.FC = () => {
     <button
       aria-label="Toggle theme"
       onClick={toggle}
-      className="rounded-full p-2 transition-colors cursor-pointer hover:text-primary"
+      className="inline-flex ml-0 h-8 w-8 items-center justify-center rounded-full p-0 transition-colors cursor-pointer hover:text-primary"
       title="Toggle theme"
     >
       {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -288,25 +283,47 @@ export default function ChartsPage() {
           }
         `}</style>
         <header className="sticky top-0 z-30 w-full backdrop-blur-lg bg-background/90 border-b border-border">
-          <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4">
+          <div className="max-w-7xl mx-auto h-16 px-6 flex items-center gap-4 overflow-x-auto whitespace-nowrap">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-6 h-6 text-primary" />
               <span className="font-extrabold tracking-tight text-lg">
                 Insights Dashboard
               </span>
             </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Link href="/chat" legacyBehavior title="Back to Chat">
-                <a
-                  aria-label="Home"
-                  className="mr-2 hover:text-primary"
-                  title="Back to Chat"
-                >
-                  <MessageCircleMore className="h-5 w-5" />
-                </a>
-              </Link>
-              <DarkModeToggle />
-            </div>
+            <nav className="ml-auto flex items-center gap-6 text-sm">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/chat" className="hover:text-primary" aria-label="Chat">
+                    <MessageCircleMore className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Chat</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/insights" className="hover:text-primary" aria-label="Insights">
+                    <GitBranch className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Insights</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/map" className="hover:text-primary" aria-label="Map">
+                    <MapPin className="h-5 w-5" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Map</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <DarkModeToggle />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Toggle theme</TooltipContent>
+              </Tooltip>
+            </nav>
           </div>
         </header>
 

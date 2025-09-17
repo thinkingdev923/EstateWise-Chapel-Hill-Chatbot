@@ -1,0 +1,25 @@
+{
+  "name": "estatewise-mcp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP server exposing EstateWise graph and property tools",
+  "scripts": {
+    "dev": "tsx src/server.ts",
+    "start": "node dist/server.js",
+    "build": "tsc -p tsconfig.json",
+    "client:dev": "tsx src/client.ts list",
+    "client": "node dist/client.js list",
+    "client:call": "node dist/client.js call",
+    "client:call:parse": "node dist/client.js call --parse"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.18.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^24.5.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.5.4"
+  }
+}
