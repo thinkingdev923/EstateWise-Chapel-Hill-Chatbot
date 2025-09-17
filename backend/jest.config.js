@@ -6,9 +6,13 @@ module.exports = {
   testMatch: ["**/tests/**/*.spec.js"],
   detectOpenHandles: true,
   forceExit: true,
-  globals: {
-    "ts-jest": {
-      tsconfig: "tsconfig.json",
-    },
+  watchman: false,
+  transform: {
+    "^.+\\.(ts|tsx)$": [
+      "ts-jest",
+      {
+        tsconfig: "tsconfig.json",
+      },
+    ],
   },
 };

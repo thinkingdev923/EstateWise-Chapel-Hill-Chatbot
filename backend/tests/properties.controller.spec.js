@@ -68,6 +68,17 @@ const buildRes = () => ({
 });
 
 describe("getPropertyData()", () => {
+  let consoleErrorSpy;
+
+  beforeAll(() => {
+    // Silence expected error logs from the controller in this suite
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleErrorSpy && consoleErrorSpy.mockRestore();
+  });
+
   beforeEach(() => jest.clearAllMocks());
 
   it("handles service failure with 500", async () => {
