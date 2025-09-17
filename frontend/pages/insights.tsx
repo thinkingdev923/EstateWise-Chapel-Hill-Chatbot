@@ -1587,6 +1587,8 @@ function PathGraph({ nodes, rels }: { nodes: GraphNode[]; rels: GraphRel[] }) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .on("start", (event: any, d: { fx?: number; fy?: number }) => {
                 if (!event.active && simulation)
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
                   simulation.alphaTarget(0.3).restart();
                 d.fx = event.x;
                 d.fy = event.y;
@@ -1596,10 +1598,12 @@ function PathGraph({ nodes, rels }: { nodes: GraphNode[]; rels: GraphRel[] }) {
                 d.fx = event.x;
                 d.fy = event.y;
               })
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .on(
                 "end",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (event: any, d: { fx?: number | null; fy?: number | null }) => {
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
                   if (!event.active && simulation) simulation.alphaTarget(0);
                   d.fx = null;
                   d.fy = null;
@@ -1795,6 +1799,8 @@ function SimilarGraph({
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .on("start", (event: any, d: { fx?: number; fy?: number }) => {
                 if (!event.active && simulation)
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
                   simulation.alphaTarget(0.3).restart();
                 d.fx = event.x;
                 d.fy = event.y;
@@ -1804,10 +1810,12 @@ function SimilarGraph({
                 d.fx = event.x;
                 d.fy = event.y;
               })
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .on(
                 "end",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (event: any, d: { fx?: number | null; fy?: number | null }) => {
+                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                  // @ts-ignore
                   if (!event.active && simulation) simulation.alphaTarget(0);
                   d.fx = null;
                   d.fy = null;
