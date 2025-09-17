@@ -12,8 +12,20 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { Sun, Moon, ChevronLeft, BarChart3, MessageCircleMore, MapPin, GitBranch } from "lucide-react";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Sun,
+  Moon,
+  ChevronLeft,
+  BarChart3,
+  MessageCircleMore,
+  MapPin,
+  GitBranch,
+} from "lucide-react";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 
 const API_BASE_URL = "https://estatewise-backend.vercel.app";
@@ -293,7 +305,11 @@ export default function ChartsPage() {
             <nav className="ml-auto flex items-center gap-6 text-sm">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/chat" className="hover:text-primary" aria-label="Chat">
+                  <Link
+                    href="/chat"
+                    className="hover:text-primary"
+                    aria-label="Chat"
+                  >
                     <MessageCircleMore className="h-5 w-5" />
                   </Link>
                 </TooltipTrigger>
@@ -301,7 +317,11 @@ export default function ChartsPage() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/insights" className="hover:text-primary" aria-label="Insights">
+                  <Link
+                    href="/insights"
+                    className="hover:text-primary"
+                    aria-label="Insights"
+                  >
                     <GitBranch className="h-5 w-5" />
                   </Link>
                 </TooltipTrigger>
@@ -309,7 +329,11 @@ export default function ChartsPage() {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/map" className="hover:text-primary" aria-label="Map">
+                  <Link
+                    href="/map"
+                    className="hover:text-primary"
+                    aria-label="Map"
+                  >
                     <MapPin className="h-5 w-5" />
                   </Link>
                 </TooltipTrigger>

@@ -212,7 +212,8 @@ export async function lookupZpid(params: {
 }) {
   const qp = new URLSearchParams();
   Object.entries(params).forEach(([k, v]) => {
-    if (v !== undefined && v !== null && String(v).trim() !== '') qp.set(k, String(v));
+    if (v !== undefined && v !== null && String(v).trim() !== "")
+      qp.set(k, String(v));
   });
   const url = `${API_BASE_URL}/api/properties/lookup?${qp.toString()}`;
   const res = await fetch(url);

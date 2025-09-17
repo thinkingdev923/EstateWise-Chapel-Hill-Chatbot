@@ -42,7 +42,11 @@ import {
   Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -641,7 +645,11 @@ const TopBar: React.FC<TopBarProps> = ({
       <div className="flex items-center gap-4 relative">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link href="/charts" className="hover:text-primary" aria-label="Charts">
+            <Link
+              href="/charts"
+              className="hover:text-primary"
+              aria-label="Charts"
+            >
               <BarChart3 className="w-5 h-5" />
             </Link>
           </TooltipTrigger>
@@ -649,7 +657,11 @@ const TopBar: React.FC<TopBarProps> = ({
         </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Link href="/insights" className="hover:text-primary" aria-label="Insights">
+            <Link
+              href="/insights"
+              className="hover:text-primary"
+              aria-label="Insights"
+            >
               <GitBranch className="w-5 h-5" />
             </Link>
           </TooltipTrigger>
@@ -690,17 +702,17 @@ const TopBar: React.FC<TopBarProps> = ({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-              variant="outline"
-              onClick={() => {
-                document.cookie =
-                  "estatewise_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-                toast.success("Logged out successfully");
-                window.location.reload();
-              }}
-              className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer"
-              title="Log Out"
-            >
-              <LogOut className="w-5 h-5" />
+                  variant="outline"
+                  onClick={() => {
+                    document.cookie =
+                      "estatewise_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+                    toast.success("Logged out successfully");
+                    window.location.reload();
+                  }}
+                  className="flex items-center gap-1 transition-none text-red-500 hover:bg-red-500/10 cursor-pointer"
+                  title="Log Out"
+                >
+                  <LogOut className="w-5 h-5" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Sign out</TooltipContent>
@@ -1791,9 +1803,13 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                         aria-label={`View ${zpidsFromText.length} properties on map`}
                         title="View all on map"
                       >
-                        <Link href={`/map?zpids=${encodeURIComponent(zpidsFromText.join(","))}`}>
+                        <Link
+                          href={`/map?zpids=${encodeURIComponent(zpidsFromText.join(","))}`}
+                        >
                           <MapPin className="w-4 h-4" />
-                          <span className="ml-1">Map {zpidsFromText.length}</span>
+                          <span className="ml-1">
+                            Map {zpidsFromText.length}
+                          </span>
                         </Link>
                       </Button>
                     </TooltipTrigger>
@@ -1805,9 +1821,9 @@ const ChatWindow: React.FC<ChatWindowProps> = ({
                     <>
                       <button
                         onClick={() => setPickerOpen((o) => !o)}
-                      className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50 cursor-pointer"
-                      title="Select Expert View"
-                      aria-label="Select Expert View"
+                        className="flex items-center gap-1 px-2 py-1 border border-border rounded-md bg-muted hover:bg-muted/50 cursor-pointer"
+                        title="Select Expert View"
+                        aria-label="Select Expert View"
                       >
                         {view === "Combined" ? "Combined (Default)" : view}{" "}
                         <ChevronDown className="w-3 h-3" />
