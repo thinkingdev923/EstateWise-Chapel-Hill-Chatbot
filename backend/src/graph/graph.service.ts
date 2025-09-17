@@ -47,7 +47,7 @@ export async function getSimilarByZpid(
       sameNeighborhood, sameZip, hasSimilarEdge
     RETURN c { .* } AS property, score, sameNeighborhood, sameZip, hasSimilarEdge
     ORDER BY score ASC
-    LIMIT $limit
+    LIMIT toInteger($limit)
     `,
     { zpid, limit },
   );
@@ -103,7 +103,7 @@ export async function getNeighborhoodStats(
   const rows = await runRead(
     `
     MATCH (n:Neighborhood {name:$name})<-[:IN_NEIGHBORHOOD]-(p:Property)
-    RETURN count(p) AS count, avg(p.price) AS avgPrice, avg(p.livingArea) AS avgArea, collect(p{.*})[0..$limit] AS properties
+    RETURN count(p) AS count, avg(p.price) AS avgPrice, avg(p.livingArea) AS avgArea, collect(p{.*})[0..toInteger($limit)] AS properties
     `,
     { name, limit },
   );

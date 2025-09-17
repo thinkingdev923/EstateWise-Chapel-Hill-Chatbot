@@ -13,7 +13,11 @@ export async function similarByZpid(req: Request, res: Response) {
     const zpid = Number(req.params.zpid);
     if (!Number.isFinite(zpid))
       return res.status(400).json({ error: "Invalid zpid" });
-    const limit = Math.min(Number(req.query.limit ?? 10), 50);
+    const parsed = Number(req.query.limit ?? 10);
+    const limit = Math.max(
+      0,
+      Math.min(50, Number.isFinite(parsed) ? Math.floor(parsed) : 10),
+    );
     const results = await getSimilarByZpid(zpid, limit);
     return res.json({ zpid, results });
   } catch (err) {
@@ -49,7 +53,11 @@ export async function neighborhoodStats(req: Request, res: Response) {
     const name = String(req.params.name || "").trim();
     if (!name)
       return res.status(400).json({ error: "Missing neighborhood name" });
-    const limit = Math.min(Number(req.query.limit ?? 50), 200);
+    const parsed = Number(req.query.limit ?? 50);
+    const limit = Math.max(
+      0,
+      Math.min(200, Number.isFinite(parsed) ? Math.floor(parsed) : 50),
+    );
     const data = await getNeighborhoodStats(name, limit);
     return res.json({ neighborhood: name, ...data });
   } catch (err) {
