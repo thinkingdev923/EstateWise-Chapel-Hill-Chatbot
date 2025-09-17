@@ -158,6 +158,7 @@ function BreakdownChart({
       c.options.plugins!.legend!.labels!.color = fc;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c.options.plugins as any).tooltip = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
         titleColor: fc,
         bodyColor: fc,
@@ -258,6 +259,7 @@ function RateSensitivityChart({
       c.options.plugins!.legend!.labels!.color = fc;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c.options.plugins as any).tooltip = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
         titleColor: fc,
         bodyColor: fc,
@@ -365,6 +367,7 @@ function DownPaymentImpactChart({
       c.options.plugins!.legend!.labels!.color = fc;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (c.options.plugins as any).tooltip = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
         titleColor: fc,
         bodyColor: fc,
@@ -862,6 +865,7 @@ export default function InsightsPage() {
                           {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           <SimilarGraph
                             centerLabel={`ZPID ${similarZpid || "?"}`}
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             nodes={similarData.map((d: any) => ({
                               id: String(d.property.zpid ?? Math.random()),
                               label:
@@ -933,7 +937,8 @@ export default function InsightsPage() {
                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                         {Array.isArray(hoodData.properties) &&
                           hoodData.properties
-                            .slice(0, hoodLimit)
+                          .slice(0,hoodLimit)
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             .map((p: any, i: number) => (
                               <li
                                 key={i}
@@ -1435,7 +1440,8 @@ function NeighborhoodForceGraph({
   name,
   properties,
 }: {
-  name: string;
+    name: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: any[];
 }) {
   const ref = useRef<SVGSVGElement>(null);
@@ -1463,6 +1469,7 @@ function NeighborhoodForceGraph({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const nodes = [
           hoodNode,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           ...properties.slice(0, 60).map((p: any) => ({
             id: `z:${p.zpid || p.id}`,
             type: "prop",
@@ -1540,7 +1547,7 @@ function NeighborhoodForceGraph({
               }),
           );
 
-        let labels = g
+        const labels = g
           .append("g")
           .selectAll("text")
           .data(nodes)
@@ -1582,7 +1589,9 @@ function NeighborhoodForceGraph({
             "link",
             d3
               .forceLink(links)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .id((d: any) => d.id)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .distance((l: any) => (l.target.type === "hood" ? 60 : 40)),
           )
           .force("charge", d3.forceManyBody().strength(-80))
@@ -1590,6 +1599,7 @@ function NeighborhoodForceGraph({
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .force(
             "collision",
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             d3.forceCollide().radius((d: any) => radius(d) + 4),
           )
           .on("tick", () => {
@@ -1606,7 +1616,9 @@ function NeighborhoodForceGraph({
             node.attr("cx", (d: any) => d.x).attr("cy", (d: any) => d.y);
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             labels
-              .attr("x", (d: any) => d.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              .attr("x",(d: any) => d.x)
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .attr("y", (d: any) => d.y + (d.type === "hood" ? -24 : 22));
           });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
