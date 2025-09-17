@@ -448,6 +448,10 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 
 #### Neo4j Graph Integration
 
+<p align="center">
+  <img src="img/neo4j.png" alt="Neo4j Graph Integration" width="100%" />
+</p>
+
 - What it adds
   - Explicit relationship modeling: `(Property)‑[:IN_ZIP|IN_NEIGHBORHOOD]->(...)` and optional `(:Property)‑[:SIMILAR_TO]->(:Property)`.
   - New API endpoints under `/api/graph` for explainable recommendations and path explanations.
@@ -497,12 +501,36 @@ Example managed credentials
    Create a `.env` file in the `server` directory with the following variables (adjust as needed):
 
    ```env
-   PORT=<your_port>
-   MONGO_URI=<your_mongo_uri>
-   JWT_SECRET=<your_jwt_secret>
-   GOOGLE_AI_API_KEY=<your_google_ai_api_key>
-   PINECONE_API_KEY=<your_pinecone_api_key>
-   PINECONE_INDEX=estatewise-index
+    PORT=<your_port>
+    MONGO_URI=<your_mongo_uri>
+    JWT_SECRET=<your_jwt_secret>
+    GOOGLE_AI_API_KEY=<your_google_ai_api_key>
+    PINECONE_API_KEY=<your_pinecone_api_key>
+    PINECONE_INDEX=estatewise-index
+    NEO4J_ENABLE=false
+    NEO4J_URI=neo4j+s://<your-instance-id>.databases.neo4j.io
+    NEO4J_USERNAME=neo4j
+    NEO4J_PASSWORD=<paste-once-admin-password>
+    NEO4J_DATABASE=neo4j
+    INGEST_LIMIT=30772
+    
+    # Speed & reliability tuning for Pinecone -> Neo4j ingest
+    # Max IDs per page (serverless only). Range 1..1000
+    PINECONE_PAGE_SIZE=1000
+    # Auto-resume from checkpoint after failures
+    INGEST_RESUME=true
+    # Optional starting token to resume from a specific point (overrides checkpoint)
+    PINECONE_START_TOKEN=
+    # Checkpoint file path (optional). Default: .neo4j_ingest_checkpoint.json in backend/
+    INGEST_CHECKPOINT_FILE=
+    # Overwrite behavior for Neo4j before ingest:
+    # - set to "all" to delete ALL nodes (destructive)
+    # - set to any non-empty value (e.g., "true") to delete only Property/Zip/Neighborhood
+    NEO4J_RESET=true
+    # Increase write retries for transient disconnects
+    NEO4J_WRITE_RETRIES=7
+    # Namespace for Pinecone (leave blank for default)
+    PINECONE_NAMESPACE=
    ```
 
    Important: Be sure that you created the Pinecone index with the name `estatewise-index` in your Pinecone account before proceeding. Then,
@@ -702,6 +730,24 @@ EstateWise features a modern, animated, and fully responsive user interface buil
 
 <p align="center">
   <img src="img/visualizations.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Insights & Tools Page
+
+<p align="center">
+  <img src="img/insights.png" alt="EstateWise UI" width="100%" />
+</p>
+
+#### More Tools...
+
+<p align="center">
+  <img src="img/more-tools.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Map Page
+
+<p align="center">
+  <img src="img/map.png" alt="EstateWise UI" width="100%" />
 </p>
 
 ### Login Page

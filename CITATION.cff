@@ -2,26 +2,15 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 title: "EstateWise: Chapel Hill Real Estate AI Chatbot"
 version: "1.0.0"
-date-released: 2025-05-15
+date-released: "2025-05-15"
+type: software
 authors:
   - family-names: "Nguyen"
-    given-names: "Son (David)"
-    alias: "hoangsonww"
-    email: "Email"
-    website: "https://estatewise.vercel.app"
-  - family-names: "Fellner"
-    given-names: "Rikhil"
-  - family-names: "Joshi"
-    given-names: "Muskaan"
-  - family-names: "Rai"
-    given-names: "Vinir"
-  - family-names: "Singh"
-    given-names: "Rishabh"
-  - family-names: "Yogarajan"
-    given-names: "Rajbalan"
+    given-names: "Son"
+    orcid: "https://orcid.org/0009-0002-7806-068X"
 repository-code: "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot"
+url: "https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot"
 license: "MIT"
-type: software
 keywords:
   - real estate
   - chatbot
@@ -40,13 +29,13 @@ keywords:
   - AWS
   - GCP
   - Terraform
-abstract: >
-  EstateWise is an intelligent real estate assistant chatbot designed to help users 
-  in Chapel Hill, NC, discover properties through hyper-personalized AI recommendations. 
-  The system integrates Retrieval-Augmented Generation (RAG) with Pinecone, kNN similarity, 
-  k-Means clustering, Mixture-of-Experts (MoE), and Chain-of-Thought reasoning to provide 
-  tailored results. It is built as a full-stack monorepo featuring Next.js, React, Express, 
-  TypeScript, Tailwind CSS, MongoDB, Redis, Docker, and cloud-native deployments on AWS, 
-  GCP, Azure, and Vercel. EstateWise supports real-time chat, interactive data visualizations, 
-  CI/CD pipelines, monitoring with Prometheus/Grafana, and even a VS Code extension for 
+abstract: >-
+  EstateWise is an intelligent real estate assistant chatbot designed to help users
+  in Chapel Hill, NC, discover properties through hyper-personalized AI recommendations.
+  The system integrates Retrieval-Augmented Generation (RAG) with Pinecone, kNN similarity,
+  k-means clustering, Mixture-of-Experts (MoE), and chain-of-thought reasoning to provide
+  tailored results. It is built as a full-stack monorepo featuring Next.js, React, Express,
+  TypeScript, Tailwind CSS, MongoDB, Redis, Docker, and cloud-native deployments on AWS,
+  GCP, Azure, and Vercel. EstateWise supports real-time chat, interactive data visualizations,
+  CI/CD pipelines, monitoring with Prometheus/Grafana, and a VS Code extension for
   developer integration.

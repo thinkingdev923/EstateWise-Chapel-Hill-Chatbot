@@ -1,7 +1,10 @@
 import { Response } from "express";
 import { AuthRequest } from "../middleware/auth.middleware";
 import { CommuteProfileService } from "../services/commuteProfile.service";
-import { CreateCommuteProfileDto, UpdateCommuteProfileDto } from "../dto/commute-profile.dto";
+import {
+  CreateCommuteProfileDto,
+  UpdateCommuteProfileDto,
+} from "../dto/commute-profile.dto";
 
 // Create service instance
 const commuteProfileService = new CommuteProfileService();
@@ -11,13 +14,13 @@ const commuteProfileService = new CommuteProfileService();
  * POST /api/commute-profiles
  */
 export const createCommuteProfile = async (req: AuthRequest, res: Response) => {
-    // Create profile
-    const profile = await commuteProfileService.createProfile(
-        req.user?.id,
-        req.body as CreateCommuteProfileDto
-    );
+  // Create profile
+  const profile = await commuteProfileService.createProfile(
+    req.user?.id,
+    req.body as CreateCommuteProfileDto,
+  );
 
-    res.status(201).json(profile);
+  res.status(201).json(profile);
 };
 
 /**
@@ -25,23 +28,28 @@ export const createCommuteProfile = async (req: AuthRequest, res: Response) => {
  * GET /api/commute-profiles
  */
 export const getCommuteProfiles = async (req: AuthRequest, res: Response) => {
-    // Get profiles
-    const profiles = await commuteProfileService.getProfilesByUserId(req.user?.id);
+  // Get profiles
+  const profiles = await commuteProfileService.getProfilesByUserId(
+    req.user?.id,
+  );
 
-    res.json(profiles);
+  res.json(profiles);
 };
 
 /**
  * Get a specific commute profile by ID
  * GET /api/commute-profiles/:id
  */
-export const getCommuteProfileById = async (req: AuthRequest, res: Response) => {
-    const id = req.params?.id;
+export const getCommuteProfileById = async (
+  req: AuthRequest,
+  res: Response,
+) => {
+  const id = req.params?.id;
 
-    // Get profile
-    const profile = await commuteProfileService.getProfileById(id, req.user?.id);
+  // Get profile
+  const profile = await commuteProfileService.getProfileById(id, req.user?.id);
 
-    res.json(profile);
+  res.json(profile);
 };
 
 /**
@@ -49,16 +57,16 @@ export const getCommuteProfileById = async (req: AuthRequest, res: Response) => 
  * PUT /api/commute-profiles/:id
  */
 export const updateCommuteProfile = async (req: AuthRequest, res: Response) => {
-    const id = req.params?.id;
+  const id = req.params?.id;
 
-    // Update profile
-    const profile = await commuteProfileService.updateProfile(
-        id,
-        req.user?.id,
-        req.body as UpdateCommuteProfileDto
-    );
+  // Update profile
+  const profile = await commuteProfileService.updateProfile(
+    id,
+    req.user?.id,
+    req.body as UpdateCommuteProfileDto,
+  );
 
-    res.json(profile);
+  res.json(profile);
 };
 
 /**
@@ -66,10 +74,10 @@ export const updateCommuteProfile = async (req: AuthRequest, res: Response) => {
  * DELETE /api/commute-profiles/:id
  */
 export const deleteCommuteProfile = async (req: AuthRequest, res: Response) => {
-    const id = req.params?.id;
+  const id = req.params?.id;
 
-    // Delete profile
-    await commuteProfileService.deleteProfile(id, req.user?.id);
+  // Delete profile
+  await commuteProfileService.deleteProfile(id, req.user?.id);
 
-    res.json({ message: "Commute profile deleted successfully" });
+  res.json({ message: "Commute profile deleted successfully" });
 };

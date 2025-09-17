@@ -1,165 +1,182 @@
 const {
-    createCommuteProfile,
-    getCommuteProfiles,
-    getCommuteProfileById,
-    updateCommuteProfile,
-    deleteCommuteProfile
-} = require('../src/controllers/commute-profile.controller');
-const { CommuteProfileService } = require('../src/services/commuteProfile.service');
+  createCommuteProfile,
+  getCommuteProfiles,
+  getCommuteProfileById,
+  updateCommuteProfile,
+  deleteCommuteProfile,
+} = require("../src/controllers/commute-profile.controller");
+const {
+  CommuteProfileService,
+} = require("../src/services/commuteProfile.service");
 
 // Mock the service
-jest.mock('../src/services/commuteProfile.service');
+jest.mock("../src/services/commuteProfile.service");
 const MockedCommuteProfileService = CommuteProfileService;
 
-describe('CommuteProfileController', () => {
-    let mockReq, mockRes;
+describe("CommuteProfileController", () => {
+  let mockReq, mockRes;
 
-    beforeEach(() => {
-        jest.clearAllMocks();
+  beforeEach(() => {
+    jest.clearAllMocks();
 
-        mockReq = {
-            user: { id: '507f1f77bcf86cd799439012' },
-            body: {},
-            params: { id: '507f1f77bcf86cd799439011' }
-        };
+    mockReq = {
+      user: { id: "507f1f77bcf86cd799439012" },
+      body: {},
+      params: { id: "507f1f77bcf86cd799439011" },
+    };
 
-        mockRes = {
-            status: jest.fn().mockReturnThis(),
-            json: jest.fn().mockReturnThis()
-        };
+    mockRes = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn().mockReturnThis(),
+    };
+  });
+
+  describe("createCommuteProfile", () => {
+    it("should create profile successfully", async () => {
+      // Arrange
+      const profileData = {
+        name: "Test Profile",
+        destinations: [
+          {
+            label: "Office",
+            lat: 35.9042,
+            lng: -79.0469,
+            mode: "drive",
+            window: "08:00-09:00",
+          },
+        ],
+      };
+      mockReq.body = profileData;
+
+      const expectedResponse = {
+        _id: "507f1f77bcf86cd799439011",
+        userId: "507f1f77bcf86cd799439012",
+        name: "Test Profile",
+        destinations: profileData.destinations,
+        createdAt: "2023-01-01T00:00:00.000Z",
+        updatedAt: "2023-01-01T00:00:00.000Z",
+      };
+
+      MockedCommuteProfileService.prototype.createProfile = jest
+        .fn()
+        .mockResolvedValue(expectedResponse);
+
+      // Act
+      await createCommuteProfile(mockReq, mockRes);
+
+      // Assert
+      expect(
+        MockedCommuteProfileService.prototype.createProfile,
+      ).toHaveBeenCalledWith(mockReq.user.id, profileData);
+      expect(mockRes.status).toHaveBeenCalledWith(201);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedResponse);
     });
+  });
 
-    describe('createCommuteProfile', () => {
-        it('should create profile successfully', async () => {
-            // Arrange
-            const profileData = {
-                name: 'Test Profile',
-                destinations: [{ label: 'Office', lat: 35.9042, lng: -79.0469, mode: 'drive', window: '08:00-09:00' }]
-            };
-            mockReq.body = profileData;
+  describe("getCommuteProfiles", () => {
+    it("should return all profiles for user", async () => {
+      // Arrange
+      const expectedProfiles = [
+        {
+          _id: "507f1f77bcf86cd799439011",
+          userId: "507f1f77bcf86cd799439012",
+          name: "Profile 1",
+          destinations: [],
+        },
+        {
+          _id: "507f1f77bcf86cd799439012",
+          userId: "507f1f77bcf86cd799439012",
+          name: "Profile 2",
+          destinations: [],
+        },
+      ];
 
-            const expectedResponse = {
-                _id: '507f1f77bcf86cd799439011',
-                userId: '507f1f77bcf86cd799439012',
-                name: 'Test Profile',
-                destinations: profileData.destinations,
-                createdAt: '2023-01-01T00:00:00.000Z',
-                updatedAt: '2023-01-01T00:00:00.000Z'
-            };
+      MockedCommuteProfileService.prototype.getProfilesByUserId = jest
+        .fn()
+        .mockResolvedValue(expectedProfiles);
 
-            MockedCommuteProfileService.prototype.createProfile = jest.fn().mockResolvedValue(expectedResponse);
+      // Act
+      await getCommuteProfiles(mockReq, mockRes);
 
-            // Act
-            await createCommuteProfile(mockReq, mockRes);
-
-            // Assert
-            expect(MockedCommuteProfileService.prototype.createProfile).toHaveBeenCalledWith(
-                mockReq.user.id,
-                profileData
-            );
-            expect(mockRes.status).toHaveBeenCalledWith(201);
-            expect(mockRes.json).toHaveBeenCalledWith(expectedResponse);
-        });
+      // Assert
+      expect(
+        MockedCommuteProfileService.prototype.getProfilesByUserId,
+      ).toHaveBeenCalledWith(mockReq.user.id);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedProfiles);
     });
+  });
 
-    describe('getCommuteProfiles', () => {
-        it('should return all profiles for user', async () => {
-            // Arrange
-            const expectedProfiles = [
-                {
-                    _id: '507f1f77bcf86cd799439011',
-                    userId: '507f1f77bcf86cd799439012',
-                    name: 'Profile 1',
-                    destinations: []
-                },
-                {
-                    _id: '507f1f77bcf86cd799439012',
-                    userId: '507f1f77bcf86cd799439012',
-                    name: 'Profile 2',
-                    destinations: []
-                }
-            ];
+  describe("getCommuteProfileById", () => {
+    it("should return specific profile by ID", async () => {
+      // Arrange
+      const expectedProfile = {
+        _id: "507f1f77bcf86cd799439011",
+        userId: "507f1f77bcf86cd799439012",
+        name: "Test Profile",
+        destinations: [],
+      };
 
-            MockedCommuteProfileService.prototype.getProfilesByUserId = jest.fn().mockResolvedValue(expectedProfiles);
+      MockedCommuteProfileService.prototype.getProfileById = jest
+        .fn()
+        .mockResolvedValue(expectedProfile);
 
-            // Act
-            await getCommuteProfiles(mockReq, mockRes);
+      // Act
+      await getCommuteProfileById(mockReq, mockRes);
 
-            // Assert
-            expect(MockedCommuteProfileService.prototype.getProfilesByUserId).toHaveBeenCalledWith(mockReq.user.id);
-            expect(mockRes.json).toHaveBeenCalledWith(expectedProfiles);
-        });
+      // Assert
+      expect(
+        MockedCommuteProfileService.prototype.getProfileById,
+      ).toHaveBeenCalledWith(mockReq.params.id, mockReq.user.id);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedProfile);
     });
+  });
 
-    describe('getCommuteProfileById', () => {
-        it('should return specific profile by ID', async () => {
-            // Arrange
-            const expectedProfile = {
-                _id: '507f1f77bcf86cd799439011',
-                userId: '507f1f77bcf86cd799439012',
-                name: 'Test Profile',
-                destinations: []
-            };
+  describe("updateCommuteProfile", () => {
+    it("should update profile successfully", async () => {
+      // Arrange
+      const updateData = { name: "Updated Profile", maxMinutes: 60 };
+      mockReq.body = updateData;
 
-            MockedCommuteProfileService.prototype.getProfileById = jest.fn().mockResolvedValue(expectedProfile);
+      const expectedResponse = {
+        _id: "507f1f77bcf86cd799439011",
+        userId: "507f1f77bcf86cd799439012",
+        name: "Updated Profile",
+        maxMinutes: 60,
+        destinations: [],
+      };
 
-            // Act
-            await getCommuteProfileById(mockReq, mockRes);
+      MockedCommuteProfileService.prototype.updateProfile = jest
+        .fn()
+        .mockResolvedValue(expectedResponse);
 
-            // Assert
-            expect(MockedCommuteProfileService.prototype.getProfileById).toHaveBeenCalledWith(
-                mockReq.params.id,
-                mockReq.user.id
-            );
-            expect(mockRes.json).toHaveBeenCalledWith(expectedProfile);
-        });
+      // Act
+      await updateCommuteProfile(mockReq, mockRes);
+
+      // Assert
+      expect(
+        MockedCommuteProfileService.prototype.updateProfile,
+      ).toHaveBeenCalledWith(mockReq.params.id, mockReq.user.id, updateData);
+      expect(mockRes.json).toHaveBeenCalledWith(expectedResponse);
     });
+  });
 
-    describe('updateCommuteProfile', () => {
-        it('should update profile successfully', async () => {
-            // Arrange
-            const updateData = { name: 'Updated Profile', maxMinutes: 60 };
-            mockReq.body = updateData;
+  describe("deleteCommuteProfile", () => {
+    it("should delete profile successfully", async () => {
+      // Arrange
+      MockedCommuteProfileService.prototype.deleteProfile = jest
+        .fn()
+        .mockResolvedValue();
 
-            const expectedResponse = {
-                _id: '507f1f77bcf86cd799439011',
-                userId: '507f1f77bcf86cd799439012',
-                name: 'Updated Profile',
-                maxMinutes: 60,
-                destinations: []
-            };
+      // Act
+      await deleteCommuteProfile(mockReq, mockRes);
 
-            MockedCommuteProfileService.prototype.updateProfile = jest.fn().mockResolvedValue(expectedResponse);
-
-            // Act
-            await updateCommuteProfile(mockReq, mockRes);
-
-            // Assert
-            expect(MockedCommuteProfileService.prototype.updateProfile).toHaveBeenCalledWith(
-                mockReq.params.id,
-                mockReq.user.id,
-                updateData
-            );
-            expect(mockRes.json).toHaveBeenCalledWith(expectedResponse);
-        });
+      // Assert
+      expect(
+        MockedCommuteProfileService.prototype.deleteProfile,
+      ).toHaveBeenCalledWith(mockReq.params.id, mockReq.user.id);
+      expect(mockRes.json).toHaveBeenCalledWith({
+        message: "Commute profile deleted successfully",
+      });
     });
-
-    describe('deleteCommuteProfile', () => {
-        it('should delete profile successfully', async () => {
-            // Arrange
-            MockedCommuteProfileService.prototype.deleteProfile = jest.fn().mockResolvedValue();
-
-            // Act
-            await deleteCommuteProfile(mockReq, mockRes);
-
-            // Assert
-            expect(MockedCommuteProfileService.prototype.deleteProfile).toHaveBeenCalledWith(
-                mockReq.params.id,
-                mockReq.user.id
-            );
-            expect(mockRes.json).toHaveBeenCalledWith({
-                message: 'Commute profile deleted successfully'
-            });
-        });
-    });
+  });
 });

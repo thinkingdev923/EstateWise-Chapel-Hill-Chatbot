@@ -45,6 +45,7 @@ import {
   Sun,
   Moon,
   MessageCircleMore,
+  HelpCircle,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -141,9 +142,9 @@ function BreakdownChart({
             labels: { color: fontColor },
           },
           tooltip: {
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         maintainAspectRatio: false,
@@ -160,9 +161,9 @@ function BreakdownChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       c.update();
     });
@@ -228,9 +229,9 @@ function RateSensitivityChart({
           legend: { labels: { color: fontColor } },
           tooltip: {
             callbacks: { label: (ctx) => `$${ctx.parsed.y?.toLocaleString()}` },
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         scales: {
@@ -261,9 +262,9 @@ function RateSensitivityChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scales: any = c.options.scales;
@@ -339,9 +340,9 @@ function DownPaymentImpactChart({
           legend: { labels: { color: fontColor } },
           tooltip: {
             callbacks: { label: (ctx) => `$${ctx.parsed.y?.toLocaleString()}` },
-            titleColor: fontColor,
-            bodyColor: fontColor,
-            footerColor: fontColor,
+            titleColor: "#ffffff",
+            bodyColor: "#ffffff",
+            footerColor: "#ffffff",
           },
         },
         scales: {
@@ -369,9 +370,9 @@ function DownPaymentImpactChart({
       (c.options.plugins as any).tooltip = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ...(c.options.plugins as any).tooltip,
-        titleColor: fc,
-        bodyColor: fc,
-        footerColor: fc,
+        titleColor: "#ffffff",
+        bodyColor: "#ffffff",
+        footerColor: "#ffffff",
       };
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const scales: any = c.options.scales;
@@ -398,6 +399,73 @@ function DownPaymentImpactChart({
   }, [price, rate, termYears]);
 
   return <canvas ref={ref} className="h-56" />;
+}
+
+function HelpDialog({ title, content }: { title: string; content: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 rounded-full hover:bg-muted"
+        onClick={() => setOpen(true)}
+      >
+        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            {content.split("\n\n").map((paragraph, i) => {
+              if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
+                return (
+                  <h4 key={i} className="font-semibold mt-4 mb-2">
+                    {paragraph.slice(2, -2)}
+                  </h4>
+                );
+              }
+              if (paragraph.startsWith("•")) {
+                const items = paragraph
+                  .split("\n")
+                  .filter((line) => line.startsWith("•"));
+                return (
+                  <ul key={i} className="list-disc pl-5 space-y-1">
+                    {items.map((item, j) => {
+                      const text = item.slice(1).trim();
+                      const parts = text.split("**");
+                      return (
+                        <li key={j}>
+                          {parts.map((part, k) =>
+                            k % 2 === 0 ? (
+                              part
+                            ) : (
+                              <strong key={k}>{part}</strong>
+                            ),
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
+              }
+              const parts = paragraph.split("**");
+              return (
+                <p key={i} className="text-sm text-muted-foreground mb-3">
+                  {parts.map((part, j) =>
+                    j % 2 === 0 ? part : <strong key={j}>{part}</strong>,
+                  )}
+                </p>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 export default function InsightsPage() {
@@ -690,8 +758,29 @@ export default function InsightsPage() {
             <div className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <GitBranch className="w-5 h-5" /> Explain Relationship
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <GitBranch className="w-5 h-5" /> Explain Relationship
+                    </span>
+                    <HelpDialog
+                      title="How to Use Explain Relationship"
+                      content={`This tool finds and displays the shortest connection path between two properties in our graph database.
+
+**What you need:**
+• From ZPID: The starting property's Zillow ID
+• To ZPID: The destination property's Zillow ID
+
+**How it works:**
+The tool searches for connections through:
+• Same ZIP code relationships
+• Same neighborhood relationships
+• Property similarity edges
+
+**Tips:**
+• Use the "Get ZPID" button if you don't know a property's ZPID
+• The visual graph shows how properties are connected
+• Shorter paths indicate stronger relationships`}
+                    />
                   </CardTitle>
                   <CardDescription>
                     Return the shortest path between two properties via same
@@ -705,6 +794,16 @@ export default function InsightsPage() {
                         type="number"
                         value={fromZpid || ""}
                         onChange={(e) => setFromZpid(Number(e.target.value))}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            fromZpid &&
+                            toZpid &&
+                            !explainLoading
+                          ) {
+                            onExplain();
+                          }
+                        }}
                         placeholder="e.g. 123456"
                       />
                     </Field>
@@ -713,6 +812,16 @@ export default function InsightsPage() {
                         type="number"
                         value={toZpid || ""}
                         onChange={(e) => setToZpid(Number(e.target.value))}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            fromZpid &&
+                            toZpid &&
+                            !explainLoading
+                          ) {
+                            onExplain();
+                          }
+                        }}
                         placeholder="e.g. 789012"
                       />
                     </Field>
@@ -768,8 +877,33 @@ export default function InsightsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <House className="w-5 h-5" /> Graph Similar Properties
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <House className="w-5 h-5" /> Graph Similar Properties
+                    </span>
+                    <HelpDialog
+                      title="How to Use Graph Similar Properties"
+                      content={`This tool finds properties similar to your target property based on graph relationships.
+
+**What you need:**
+• ZPID: The property's Zillow ID to find similar homes for
+• Limit: Number of similar properties to return (1-20)
+
+**Similarity factors:**
+• Same neighborhood (green nodes)
+• Same ZIP code (orange nodes)
+• Vector similarity based on features (purple nodes)
+
+**Understanding results:**
+• Each result shows a similarity score
+• Reasons explain why properties are considered similar
+• The visual graph displays relationships with color coding
+
+**Use cases:**
+• Finding comparable properties for pricing
+• Discovering alternative homes to consider
+• Market analysis in specific areas`}
+                    />
                   </CardTitle>
                   <CardDescription>
                     Find similar homes by explicit graph relationships with
@@ -783,6 +917,15 @@ export default function InsightsPage() {
                         type="number"
                         value={similarZpid || ""}
                         onChange={(e) => setSimilarZpid(Number(e.target.value))}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            similarZpid &&
+                            !similarLoading
+                          ) {
+                            onFetchSimilar();
+                          }
+                        }}
                         placeholder="e.g. 123456"
                       />
                     </Field>
@@ -888,8 +1031,31 @@ export default function InsightsPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5" /> Neighborhood Stats
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <MapPin className="w-5 h-5" /> Neighborhood Stats
+                    </span>
+                    <HelpDialog
+                      title="How to Use Neighborhood Stats"
+                      content={`This tool provides statistical summaries and property samples for specific neighborhoods.
+
+**What you need:**
+• Neighborhood Name: Enter the name (e.g., "Meadowmont")
+• Limit: Number of sample properties to display (5-100)
+
+**Information provided:**
+• Total property count in the neighborhood
+• Average home price
+• Average square footage
+• Sample list of actual properties
+• Interactive force-directed graph visualization
+
+**Tips:**
+• The tool tries different capitalizations automatically
+• Drag nodes in the graph to explore relationships
+• Larger nodes indicate higher-priced properties
+• Use for quick neighborhood market overviews`}
+                    />
                   </CardTitle>
                   <CardDescription>
                     Summaries by neighborhood with a sample list of properties.
@@ -901,6 +1067,15 @@ export default function InsightsPage() {
                       <Input
                         value={hoodName}
                         onChange={(e) => setHoodName(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "Enter" &&
+                            hoodName.trim() &&
+                            !hoodLoading
+                          ) {
+                            onFetchHood();
+                          }
+                        }}
                         placeholder="e.g. Meadowmont"
                       />
                     </Field>
@@ -937,7 +1112,7 @@ export default function InsightsPage() {
                         {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                         {Array.isArray(hoodData.properties) &&
                           hoodData.properties
-                          .slice(0,hoodLimit)
+                            .slice(0, hoodLimit)
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             .map((p: any, i: number) => (
                               <li
@@ -977,8 +1152,37 @@ export default function InsightsPage() {
             <div className="flex flex-col gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calculator className="w-5 h-5" /> Mortgage Calculator
+                  <CardTitle className="flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                      <Calculator className="w-5 h-5" /> Mortgage Calculator
+                    </span>
+                    <HelpDialog
+                      title="How to Use Mortgage Calculator"
+                      content={`This comprehensive calculator helps you understand the true cost of homeownership.
+
+**Main inputs:**
+• Home Price: Total purchase price
+• Down Payment: Percentage down (0-50%)
+• Interest Rate: Annual percentage rate (APR)
+• Term: Loan duration in years
+• Property Tax Rate: Annual tax as % of home value
+• Insurance: Monthly homeowners insurance
+• HOA: Monthly HOA fees if applicable
+
+**Visualizations:**
+• **Monthly Breakdown**: Pie chart showing payment components
+• **Rate Sensitivity**: How payment changes with interest rates
+• **Down Payment Impact**: Effect of down payment on monthly costs
+
+**Additional tools:**
+• **Affordability Estimator**: Calculate max home price based on income
+• **Quick calculators**: Price per square foot and down payment amounts
+
+**Tips:**
+• Use sliders for quick adjustments
+• Charts update automatically
+• Consider all costs, not just principal & interest`}
+                    />
                   </CardTitle>
                   <CardDescription>
                     Interactive monthly payment breakdown with taxes, insurance,
@@ -1440,7 +1644,7 @@ function NeighborhoodForceGraph({
   name,
   properties,
 }: {
-    name: string;
+  name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   properties: any[];
 }) {
@@ -1617,7 +1821,7 @@ function NeighborhoodForceGraph({
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             labels
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .attr("x",(d: any) => d.x)
+              .attr("x", (d: any) => d.x)
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               .attr("y", (d: any) => d.y + (d.type === "hood" ? -24 : 22));
           });
@@ -1786,6 +1990,11 @@ function GetZpidDialog({
               <Input
                 value={address}
                 onChange={(e) => setAddress(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
                 placeholder="123 Main St"
               />
             </Field>
@@ -1793,6 +2002,11 @@ function GetZpidDialog({
               <Input
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
                 placeholder="City"
               />
             </Field>
@@ -1800,6 +2014,11 @@ function GetZpidDialog({
               <Input
                 value={state}
                 onChange={(e) => setState(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
                 placeholder="NC"
               />
             </Field>
@@ -1807,6 +2026,11 @@ function GetZpidDialog({
               <Input
                 value={zipcode}
                 onChange={(e) => setZipcode(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
                 placeholder="27514"
               />
             </Field>
@@ -1817,6 +2041,11 @@ function GetZpidDialog({
                 onChange={(e) =>
                   setBeds(e.target.value ? Number(e.target.value) : undefined)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
               />
             </Field>
             <Field label="Baths">
@@ -1826,6 +2055,11 @@ function GetZpidDialog({
                 onChange={(e) =>
                   setBaths(e.target.value ? Number(e.target.value) : undefined)
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !loading) {
+                    onSearch();
+                  }
+                }}
               />
             </Field>
           </div>

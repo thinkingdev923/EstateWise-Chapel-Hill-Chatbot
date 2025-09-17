@@ -26,7 +26,7 @@
   "scripts": {
     "build": "tsc",
     "start": "cd frontend && npm run dev",
-    "dev": "cd backend && npm start",
+    "dev": "concurrently \"npm run frontend\" \"npm run backend\"",
     "frontend": "cd frontend && npm run dev",
     "backend": "cd backend && npm start",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,html}\"",
@@ -37,6 +37,7 @@
     "typedoc:frontend": "typedoc --tsconfig frontend/tsconfig.json frontend --out docs-frontend --entryPointStrategy expand"
   },
   "dependencies": {
+    "concurrently": "^9.2.1",
     "prettier": "^3.4.2"
   },
   "private": false,
