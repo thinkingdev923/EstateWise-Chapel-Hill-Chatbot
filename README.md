@@ -47,6 +47,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Containerization](#containerization)
 - [MCP Server](#mcp-server)
+- [Agentic AI Pipeline](#agentic-ai-pipeline)
 - [VS Code Extension](#vs-code-extension)
 - [Contributing](#contributing)
 - [License](#license)
@@ -448,9 +449,15 @@ Below is a high-level diagram that illustrates the flow of the application, incl
 
 #### Neo4j Graph Integration
 
+The graph database layer is optional. If enabled, it adds explicit relationship modeling between properties, neighborhoods, and zip codes,
+
 <p align="center">
   <img src="img/neo4j.png" alt="Neo4j Graph Integration" width="100%" />
 </p>
+
+The graph layer enhances explainability by allowing the AI to reference relationships like "same neighborhood" or "similar properties" in its recommendations.
+
+**Neo4j integration details:**
 
 - What it adds
   - Explicit relationship modeling: `(Property)‑[:IN_ZIP|IN_NEIGHBORHOOD]->(...)` and optional `(:Property)‑[:SIMILAR_TO]->(:Property)`.
@@ -1079,19 +1086,25 @@ This approach ensures faster onboarding for developers, simplifies deployments, 
 
 ## MCP Server
 
-Bring EstateWise data and graph tools to MCP-compatible clients (e.g., IDEs or assistants that support the Model Context Protocol) via the `mcp/` package.
+Bring EstateWise data, graphs, analytics, and utilities to MCP‑compatible clients (IDEs/assistants) via the `mcp/` package.
 
-![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logp=zod&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
 
 - Location: `mcp/`
-- Transport: stdio (compatible with typical MCP client launchers)
-- Tools exposed:
-  - `properties.search(q: string, topK?: number)`
-  - `properties.byIds(ids: Array<string | number>)`
-  - `graph.similar(zpid: number, limit?: number)`
-  - `graph.explain(from: number, to: number)`
-  - `graph.neighborhood(name: string, limit?: number)`
-  - `map.linkForZpids(ids: Array<string | number>)`
+- Transport: stdio (works with typical MCP launchers)
+- Tools (highlights):
+  - Properties: `properties.search`, `properties.searchAdvanced`, `properties.lookup`, `properties.byIds`, `properties.sample`
+  - Graph: `graph.similar`, `graph.explain`, `graph.neighborhood`, `graph.similarityBatch`, `graph.comparePairs`, `graph.pathMatrix`
+  - Charts & Analytics: `charts.priceHistogram`, `analytics.summarizeSearch`, `analytics.groupByZip`, `analytics.distributions`
+  - Map: `map.linkForZpids`, `map.buildLinkByQuery`
+  - Utilities & Finance: `util.extractZpids`, `util.zillowLink`, `util.summarize`, `util.parseGoal`, `finance.mortgage`, `finance.affordability`, `finance.schedule`
+
+```mermaid
+flowchart LR
+  Client[IDE or Assistant MCP Client] -- stdio --> Server[MCP Server]
+  Server -->|properties, graph, analytics, map, util, finance| API[Backend API]
+  Server -->|deep links| Frontend[Frontend map]
+```
 
 Env vars (in `mcp/.env`)
 - `API_BASE_URL` (default: `https://estatewise-backend.vercel.app`)
@@ -1112,8 +1125,55 @@ npm start
 ```
 
 Notes
-- The MCP server returns text content; JSON payloads are stringified for portability across clients.
+- Returns are text content blocks; JSON payloads are stringified for portability across clients.
 - Graph tools require the backend to have Neo4j configured; otherwise they may return 503 from the API.
+
+For details and examples, see [mcp/README.md](mcp/README.md).
+
+## Agentic AI Pipeline
+
+A multi‑agent CLI orchestrator that uses the MCP server to research markets, find ZPIDs, analyze results, and produce links and estimates.
+
+- Location: `agentic-ai/`
+- Pipeline: `src/pipelines/marketResearch.ts` (Planner → ZPID Finder → Property → Analytics → Graph → Map → Finance → Reporter)
+- Agents: Planner, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, MapAnalyst, FinanceAnalyst, Reporter
+- Agents: Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, MapAnalyst, FinanceAnalyst, Reporter
+ - Agents: Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, DedupeRanking, MapAnalyst, FinanceAnalyst, Compliance, Reporter
+ - Coordination: Shared blackboard plan + memory (ZPIDs, parsed filters, analytics, links, finance) powers agent hand‑offs; Coordinator drives step execution; orchestrator retries tool calls once and normalizes JSON results.
+
+Quick start
+```
+cd mcp && npm run build
+cd ../agentic-ai && npm run dev "Find 3-bed homes in Chapel Hill, NC; explain 123456 vs 654321; estimate $600k at 6.25%."
+```
+
+Build & run
+```
+cd agentic-ai
+npm run build
+npm start "Lookup ZPID for 123 Main St, Chapel Hill, NC and show similars."
+```
+
+Notes
+- The orchestrator spawns `mcp/dist/server.js` over stdio; outputs are aggregated and summarized.
+- Extend by adding MCP tools in `mcp/` and agents in `agentic-ai/src/agents/`.
+
+```mermaid
+flowchart LR
+    Goal --> Planner --> Coordinator
+    Coordinator -->|parseGoal| UPG["util.parseGoal"]
+    Coordinator -->|lookup| PL["properties.lookup"]
+    Coordinator -->|search| PS["properties.search"]
+    Coordinator -->|analytics| AS["analytics.summarizeSearch"]
+    Coordinator -->|graph| GE["graph.explain"]
+    Coordinator -->|rank| DR["DedupeRanking"]
+    Coordinator -->|map| MLZ["map.linkForZpids"]
+    Coordinator -->|finance| FM["finance.mortgage"]
+    Coordinator -->|compliance| Compliance
+    Compliance --> Reporter
+```
+
+For details and examples, see [agentic-ai/README.md](agentic-ai/README.md).
 
 ## VS Code Extension
 

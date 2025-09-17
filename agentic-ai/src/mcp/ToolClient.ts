@@ -1,3 +1,4 @@
+// @ts-ignore
 import { McpClient } from "@modelcontextprotocol/sdk/client/mcp.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
 import { spawn } from "node:child_process";
@@ -18,6 +19,7 @@ export class ToolClient {
       env: process.env,
     });
     this.child = child;
+    // @ts-ignore
     const transport = new StdioClientTransport(child.stdout!, child.stdin!);
     const client = new McpClient({ name: "agentic-ai", version: "0.1.0" });
     await client.connect(transport);

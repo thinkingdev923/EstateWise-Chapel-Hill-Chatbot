@@ -4,22 +4,56 @@ export class ReporterAgent implements Agent {
   role: "reporter" = "reporter";
 
   async think(ctx: AgentContext): Promise<AgentMessage> {
-    const toolOutputs = ctx.history
-      .filter((m) => (m.data as any)?.result)
-      .map(
-        (m) =>
-          (m.data as any).resultText || JSON.stringify((m.data as any).result),
+    const bb = ctx.blackboard;
+    const lines: string[] = [];
+    lines.push(`Goal: ${ctx.goal}`);
+    // High-level metrics
+    const medPrice = (bb.analytics?.summary as any)?.medianPrice as
+      | number
+      | null;
+    const medSqft = (bb.analytics?.summary as any)?.medianSqft as number | null;
+    const medPpsf = (bb.analytics?.summary as any)?.medianPricePerSqft as
+      | number
+      | null;
+    if (medPrice || medSqft || medPpsf) {
+      lines.push(
+        `Market medians: ${medPrice ?? "?"} price | ${medSqft ?? "?"} sqft | ${medPpsf ? `$${Math.round(medPpsf)}/sqft` : "?"}`,
       );
+    }
+    if (bb.analytics?.groups) {
+      const topZip = (bb.analytics.groups as any[])
+        .slice(0, 3)
+        .map(
+          (g) =>
+            `${g.zip}: ${g.count} listings @ $${Math.round(g.medianPrice || 0)}`,
+        )
+        .join("; ");
+      if (topZip) lines.push(`Top ZIPs: ${topZip}`);
+    }
+    if (bb.zpids?.length)
+      lines.push(
+        `ZPIDs: ${bb.zpids.slice(0, 10).join(", ")}${bb.zpids.length > 10 ? "…" : ""}`,
+      );
+    if (bb.mapLink) lines.push(`Map: ${bb.mapLink}`);
+    if (bb.mortgage) {
+      const m = bb.mortgage as any;
+      lines.push(
+        `Mortgage est.: P&I $${Math.round(m.pAndI || 0)}, taxes $${Math.round(m.taxes || 0)}, ins $${Math.round(m.insMonthly || 0)}, HOA $${Math.round(m.hoaMonthly || 0)} (total $${Math.round(m.total || 0)})`,
+      );
+    }
 
-    const summary = [
-      `Goal: ${ctx.goal}`,
-      "Findings:",
-      ...toolOutputs.map(
-        (t, i) => `  ${i + 1}. ${t.slice(0, 400)}${t.length > 400 ? "…" : ""}`,
-      ),
-      "Note: Links may reflect sample subsets. Always verify details.",
-    ].join("\n");
+    // Include a concise log of executed tools for traceability
+    const executed = ctx.history.filter((m) => (m.data as any)?.resultText);
+    if (executed.length) {
+      lines.push("Tools executed:");
+      for (const m of executed.slice(-6)) {
+        const t = ((m.data as any).resultText as string) || "";
+        const snippet = t.length > 220 ? t.slice(0, 220) + "…" : t;
+        lines.push(`- ${m.content}: ${snippet}`);
+      }
+    }
 
-    return { from: this.role, content: summary };
+    lines.push("Note: Verify details before decisions.");
+    return { from: this.role, content: lines.join("\n") };
   }
 }

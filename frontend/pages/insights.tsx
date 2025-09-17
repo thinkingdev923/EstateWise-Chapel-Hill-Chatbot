@@ -1960,14 +1960,62 @@ function GetZpidDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl bg-background text-foreground">
+      <DialogContent className="sm:max-w-2xl bg-background text-foreground max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-lg">Find ZPID</DialogTitle>
         </DialogHeader>
         <div className="rounded-xl border border-border bg-card p-4">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2 mb-2">
-            <div className="text-sm text-muted-foreground">
-              Search by address, city, state, ZIP, or beds/baths.
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-3">
+            <div className="flex-1">
+              <div className="rounded-md border border-border/60 bg-muted/30 p-3">
+                <div className="text-xs text-muted-foreground flex items-start gap-2">
+                  <Info className="w-4 h-4 mt-0.5" />
+                  <div>
+                    You can search with any single field or mix a few — no need
+                    to fill everything.
+                  </div>
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="px-2.5 py-1 rounded-full border border-border bg-background text-[11px] text-foreground/80 hover:bg-accent/50 transition-colors"
+                    onClick={() => {
+                      setAddress("123 Main St");
+                    }}
+                  >
+                    Try: 123 Main St
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2.5 py-1 rounded-full border border-border bg-background text-[11px] text-foreground/80 hover:bg-accent/50 transition-colors"
+                    onClick={() => {
+                      setCity("Chapel Hill");
+                      setState("NC");
+                    }}
+                  >
+                    Try: Chapel Hill, NC
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2.5 py-1 rounded-full border border-border bg-background text-[11px] text-foreground/80 hover:bg-accent/50 transition-colors"
+                    onClick={() => {
+                      setZipcode("27514");
+                    }}
+                  >
+                    Try: 27514
+                  </button>
+                  <button
+                    type="button"
+                    className="px-2.5 py-1 rounded-full border border-border bg-background text-[11px] text-foreground/80 hover:bg-accent/50 transition-colors"
+                    onClick={() => {
+                      setBeds(3);
+                      setBaths(2);
+                    }}
+                  >
+                    Try: 3 bd / 2 ba
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-2 text-xs">
               <span className="text-muted-foreground">Apply to</span>
@@ -2007,7 +2055,7 @@ function GetZpidDialog({
                     onSearch();
                   }
                 }}
-                placeholder="City"
+                placeholder="e.g., Chapel Hill"
               />
             </Field>
             <Field label="State">
@@ -2019,7 +2067,7 @@ function GetZpidDialog({
                     onSearch();
                   }
                 }}
-                placeholder="NC"
+                placeholder="e.g., NC"
               />
             </Field>
             <Field label="ZIP">
@@ -2037,6 +2085,7 @@ function GetZpidDialog({
             <Field label="Beds">
               <Input
                 type="number"
+                placeholder="e.g., 3"
                 value={beds ?? ""}
                 onChange={(e) =>
                   setBeds(e.target.value ? Number(e.target.value) : undefined)
@@ -2051,6 +2100,7 @@ function GetZpidDialog({
             <Field label="Baths">
               <Input
                 type="number"
+                placeholder="e.g., 2"
                 value={baths ?? ""}
                 onChange={(e) =>
                   setBaths(e.target.value ? Number(e.target.value) : undefined)
@@ -2063,6 +2113,7 @@ function GetZpidDialog({
               />
             </Field>
           </div>
+          {/* subtle spacing below the fields; callout above already gives the hint */}
           <div className="flex justify-end mt-3">
             <Button
               onClick={onSearch}
@@ -2080,7 +2131,7 @@ function GetZpidDialog({
             </Button>
           </div>
         </div>
-        <div className="mt-4 max-h-72 overflow-auto space-y-2">
+        <div className="mt-4 max-h-[45vh] overflow-auto space-y-2">
           {!results.length ? (
             <div className="text-sm text-muted-foreground border border-border rounded-md p-4 bg-muted/20">
               No results yet. Enter details above and click Search.

@@ -4,9 +4,15 @@ export class FinanceAnalystAgent implements Agent {
   role: "finance-analyst" = "finance-analyst" as const;
 
   async think(ctx: AgentContext): Promise<AgentMessage> {
-    // Heuristic defaults from goal text; could parse with regex for numbers
+    if (ctx.blackboard.plan?.inFlightStepKey) {
+      return { from: this.role, content: "Coordinator in-flight; waiting." };
+    }
+    // Prefer price signal from blackboard analytics; else parse goal; else fallback
+    const boardPrice = (ctx.blackboard.analytics?.summary as any)
+      ?.medianPrice as number | undefined;
     const mPrice = ctx.goal.match(/\$?(\d{3,}[,\d]*)/);
-    const price = mPrice ? Number(mPrice[1].replace(/,/g, "")) : 600000;
+    const price =
+      boardPrice ?? (mPrice ? Number(mPrice[1].replace(/,/g, "")) : 600000);
     const mRate = ctx.goal.match(/(\d+(?:\.\d+)?)%/);
     const apr = mRate ? Number(mRate[1]) : 6.5;
     const years = /\b(15|30)\b/.test(ctx.goal) ? Number(RegExp.$1) : 30;

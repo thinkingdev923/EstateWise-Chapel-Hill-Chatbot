@@ -1,201 +1,517 @@
 # EstateWise Architecture
 
-## Overview
-EstateWise is a full‑stack, AI‑powered real estate assistant focused on Chapel Hill, NC.  It pairs a modern **Next.js** front‑end with an **Express/TypeScript** API and a rich Retrieval‑Augmented Generation (RAG) pipeline backed by **Google Gemini**, **Pinecone**, and **MongoDB**.  The project also includes infrastructure as code for multi‑cloud deployment, monitoring, and a VS Code extension for in‑editor chat.
+This document describes the end‑to‑end architecture for EstateWise, spanning frontend UI, backend services, data and graph pipelines, MCP tooling, the agentic orchestration CLI, IDE extension, and CI/CD.
 
-## High‑Level Components
+## System Overview
+
+The high-level architecture is as follows:
+
 ```mermaid
 flowchart LR
-    subgraph Client
-        U[User]
-        F[Next.js UI]
-    end
-    subgraph Server
-        API[Express API]
-        DL[Decision Layer]
-        RAG[RAG Query]
-        MoE[Mixture of Experts]
-    end
-    DB[(MongoDB)]
-    PC[(Pinecone)]
-    GM[(Google Gemini)]
-    U --> F --> API
-    API --> DL -->|usePropertyData| RAG
-    RAG --> PC
-    RAG --> MoE
-    DL -->|skip RAG| MoE
-    MoE --> GM
-    API --> DB
-    API -->|metrics| Prom[Prometheus]
-    API --> F
+  subgraph Users
+    U[Web User]
+    Dev[Developer]
+  end
+  subgraph Frontend
+    FE[Next.js / React]
+    Map[/Map page/]
+    Insights[/Insights page/]
+    Chat[/Chat page/]
+  end
+  subgraph Backend
+    API[Express + TypeScript]
+    GraphAPI[/Graph routes/]
+    PropAPI[/Property routes/]
+    AuthAPI[/Auth/Conversations/Chat/]
+  end
+  subgraph Data
+    Mongo[(MongoDB Atlas)]
+    Pinecone[(Pinecone Index)]
+    Neo4j[(Neo4j Graph)]
+  end
+  subgraph AI
+    Gemini[Google Gemini]
+  end
+  subgraph Tooling
+    MCP[MCP Server]
+    Agentic[Agentic AI Orchestrator]
+    VSX[VS Code Extension]
+  end
+
+  U --> FE --> API
+  FE -->|/api/graph/*| GraphAPI
+  FE -->|/api/properties/*| PropAPI
+  API --> Mongo
+  API --> Pinecone
+  API --> Neo4j
+  API --> Gemini
+  Dev --> Agentic -->|stdio| MCP --> API
+  VSX --> FE
+  FE --> Map
+  FE --> Insights
+  FE --> Chat
 ```
 
-### Frontend (Next.js)
-- Renders the chat interface, property visualizations, and account management.
-- Communicates with the backend via REST APIs.
-- Uses Tailwind CSS, Framer Motion, and Chart.js for responsive and animated UI.
+## Repository Topology
 
-### Backend (Express + TypeScript)
-- Serves RESTful endpoints for authentication, conversations, chat, and property data.
-- Integrates Prometheus metrics, status monitoring, and structured logging.
-- Connects to MongoDB for persistence and Pinecone for vector search.
+```
+backend/       # Express + TypeScript API, graph + property endpoints
+frontend/      # Next.js + React app (chat, insights, map)
+mcp/           # Model Context Protocol server exposing project tools over stdio
+agentic-ai/    # Multi-agent CLI orchestrator using MCP
+extension/     # VS Code extension embedding chat
+docs-backend/  # TypeDoc output for backend
+terraform/, aws/, gcp/  # Infra-as-code and cloud configs
+```
 
-### AI/RAG Pipeline
-- Property data is embedded using Google's `text-embedding-004` model and stored in Pinecone.
-- A decision model determines whether property retrieval is needed.
-- A Mixture‑of‑Experts system (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) generates responses and merges them into a final answer.
+## Frontend
 
-## Chat Sequence
+- Pages
+  - `pages/chat.tsx`: conversational UI integrated with backend chat API and conversation management.
+  - `pages/insights.tsx`: graph tools, comparators, calculators; includes Find ZPID dialog with address/city/state/ZIP and bed/bath filters.
+  - `pages/map.tsx`: Leaflet map rendering; accepts deep links `?zpids=...` or `?q=...` and caps markers for performance (~200 by default).
+- UI
+  - TailwindCSS + shadcn UI components; Chart.js for visualizations.
+- API Client
+  - `frontend/lib/api.ts`: REST wrappers for conversations, chat, properties, and graph.
+
+### ZPID Lookup UX
+
 ```mermaid
 sequenceDiagram
-    participant User
-    participant UI as Next.js
-    participant API as Express API
-    participant Agent as EstateWise Agent
-    participant DecisionAI
-    participant Pinecone
-    participant Experts
-    participant Gemini
+  participant User
+  participant FE as Insights Modal
+  participant API as /api/properties/lookup
 
-    User->>UI: sendMessage
-    UI->>API: POST /api/chat
-    API->>Agent: runEstateWiseAgent
-    Agent->>DecisionAI: shouldFetch?
-    DecisionAI-->>Agent: yes/no
-    alt fetch
-        Agent->>Pinecone: queryProperties
-        Pinecone-->>Agent: propertyContext
-    end
-    Agent->>Experts: parallel expert calls
-    Experts->>Gemini: generate views
-    Gemini-->>Experts: expert responses
-    Experts-->>Agent: merged response
-    Agent-->>API: finalText + expertViews
-    API-->>UI: JSON response
-    UI-->>User: render answer
+  User->>FE: enter any subset of fields
+  FE->>API: GET /lookup?city=...&state=...&zipcode=...&beds=...&baths=...
+  API-->>FE: { matches: [{zpid, address, stats}] }
+  FE-->>User: show candidates + "Use" action
 ```
 
-## Data Ingestion & Embedding Pipeline
+## Backend (Express + TypeScript)
+
+- Routes
+  - Properties: `/api/properties` (query), `/api/properties/by-ids`, `/api/properties/lookup`.
+  - Graph: `/api/graph/similar/:zpid`, `/api/graph/explain?from&to`, `/api/graph/neighborhood/:name`.
+  - Auth/Conversations/Chat: login/signup, chat completion, and conversation storage.
+- Integrations
+  - MongoDB Atlas for persistence.
+  - Pinecone for semantic search (kNN) and metadata fetch.
+  - Neo4j for property‑ZIP‑neighborhood relationships and explanations.
+  - Google Gemini for LLM‑assisted analysis (agents and chat).
+- Observability
+  - `express-status-monitor` on `/status`.
+  - Prometheus metrics (latency, error rates) and structured logs.
+
+### Property Search Flow
+
+```mermaid
+sequenceDiagram
+  participant FE as Next.js
+  participant API as Express
+  participant PC as Pinecone
+
+  FE->>API: GET /api/properties?q=...&topK=...
+  API->>PC: vector query (kNN)
+  PC-->>API: matches + metadata
+  API-->>FE: listings + chart configs
+```
+
+### Graph API Flow
+
+```mermaid
+sequenceDiagram
+  participant FE as Next.js
+  participant API as Express
+  participant N as Neo4j
+
+  FE->>API: GET /api/graph/similar/:zpid
+  API->>N: Cypher query (SIMILAR/IN_ZIP/IN_NEIGHBORHOOD)
+  N-->>API: related nodes + reasons
+  API-->>FE: results
+```
+
+## Data & Graph Pipelines
+
+### Embedding & Upsert (Pinecone)
+
 ```mermaid
 flowchart TD
-    CSV[Raw Property CSV] --> Clean[Data Cleaning & Normalization]
-    Clean --> Embed[Generate 1536-dim Embeddings]
-    Embed --> Upsert[Batch Upsert size=50]
-    Upsert --> PineconeStore[(Pinecone Index)]
-    PineconeStore -->|KNN| Query[Query]
+  Raw[Raw Property Source] --> Clean[Normalize fields]
+  Clean --> Embed[Embedding model]
+  Embed --> Upsert[Upsert batched]
+  Upsert --> Pinecone[(Pinecone Index)]
 ```
 
-## Deployment & Infrastructure
+### Neo4j Ingest (from Pinecone)
+
+```mermaid
+flowchart TD
+    PineconeList["List IDs by page"] --> FetchMeta["Fetch metadata"]
+    FetchMeta --> ParseAddr["Parse address JSON"]
+    ParseAddr --> UpsertProp["MERGE Property(zpid) SET props"]
+    UpsertProp --> LinkZip["MERGE Zip(code) and (Property)-[:IN_ZIP]->(Zip)"]
+    UpsertProp --> LinkHood["MERGE Neighborhood(name) and link"]
+    LinkZip --> NextPage{More?}
+    LinkHood --> NextPage
+    NextPage -->|yes| PineconeList
+    NextPage -->|no| Done[Complete]
+```
+
+## Model Context Protocol (MCP) Server
+
+The `mcp/` package exposes graph, property, analytics, finance, and utility tools to any MCP‑compatible client over stdio.
+
 ```mermaid
 flowchart LR
-    subgraph Cloud
-        Vercel[Vercel
-        Frontend]
-        ECS[AWS ECS
-        Backend]
-        Atlas[MongoDB Atlas]
-        PineconeSvc[Pinecone]
-        GCP[GCP Storage]
-        Azure[Azure Pipelines]
-    end
-    Dev[Developer]
-    Dev -->|Git Push| GH[GitHub Actions]
-    GH -->|Docker Build & Scan| Registry[GHCR]
-    Registry --> ECS
-    Registry --> Vercel
-    ECS --> Atlas
-    ECS --> PineconeSvc
-    GH -->|Terraform| AWS[(AWS Infra)]
+  Client[IDE or Assistant MCP Client] -- stdio --> MCP[MCP Server]
+  MCP -->|properties, graph, analytics, map, util, finance| API[Backend API]
+  MCP -->|deep links| FE[Frontend /map]
 ```
 
-## Monitoring & Observability
-- `express-status-monitor` provides a `/status` dashboard.
-- Prometheus collects request latency, MongoDB connection health, and other metrics.
-- Logs are emitted via Winston for structured analysis.
+- Tool categories
+  - Properties: `search`, `searchAdvanced`, `lookup`, `byIds`, `sample`
+  - Graph: `similar`, `explain`, `neighborhood`, `similarityBatch`, `comparePairs`, `pathMatrix`
+  - Analytics: `priceHistogram`, `summarizeSearch`, `groupByZip`, `distributions`
+  - Map: `linkForZpids`, `buildLinkByQuery`
+  - Utilities: `extractZpids`, `zillowLink`, `summarize`, `parseGoal`
+  - Finance: `mortgage`, `affordability`, `schedule`
 
-## Security
-- JWT‑based authentication with cookies.
-- CORS configured for public access.
-- Rate limiting and error‑handling middleware.
+## Agentic AI Orchestrator
 
-## Testing
-- **Backend:** Jest unit tests for controllers and middleware.
-- **Frontend:** Jest tests for API utilities; Cypress and Selenium for E2E and UI testing.
+The `agentic-ai/` CLI runs a multi‑agent pipeline that spawns the local MCP server and coordinates steps with a shared blackboard and a Coordinator agent.
+
+```mermaid
+flowchart LR
+  Goal[User Goal] --> Planner
+  Planner --> Coordinator
+  Coordinator -->|parseGoal| Parse
+  Coordinator -->|lookup| Lookup
+  Coordinator -->|search| Search
+  Coordinator -->|summarize| Summarize
+  Coordinator -->|groupByZip| Group
+  Coordinator -->|dedupeRank| Rank
+  Coordinator -->|graph| Graph
+  Coordinator -->|comparePairs| Pairs
+  Coordinator -->|map| Map
+  Coordinator -->|mortgage| Mortgage
+  Coordinator -->|affordability| Afford
+  Coordinator -->|compliance| Compliance
+  Compliance --> Reporter
+```
+
+- Agents
+  - Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, DedupeRanking, MapAnalyst, FinanceAnalyst, Compliance, Reporter.
+- Blackboard
+  - Aggregates ZPIDs, parsed filters, analytics summaries, map links, finance results, and step state.
+- Orchestrator
+  - Executes tool calls via MCP, retries transient failures once, and normalizes JSON results.
 
 ## VS Code Extension
-The `extension` directory contains a VS Code WebView extension that embeds the live chat at `https://estatewise.vercel.app/chat` directly inside the editor, enabling in‑IDE conversations.
 
-## Technology Stack Overview
-```mermaid
-pie title Core Technologies
-    "Next.js & React" : 25
-    "Express & TypeScript" : 25
-    "Google Gemini" : 15
-    "MongoDB" : 10
-    "Pinecone" : 10
-    "Infrastructure & CI/CD" : 15
-```
+Simple WebView wrapper that loads `https://estatewise.vercel.app/chat` inside VS Code. No additional secrets are required; it leverages the hosted frontend.
 
-## Core Data Models
-```mermaid
-erDiagram
-    USER ||--o{ CONVERSATION : owns
-    CONVERSATION ||--o{ MESSAGE : includes
-    USER ||--o{ FAVORITE : marks
-    PROPERTY ||--o{ LISTING : contains
-    FAVORITE }o--|| PROPERTY : references
-```
-The models mirror the MongoDB collections:
-- **USER** documents store credentials and profile info.
-- **CONVERSATION** threads group chat **MESSAGE** documents.
-- **PROPERTY** data powers listings and user **FAVORITE** relationships.
-
-## Authentication Flow
-```mermaid
-sequenceDiagram
-    participant User
-    participant UI as Next.js
-    participant API
-    participant DB as MongoDB
-    User->>UI: Enter email/password
-    UI->>API: POST /api/auth/login
-    API->>DB: Validate credentials
-    DB-->>API: User record
-    API-->>UI: Set-Cookie JWT
-    UI-->>User: Authenticated session
-```
-Key aspects:
-- Passwords are salted and hashed with bcrypt before storage.
-- JWT tokens are HttpOnly cookies to mitigate XSS.
-
-## CI/CD Workflow
 ```mermaid
 flowchart LR
-    Dev[Developer] --> PR[Pull Request]
-    PR --> Actions[GitHub Actions]
-    Actions --> Test[Unit & E2E Tests]
-    Actions --> Lint[Lint & Type Check]
-    Actions --> Build[Docker/Next.js Builds]
-    Build --> DeployECS[ECS Deploy]
-    Build --> DeployVercel[Vercel Deploy]
-    DeployECS --> Monitor[Prometheus]
+  VSX[VS Code] --> WebView[Chat WebView]
+  WebView --> FE[estatewise.vercel.app/chat]
+```
+
+## Security & Config
+
+- Secrets are never committed. Copy `.env.example` → `.env` per package.
+- Required keys by area
+  - Backend: `MONGO_URI`, Pinecone, Google AI key, optional Neo4j (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`).
+  - MCP: `API_BASE_URL`, `FRONTEND_BASE_URL`.
+- Rate limits and error handling middleware on the API; JWT cookies for auth; CORS configured.
+
+## Testing Strategy
+
+- Backend: `backend/tests/` with Jest unit/integration tests.
+- Frontend: `frontend/__tests__/` with Jest; Cypress + Selenium for E2E/UI.
+- MCP/Agentic: CLI flows are testable via scripted goals; tools return text(JSON) for easy parsing.
+
+## CI/CD & Infrastructure
+
+```mermaid
+flowchart LR
+  Dev --> PR[Pull Request]
+  PR --> CI[GitHub Actions]
+  CI --> Test[Tests + Lint + Type Check]
+  CI --> Build[Docker/Next build]
+  Build --> GHCR[Registry]
+  GHCR --> ECS[AWS ECS Backend]
+  GHCR --> Vercel[Vercel Frontend]
+  ECS --> Atlas[MongoDB Atlas]
+  ECS --> PineconeSvc[Pinecone]
+  CI --> TF[Terraform Apply]
+  TF --> AWS[(AWS Infra)]
 ```
 
 ## Scalability & Resilience
-- Stateless backend containers on **AWS ECS** allow horizontal scaling.
-- **MongoDB Atlas** provides replica sets and automated failover.
-- **Pinecone** handles vector index sharding and replication.
-- Rate limiting and circuit breakers protect against API abuse and downstream failures.
 
-## Developer Workflow
-- Local services are orchestrated via `docker-compose` for parity with production.
-- `make` targets wrap common tasks like linting, testing, and building images.
-- TypeDoc and JSDoc generate API documentation for backend and frontend respectively.
+- Horizontal scale on ECS for stateless API.
+- MongoDB Atlas replica sets and auto‑failover; Pinecone replication; Neo4j constraints.
+- Guardrails: marker caps on map, basic circuit‑breakers, and compliance checks in agentic pipeline.
 
-## Future Enhancements
-- Incorporate real-time WebSocket updates for collaborative search.
-- Add multi-region deployment with traffic steering.
-- Expand expert models for mortgage and school district analysis.
+## Core Data Models
+
+```mermaid
+erDiagram
+  USER ||--o{ CONVERSATION : owns
+  CONVERSATION ||--o{ MESSAGE : includes
+  PROPERTY ||--o{ LISTING : contains
+```
+
+Graph (Neo4j) high‑level entities and relationships:
+
+```mermaid
+classDiagram
+  class Property {
+    zpid
+    streetAddress
+    city
+    state
+    zipcode
+    price, bedrooms, bathrooms
+    livingArea, yearBuilt
+  }
+  class Zip { code }
+  class Neighborhood { name }
+  Property --> Zip : IN_ZIP
+  Property --> Neighborhood : IN_NEIGHBORHOOD
+```
+
+## Authentication
+
+```mermaid
+sequenceDiagram
+  participant User
+  participant UI as Next.js
+  participant API
+  participant DB as MongoDB
+  User->>UI: submit credentials
+  UI->>API: POST /api/auth/login
+  API->>DB: validate user
+  DB-->>API: match
+  API-->>UI: Set-Cookie JWT
+  UI-->>User: authenticated session
+```
+
+Key aspects: bcrypt salted hashes, HttpOnly JWT cookies, and CSRF‑resistant flows via cookie + header patterns.
 
 ---
-This document serves as a top‑to‑bottom reference for EstateWise’s architecture, from data ingestion to deployment.
+
+This document reflects the current codebase, data flows, and pipelines. Update it alongside major feature changes (graph tools, MCP tools, agent roles, or infra topology).
+
+## Request Lifecycle (End‑to‑End)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant U as User
+  participant FE as Next.js
+  participant API as Express API
+  participant PC as Pinecone
+  participant N as Neo4j
+  participant DB as MongoDB
+
+  U->>FE: Interact (Chat/Insights/Map)
+  FE->>API: REST (fetch, JSON)
+  alt Property Search
+    API->>PC: vector query (kNN)
+    PC-->>API: matches + metadata
+    API-->>FE: listings + charts
+  else Graph Query
+    API->>N: Cypher
+    N-->>API: nodes + relations
+    API-->>FE: explained path / similars
+  else Conversations/Chat
+    API->>DB: read/write convo/messages
+    API-->>FE: payload
+  end
+```
+
+## Backend Modules (Detailed View)
+
+```mermaid
+classDiagram
+  class Server_ts { boot(); registerRoutes(); }
+  class Routes {
+    +property.routes.ts
+    +graph.routes.ts
+    +auth.routes.ts
+    +conversation.routes.ts
+    +chat.routes.ts
+    +commute-profile.routes.ts
+  }
+  class Controllers {
+    +property.controller.ts
+    +graph.controller.ts
+  }
+  class GraphLayer {
+    +neo4j.client
+    +graph/services.ts
+    +scripts/ingestNeo4j.ts
+  }
+  class Data {
+    +models/* (Mongo)
+    +pineconeClient.ts
+  }
+  class Middleware { auth, rateLimit, status, errors }
+  Server_ts --> Routes
+  Routes --> Controllers
+  Controllers --> Data
+  Controllers --> GraphLayer
+  Server_ts --> Middleware
+```
+
+### HTTP Surface (Selected)
+
+```mermaid
+flowchart TD
+  A[/GET /api/properties?q, topK/] -->|kNN| Pinecone
+  B[/GET /api/properties/by-ids?ids/] --> Data[(Mongo/Pinecone)]
+  C[/GET /api/properties/lookup?filters/] --> Pinecone
+  D[/GET /api/graph/similar/:zpid/] --> Neo4j
+  E[/GET /api/graph/explain?from&to/] --> Neo4j
+  F[/GET /api/graph/neighborhood/:name/] --> Neo4j
+```
+
+## Agentic Blackboard Updates (Lifecycle)
+
+```mermaid
+sequenceDiagram
+    participant Coord as Coordinator
+    participant MCP as MCP Server
+    participant API as Backend API
+    participant BB as Blackboard
+
+    Coord->>MCP: call util.parseGoal(text)
+    MCP->>API: GET /parse (server maps to backend util)
+    API-->>MCP: JSON
+    MCP-->>Coord: content: text(JSON)
+    Coord->>BB: write parsed filters
+    Coord->>MCP: call properties.lookup
+    MCP->>API: GET /api/properties/lookup
+    API-->>MCP: matches
+    MCP-->>Coord: content: text(JSON)
+    Coord->>BB: merge zpids
+    Coord->>BB: mark step done
+```
+
+## Failure Modes & Fallbacks
+
+```mermaid
+flowchart TD
+  Start[Request] --> CheckNeo4j{Graph tool?}
+  CheckNeo4j -- yes --> NeoTry[Call Neo4j]
+  NeoTry --> OkN{200?}
+  OkN -- no --> DegradeN[Return 503 with helpful message]
+  DegradeN --> End
+  OkN -- yes --> End
+  CheckNeo4j -- no --> Next[Call other services]
+  Next --> End
+```
+
+Guidance:
+- If Neo4j is down: APIs return 503 with a clear error; UI surfaces a tip to run `npm run graph:ingest` or try later.
+- If Pinecone is unavailable: property search endpoints return a 5xx; client side suggests retrying or narrowing filters.
+- MCP tools propagate backend errors as text blocks; orchestrator retries once.
+
+## Observability & Telemetry
+
+```mermaid
+flowchart LR
+  API[Express] --> Metrics[Prometheus]
+  API --> Status[/status monitor/]
+  API --> Logs[Structured logs]
+  Metrics --> Dash[Grafana/Alerts]
+```
+
+Key metrics (examples):
+- http_request_duration_seconds (by route)
+- mongo_connections, pinecone_latency_ms, neo4j_latency_ms
+- cache_hits (if applicable), error_rate
+
+## Security Model
+
+- AuthN: JWT cookies (HttpOnly, Secure in prod). Passwords hashed with bcrypt.
+- AuthZ: route middleware for protected endpoints (conversations, chat).
+- Input validation: route params/query validated server-side.
+- CORS: restricted origins (frontend + extension).
+- Secrets: `.env` per package; never committed.
+- Rate limiting and well-formed error responses.
+
+## Environment & Config Matrix
+
+```mermaid
+classDiagram
+  class Frontend_env {
+    NEXT_PUBLIC_API_BASE_URL
+  }
+  class Backend_env {
+    MONGO_URI
+    GOOGLE_AI_API_KEY
+    PINECONE_API_KEY, PINECONE_INDEX, PINECONE_NAMESPACE
+    NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
+  }
+  class MCP_env {
+    API_BASE_URL
+    FRONTEND_BASE_URL
+  }
+```
+
+## Performance & SLOs (Targets)
+
+- P50 API latency: < 200ms for property search (warm path); P95 < 800ms.
+- Graph similar/explain: P95 < 1.5s (depends on Neo4j workload).
+- Map load: < 2s with ≤200 markers.
+- Agentic CLI (marketResearch): end-to-end < 15s for typical goals.
+
+## Data Contracts (Examples)
+
+Property listing (excerpt):
+
+```json
+{
+  "id": "1234567",
+  "zpid": 1234567,
+  "price": 625000,
+  "bedrooms": 3,
+  "bathrooms": 2,
+  "livingArea": 1850,
+  "yearBuilt": 1996,
+  "city": "Chapel Hill",
+  "zipcode": "27514"
+}
+```
+
+Graph similar (excerpt):
+
+```json
+{
+  "zpid": 1234567,
+  "results": [
+    { "zpid": 2345678, "reason": "Same zip" }
+  ]
+}
+```
+
+## Environments
+
+- Local: `npm start` (backend), `npm run dev` (frontend), MCP via `npm run dev` in `mcp/`.
+- Dev/Preview: Vercel previews for frontend; ECS test cluster for backend.
+- Prod: Vercel + AWS ECS; MongoDB Atlas; Pinecone; optional Neo4j managed service.
+
+## Deployment Strategies
+
+- Frontend: Vercel immutable deploys.
+- Backend: ECS rolling updates; health checks; blue/green optional.
+- Infra: Terraform for AWS resources; GH Actions for CI.
+
+## Change Management
+
+- Keep `ARCHITECTURE.md`, `README.md`, and package READMEs in sync with feature additions (routes, tools, agents).
+- Document new env vars and update `.env.example` files.
