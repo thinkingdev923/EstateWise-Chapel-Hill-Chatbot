@@ -29,12 +29,14 @@
     "build": "tsc || true",
     "upsert": "ts-node-dev --respawn --transpile-only src/scripts/upsertProperties.ts",
     "clean": "ts-node-dev --respawn --transpile-only src/scripts/cleanProperties.ts",
+    "graph:ingest": "ts-node-dev --respawn --transpile-only src/scripts/ingestNeo4j.ts",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md,html}\"",
     "test": "NODE_ENV=test jest --runInBand",
     "test:watch": "NODE_ENV=test jest --watchAll",
     "test:coverage": "NODE_ENV=test jest --coverage"
   },
   "dependencies": {
+    "neo4j-driver": "^5.25.0",
     "@google/generative-ai": "^0.21.0",
     "@pinecone-database/pinecone": "^5.1.1",
     "body-parser": "^1.20.2",

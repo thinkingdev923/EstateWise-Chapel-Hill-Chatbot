@@ -1,5 +1,7 @@
 import { Request, Response } from "express";
 import { queryProperties } from "../scripts/queryProperties";
+import { index } from "../pineconeClient";
+import Property from "../models/Property.model";
 
 /**
  * Represents a property listing with relevant metadata.
@@ -16,6 +18,8 @@ export interface Listing {
   homeStatus: string;
   city: string;
   zipcode?: string;
+  latitude?: number;
+  longitude?: number;
   [key: string]: any;
 }
 
@@ -464,6 +468,8 @@ export async function getPropertyData(req: Request, res: Response) {
         homeStatus: String(m.homeStatus || ""),
         city: String(m.city || ""),
         zipcode: String(addr.zipcode || ""),
+        latitude: m.latitude != null ? Number(m.latitude) : undefined,
+        longitude: m.longitude != null ? Number(m.longitude) : undefined,
       };
     });
 
@@ -499,5 +505,165 @@ export async function getPropertyData(req: Request, res: Response) {
   } catch (err: unknown) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch property data" });
+  }
+}
+
+/**
+ * GET /api/properties/by-ids?ids=123,456
+ * Fetch property metadata for specific zpids, including lat/lon for mapping.
+ */
+export async function getPropertiesByIds(req: Request, res: Response) {
+  try {
+    const idsParam = String(req.query.ids || "").trim();
+    if (!idsParam) return res.json({ listings: [] });
+    const ids = idsParam
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0);
+    if (!ids.length) return res.json({ listings: [] });
+
+    let listings: any[] = [];
+    try {
+      // Try via Pinecone metadata
+      const fetchRes = await index.fetch(ids);
+      const vectors =
+        (fetchRes as any).records || (fetchRes as any).vectors || {};
+      listings = Object.entries(vectors).map(([id, rec]: any) => {
+        const m = rec?.metadata || {};
+        // metadata.address is JSON string in our pipeline
+        let zipcode = "";
+        try {
+          const addr = m.address ? JSON.parse(m.address) : {};
+          zipcode = addr.zipcode || "";
+        } catch {
+          // ignore
+        }
+        return {
+          id,
+          score: 0,
+          price: Number(m.price) || 0,
+          bedrooms: Number(m.bedrooms) || 0,
+          bathrooms: Number(m.bathrooms) || 0,
+          livingArea: Number(m.livingArea) || 0,
+          yearBuilt: Number(m.yearBuilt) || 0,
+          homeType: String(m.homeType || ""),
+          homeStatus: String(m.homeStatus || ""),
+          city: String(m.city || ""),
+          zipcode,
+          latitude: m.latitude != null ? Number(m.latitude) : undefined,
+          longitude: m.longitude != null ? Number(m.longitude) : undefined,
+          zpid: m.zpid != null ? Number(m.zpid) : Number(id),
+        };
+      });
+    } catch (e) {
+      // ignore, fall back to Mongo
+    }
+
+    // Fallback to Mongo if needed or to enrich
+    if (
+      listings.length === 0 ||
+      listings.some((l) => l.latitude == null || l.longitude == null)
+    ) {
+      const zpidsNum = ids
+        .map((s) => Number(s))
+        .filter((n) => Number.isFinite(n));
+      const docs = await Property.find({ zpid: { $in: zpidsNum } }).limit(
+        zpidsNum.length,
+      );
+      const byId = new Map<number, any>();
+      docs.forEach((d) => byId.set(d.zpid, d));
+      listings = ids.map((id) => {
+        const z = Number(id);
+        const d = byId.get(z);
+        if (!d) return { id, zpid: z };
+        return {
+          id: String(z),
+          zpid: z,
+          price: d.price,
+          bedrooms: d.bedrooms,
+          bathrooms: d.bathrooms,
+          livingArea: d.livingArea,
+          yearBuilt: d.yearBuilt,
+          homeType: d.homeType,
+          homeStatus: d.homeStatus,
+          city: d.city,
+          zipcode: d.address?.zipcode,
+          latitude: (d as any).latitude,
+          longitude: (d as any).longitude,
+        };
+      });
+    }
+
+    return res.json({ listings });
+  } catch (err) {
+    console.error("getPropertiesByIds error", err);
+    return res.status(500).json({ error: "Failed to fetch properties by ids" });
+  }
+}
+
+/**
+ * GET /api/properties/lookup
+ * Lightweight lookup endpoint to find candidate ZPIDs by address/city/state/zipcode and optional beds/baths.
+ * Returns a compact list suitable for client selection UIs.
+ */
+export async function lookupZpids(req: Request, res: Response) {
+  try {
+    const address = String(req.query.address || "").trim();
+    const city = String(req.query.city || "").trim();
+    const state = String(req.query.state || "").trim();
+    const zipcode = String(req.query.zipcode || "").trim();
+    const beds = req.query.beds != null ? Number(req.query.beds) : undefined;
+    const baths = req.query.baths != null ? Number(req.query.baths) : undefined;
+    const limit = Math.min(Number(req.query.limit || 10), 50);
+
+    if (
+      !address &&
+      !city &&
+      !state &&
+      !zipcode &&
+      beds == null &&
+      baths == null
+    ) {
+      return res.status(400).json({
+        error:
+          "Provide at least one filter (address, city, state, zipcode, beds, baths)",
+      });
+    }
+
+    const parts: string[] = [];
+    if (address) parts.push(address);
+    if (city) parts.push(city);
+    if (state) parts.push(state);
+    if (zipcode) parts.push(zipcode);
+    if (beds != null) parts.push(`${beds} bed`);
+    if (baths != null) parts.push(`${baths} bath`);
+    const q = parts.join(" ").trim();
+
+    const raw = await queryProperties(q, limit);
+    const matches = raw.map((r) => {
+      const m = r.metadata as any;
+      let addr: any = {};
+      try {
+        addr = m.address ? JSON.parse(m.address) : {};
+      } catch {}
+      return {
+        id: r.id,
+        zpid: m.zpid != null ? Number(m.zpid) : Number(r.id),
+        score: r.score || 0,
+        streetAddress: addr.streetAddress || "",
+        city: m.city || addr.city || "",
+        state: addr.state || "",
+        zipcode: addr.zipcode || "",
+        price: m.price != null ? Number(m.price) : undefined,
+        bedrooms: m.bedrooms != null ? Number(m.bedrooms) : undefined,
+        bathrooms: m.bathrooms != null ? Number(m.bathrooms) : undefined,
+        livingArea: m.livingArea != null ? Number(m.livingArea) : undefined,
+        yearBuilt: m.yearBuilt != null ? Number(m.yearBuilt) : undefined,
+      };
+    });
+    return res.json({ query: q, count: matches.length, matches });
+  } catch (err) {
+    console.error("lookupZpids error", err);
+    return res.status(500).json({ error: "Failed to lookup ZPIDs" });
   }
 }

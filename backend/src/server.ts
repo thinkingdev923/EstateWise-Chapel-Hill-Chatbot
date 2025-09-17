@@ -1,4 +1,3 @@
-import 'express-async-errors';
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
@@ -11,6 +10,7 @@ import chatRoutes from "./routes/chat.routes";
 import conversationRoutes from "./routes/conversation.routes";
 import propertyRoutes from "./routes/property.routes";
 import commuteProfileRoutes from "./routes/commute-profile.routes";
+import graphRoutes from "./routes/graph.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
 
@@ -139,6 +139,7 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/commute-profiles", commuteProfileRoutes);
+app.use("/api/graph", graphRoutes);
 
 // Serve Swagger JSON definition
 app.get("/swagger.json", (req, res) => {

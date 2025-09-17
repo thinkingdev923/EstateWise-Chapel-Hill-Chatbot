@@ -58,6 +58,11 @@ jest.mock("../src/scripts/queryProperties", () => ({
   queryProperties: queryPropsMock,
 }));
 
+// Mock pinecone client to avoid env requirements in CI
+jest.mock("../src/pineconeClient", () => ({
+  index: { fetch: jest.fn().mockResolvedValue({ records: {} }) },
+}));
+
 /* ─── import after mocks ─────────────────────────────────────────────── */
 const { getPropertyData } = require("../src/controllers/property.controller");
 
@@ -68,6 +73,17 @@ const buildRes = () => ({
 });
 
 describe("getPropertyData()", () => {
+  let consoleErrorSpy;
+
+  beforeAll(() => {
+    // Silence expected error logs from the controller in this suite
+    consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+  });
+
+  afterAll(() => {
+    consoleErrorSpy && consoleErrorSpy.mockRestore();
+  });
+
   beforeEach(() => jest.clearAllMocks());
 
   it("handles service failure with 500", async () => {
