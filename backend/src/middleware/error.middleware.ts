@@ -22,7 +22,7 @@ export const errorHandler = (
     return res.status(err.statusCode).json({
       error: {
         message: err.message,
-        details: err.details
+        details: err.details,
       },
     });
   }

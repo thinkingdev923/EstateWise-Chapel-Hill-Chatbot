@@ -1,10 +1,10 @@
 import { Router } from "express";
 import {
-    createCommuteProfile,
-    getCommuteProfiles,
-    getCommuteProfileById,
-    updateCommuteProfile,
-    deleteCommuteProfile,
+  createCommuteProfile,
+  getCommuteProfiles,
+  getCommuteProfileById,
+  updateCommuteProfile,
+  deleteCommuteProfile,
 } from "../controllers/commute-profile.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
 

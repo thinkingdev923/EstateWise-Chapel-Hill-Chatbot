@@ -98,91 +98,94 @@ import { CommuteCombine, CommuteMode } from "../types/commute-profile.type";
  * Represents a single destination in a commute profile.
  */
 export interface ICommuteDestination {
-    label: string;
-    lat: number;
-    lng: number;
-    mode: CommuteMode;
-    window: string; // HH:MM-HH:MM format
-    maxMinutes?: number; // Optional per-destination max minutes
+  label: string;
+  lat: number;
+  lng: number;
+  mode: CommuteMode;
+  window: string; // HH:MM-HH:MM format
+  maxMinutes?: number; // Optional per-destination max minutes
 }
 
 /**
  * Represents a user's commute profile with multiple destinations.
  */
 export interface ICommuteProfile extends Document {
-    userId: mongoose.Types.ObjectId;
-    name: string;
-    destinations: ICommuteDestination[];
-    maxMinutes?: number; // Global max minutes
-    combine: CommuteCombine; // How to combine time windows
-    createdAt: Date;
-    updatedAt: Date;
+  userId: mongoose.Types.ObjectId;
+  name: string;
+  destinations: ICommuteDestination[];
+  maxMinutes?: number; // Global max minutes
+  combine: CommuteCombine; // How to combine time windows
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 /**
  * Schema for an individual commute destination.
  */
-const CommuteDestinationSchema: Schema = new Schema({
+const CommuteDestinationSchema: Schema = new Schema(
+  {
     label: {
-        type: String,
-        required: true,
-        trim: true
+      type: String,
+      required: true,
+      trim: true,
     },
     lat: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
     lng: {
-        type: Number,
-        required: true
+      type: Number,
+      required: true,
     },
     mode: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     window: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     maxMinutes: {
-        type: Number
-    }
-}, { _id: false });
+      type: Number,
+    },
+  },
+  { _id: false },
+);
 
 /**
  * Commute profile schema with user isolation and validation.
  */
 const CommuteProfileSchema: Schema = new Schema(
-    {
-        userId: {
-            type: Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true
-        },
-        name: {
-            type: String,
-            required: true,
-            trim: true
-        },
-        destinations: {
-            type: [CommuteDestinationSchema],
-            required: true
-        },
-        maxMinutes: {
-            type: Number
-        },
-        combine: {
-            type: String,
-            default: "intersect"
-        }
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+      index: true,
     },
-    {
-        timestamps: true,
-        // Ensure user can only access their own profiles
-        toJSON: { virtuals: true },
-        toObject: { virtuals: true }
-    }
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    destinations: {
+      type: [CommuteDestinationSchema],
+      required: true,
+    },
+    maxMinutes: {
+      type: Number,
+    },
+    combine: {
+      type: String,
+      default: "intersect",
+    },
+  },
+  {
+    timestamps: true,
+    // Ensure user can only access their own profiles
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  },
 );
 
 // Compound index for efficient queries
@@ -192,6 +195,6 @@ CommuteProfileSchema.index({ userId: 1, updatedAt: -1 });
 CommuteProfileSchema.index({ userId: 1, name: 1 }, { unique: true });
 
 export default mongoose.model<ICommuteProfile>(
-    "CommuteProfile",
-    CommuteProfileSchema,
+  "CommuteProfile",
+  CommuteProfileSchema,
 );

@@ -21,7 +21,14 @@ import {
   Sun,
   Moon,
   GitBranch,
+  HelpCircle,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type Listing = {
   id: string;
@@ -45,6 +52,73 @@ declare global {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     L: any;
   }
+}
+
+function HelpDialog({ title, content }: { title: string; content: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 rounded-full hover:bg-muted"
+        onClick={() => setOpen(true)}
+      >
+        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-auto z-[9999]">
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+          </DialogHeader>
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            {content.split("\n\n").map((paragraph, i) => {
+              if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
+                return (
+                  <h4 key={i} className="font-semibold mt-4 mb-2">
+                    {paragraph.slice(2, -2)}
+                  </h4>
+                );
+              }
+              if (paragraph.startsWith("•")) {
+                const items = paragraph
+                  .split("\n")
+                  .filter((line) => line.startsWith("•"));
+                return (
+                  <ul key={i} className="list-disc pl-5 space-y-1">
+                    {items.map((item, j) => {
+                      const text = item.slice(1).trim();
+                      const parts = text.split("**");
+                      return (
+                        <li key={j}>
+                          {parts.map((part, k) =>
+                            k % 2 === 0 ? (
+                              part
+                            ) : (
+                              <strong key={k}>{part}</strong>
+                            ),
+                          )}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                );
+              }
+              const parts = paragraph.split("**");
+              return (
+                <p key={i} className="text-sm text-muted-foreground mb-3">
+                  {parts.map((part, j) =>
+                    j % 2 === 0 ? part : <strong key={j}>{part}</strong>,
+                  )}
+                </p>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }
 
 export default function MapPage() {
@@ -319,13 +393,45 @@ export default function MapPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Filters</CardTitle>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Filters</span>
+                    <HelpDialog
+                      title="How to Use Map Filters"
+                      content={`This tool helps you search and display properties on an interactive map.
+
+**Search Options:**
+• **Text Search**: Enter keywords like "3 bed homes" or "condos under 500k"
+• **ZPID Search**: Use URL parameter ?zpids=123,456 for specific properties
+• **Default View**: Shows 50 sample properties when no search is active
+
+**Map Features:**
+• Click on any marker to see property details
+• Popup shows ZPID, price, location, and Zillow link
+• Map automatically zooms to show all results
+• Drag to pan, scroll to zoom
+
+**Search Tips:**
+• Be specific: "3 bedroom houses in Chapel Hill"
+• Use price ranges: "homes under 600000"
+• Filter by features: "houses with pool"
+• Maximum 200 properties shown for performance
+
+**URL Parameters:**
+• **?q=**: Search query (e.g., ?q=3+bed+homes)
+• **?zpids=**: Comma-separated ZPIDs (e.g., ?zpids=123,456,789)`}
+                    />
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="flex gap-2">
                     <Input
                       value={q}
                       onChange={(e) => setQ(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" && !loading) {
+                          handleSearch();
+                        }
+                      }}
                       placeholder="Search e.g. 3 bed homes"
                     />
                     <Button

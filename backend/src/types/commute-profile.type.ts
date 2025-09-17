@@ -1,4 +1,3 @@
-export type CommuteMode = 'drive' | 'transit' | 'bike' | 'walk';
+export type CommuteMode = "drive" | "transit" | "bike" | "walk";
 
-export type CommuteCombine = 'intersect' | 'union';
-
+export type CommuteCombine = "intersect" | "union";
