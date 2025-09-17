@@ -106,11 +106,13 @@ export class AgentOrchestrator {
       }
       case "analytics.summarizeSearch": {
         if (!this.blackboard.analytics) this.blackboard.analytics = {} as any;
+        // @ts-ignore
         this.blackboard.analytics.summary = data?.summary ?? data ?? null;
         break;
       }
       case "analytics.groupByZip": {
         if (!this.blackboard.analytics) this.blackboard.analytics = {} as any;
+        // @ts-ignore
         this.blackboard.analytics.groups = data?.groups ?? data ?? null;
         break;
       }

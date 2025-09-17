@@ -123,8 +123,15 @@ agentic-ai/
 ```
 
 ## Notes
+
+This project is designed for iterative development and experimentation with multi-agent systems in real estate analysis. Key points to remember:
+
 - Pure TS/Node CLI. Spawns the local MCP server dist build to avoid cross‑package imports.
 - Keep prompts small and explicit; prefer tools over LLM guessing.
+- Output is a readable terminal transcript showing agents' reasoning and actions.
+- Default 5 rounds should be enough to complete the plan and summarize.
+- CoordinatorAgent drives the pipeline, ensuring clear hand-offs and deterministic execution.
+
 ```mermaid
 sequenceDiagram
   participant CLI as Agentic CLI
