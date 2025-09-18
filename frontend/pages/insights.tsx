@@ -404,6 +404,17 @@ function DownPaymentImpactChart({
 function HelpDialog({ title, content }: { title: string; content: string }) {
   const [open, setOpen] = useState(false);
 
+  const renderInline = (text: string, keyPrefix: string) =>
+    text
+      .split("**")
+      .map((part, index) =>
+        index % 2 === 0 ? (
+          part
+        ) : (
+          <strong key={`${keyPrefix}-strong-${index}`}>{part}</strong>
+        ),
+      );
+
   return (
     <>
       <Button
@@ -420,45 +431,69 @@ function HelpDialog({ title, content }: { title: string; content: string }) {
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            {content.split("\n\n").map((paragraph, i) => {
-              if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
-                return (
-                  <h4 key={i} className="font-semibold mt-4 mb-2">
-                    {paragraph.slice(2, -2)}
-                  </h4>
+            {content.split(/\n{2,}/).map((block, blockIndex) => {
+              const lines = block
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean);
+              if (lines.length === 0) return null;
+
+              const blockParts: React.ReactNode[] = [];
+              const headingMatch = lines[0].match(/^\*\*(.+)\*\*$/);
+              let startIndex = 0;
+              if (headingMatch) {
+                blockParts.push(
+                  <h4
+                    key={`heading-${blockIndex}`}
+                    className="font-semibold mt-4 mb-2"
+                  >
+                    {headingMatch[1]}
+                  </h4>,
                 );
+                startIndex = 1;
               }
-              if (paragraph.startsWith("•")) {
-                const items = paragraph
-                  .split("\n")
-                  .filter((line) => line.startsWith("•"));
-                return (
-                  <ul key={i} className="list-disc pl-5 space-y-1">
-                    {items.map((item, j) => {
-                      const text = item.slice(1).trim();
-                      const parts = text.split("**");
+
+              const restLines = lines.slice(startIndex);
+              const bulletLines = restLines.filter((line) =>
+                /^[-•]/.test(line),
+              );
+              const textLines = restLines.filter((line) => !/^[-•]/.test(line));
+
+              textLines.forEach((line, lineIndex) => {
+                blockParts.push(
+                  <p
+                    key={`text-${blockIndex}-${lineIndex}`}
+                    className="text-sm text-muted-foreground mb-3"
+                  >
+                    {renderInline(line, `${blockIndex}-text-${lineIndex}`)}
+                  </p>,
+                );
+              });
+
+              if (bulletLines.length > 0) {
+                blockParts.push(
+                  <ul
+                    key={`list-${blockIndex}`}
+                    className="list-disc pl-5 space-y-1"
+                  >
+                    {bulletLines.map((item, itemIndex) => {
+                      const itemText = item.replace(/^[-•]\s*/, "").trim();
                       return (
-                        <li key={j}>
-                          {parts.map((part, k) =>
-                            k % 2 === 0 ? (
-                              part
-                            ) : (
-                              <strong key={k}>{part}</strong>
-                            ),
+                        <li key={`item-${blockIndex}-${itemIndex}`}>
+                          {renderInline(
+                            itemText,
+                            `${blockIndex}-item-${itemIndex}`,
                           )}
                         </li>
                       );
                     })}
-                  </ul>
+                  </ul>,
                 );
               }
-              const parts = paragraph.split("**");
+
+              if (blockParts.length === 0) return null;
               return (
-                <p key={i} className="text-sm text-muted-foreground mb-3">
-                  {parts.map((part, j) =>
-                    j % 2 === 0 ? part : <strong key={j}>{part}</strong>,
-                  )}
-                </p>
+                <React.Fragment key={blockIndex}>{blockParts}</React.Fragment>
               );
             })}
           </div>
@@ -505,6 +540,24 @@ export default function InsightsPage() {
   const [similarLoading, setSimilarLoading] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [similarData, setSimilarData] = useState<any[] | null>(null);
+
+  // Memoize the nodes transformation to prevent unnecessary rerenders
+  const similarGraphNodes = useMemo(() => {
+    if (!similarData || similarData.length === 0) return [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return similarData.map((d: any) => ({
+      id: String(d.property.zpid ?? Math.random()),
+      label:
+        d.property.streetAddress ||
+        `${d.property.city || ""} ${d.property.state || ""}`.trim() ||
+        "Property",
+      reasons: d.reasons || [],
+    }));
+  }, [similarData]);
+
+  // Store the last fetched ZPID to use in the graph label
+  const [lastFetchedZpid, setLastFetchedZpid] = useState<number | null>(null);
+
   const [lookupOpen, setLookupOpen] = useState(false);
   const [lookupMode, setLookupMode] = useState<"explain" | "similar">(
     "explain",
@@ -515,6 +568,7 @@ export default function InsightsPage() {
       setSimilarLoading(true);
       const res = await graphSimilar(similarZpid, similarLimit);
       setSimilarData(res.results || []);
+      setLastFetchedZpid(similarZpid); // Store the ZPID that was actually fetched
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (e: any) {
       toast.error(e.message || "Failed to fetch similar properties");
@@ -1005,18 +1059,9 @@ The tool searches for connections through:
                           ))}
                         </ul>
                         <div className="rounded-md border p-2 bg-muted/30 mt-3">
-                          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                           <SimilarGraph
-                            centerLabel={`ZPID ${similarZpid || "?"}`}
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            nodes={similarData.map((d: any) => ({
-                              id: String(d.property.zpid ?? Math.random()),
-                              label:
-                                d.property.streetAddress ||
-                                `${d.property.city || ""} ${d.property.state || ""}`.trim() ||
-                                "Property",
-                              reasons: d.reasons || [],
-                            }))}
+                            centerLabel={`ZPID ${lastFetchedZpid || "?"}`}
+                            nodes={similarGraphNodes}
                           />
                         </div>
                       </>
@@ -1709,254 +1754,262 @@ function PathGraph({ nodes, rels }: { nodes: GraphNode[]; rels: GraphRel[] }) {
   return <svg ref={ref} className="w-full h-36" />;
 }
 
-function SimilarGraph({
-  centerLabel,
-  nodes,
-}: {
-  centerLabel: string;
-  nodes: { id: string; label: string; reasons: string[] }[];
-}) {
-  const ref = useRef<SVGSVGElement>(null);
+// eslint-disable-next-line react/display-name
+const SimilarGraph = React.memo(
+  ({
+    centerLabel,
+    nodes,
+  }: {
+    centerLabel: string;
+    nodes: { id: string; label: string; reasons: string[] }[];
+  }) => {
+    const ref = useRef<SVGSVGElement>(null);
 
-  useEffect(() => {
-    let simulation: undefined | { stop: () => void };
-    let themeObserver: MutationObserver | null = null;
+    useEffect(() => {
+      let simulation: undefined | { stop: () => void };
+      let themeObserver: MutationObserver | null = null;
 
-    (async () => {
-      if (!ref.current) return;
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const d3: any = await import("d3");
-
-        const width = 480;
-        const height = 360;
-        const svg = d3.select(ref.current);
-        svg.selectAll("*").remove();
-        svg.attr("viewBox", `0 0 ${width} ${height}`);
-
-        const theme = () => {
-          const isDark = document.documentElement.classList.contains("dark");
-          return {
-            isDark,
-            text: isDark ? "#e5e7eb" : "#111827",
-            link: isDark ? "#475569" : "#cbd5e1",
-            legend: isDark ? "#e5e7eb" : "#111827",
-          };
-        };
-
-        const colorForReasons = (reasons: string[]) => {
-          if (reasons.includes("vector similarity")) return "#8b5cf6";
-          if (reasons.includes("same neighborhood")) return "#22c55e";
-          if (reasons.includes("same zip code")) return "#f59e0b";
-          return "#64748b";
-        };
-
-        const dataNodes = [
-          {
-            id: "center",
-            type: "center",
-            label: centerLabel || "Target",
-            reasons: [] as string[],
-          },
-          ...nodes.map((n, idx) => ({
-            id: n.id || `similar-${idx}`,
-            type: "similar",
-            label: n.label || "Property",
-            reasons: Array.isArray(n.reasons) ? n.reasons : [],
-            order: idx,
-          })),
-        ];
-
-        const dataLinks = nodes.map((n, idx) => ({
-          source: "center",
-          target: n.id || `similar-${idx}`,
-        }));
-
-        const g = svg.append("g");
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const zoomed = (event: any) => {
-          g.attr("transform", event.transform);
-        };
-        svg.call(d3.zoom().scaleExtent([0.6, 3]).on("zoom", zoomed));
-
-        const link = g
-          .append("g")
-          .selectAll("line")
-          .data(dataLinks)
-          .join("line")
-          .attr("stroke", theme().link)
-          .attr("stroke-width", 1.6);
-
-        const nodeGroup = g
-          .append("g")
-          .selectAll("g")
-          .data(dataNodes)
-          .join("g")
-          .call(
-            d3
-              .drag()
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .on("start", (event: any, d: { fx?: number; fy?: number }) => {
-                if (!event.active && simulation)
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                  // @ts-ignore
-                  simulation.alphaTarget(0.3).restart();
-                d.fx = event.x;
-                d.fy = event.y;
-              })
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .on("drag", (event: any, d: { fx?: number; fy?: number }) => {
-                d.fx = event.x;
-                d.fy = event.y;
-              })
-              .on(
-                "end",
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (event: any, d: { fx?: number | null; fy?: number | null }) => {
-                  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                  // @ts-ignore
-                  if (!event.active && simulation) simulation.alphaTarget(0);
-                  d.fx = null;
-                  d.fy = null;
-                },
-              ),
-          );
-
-        nodeGroup
-          .append("circle")
-          .attr("r", (d: { type: string }) => (d.type === "center" ? 28 : 22))
-          .attr("fill", (d: { type: string; reasons: string[] }) =>
-            d.type === "center" ? "#0ea5e9" : colorForReasons(d.reasons),
-          )
-          .attr("fill-opacity", 0.92);
-
-        nodeGroup
-          .append("text")
-          .attr("text-anchor", "middle")
-          .attr("dy", "0.35em")
-          .attr("fill", "#ffffff")
-          .attr("font-size", 11)
-          .attr("font-weight", 600)
+      (async () => {
+        if (!ref.current) return;
+        try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          .text((d: any) =>
-            d.type === "center" ? "Center" : `${(d.order ?? 0) + 1}`,
-          );
+          const d3: any = await import("d3");
 
-        const nodeLabels = nodeGroup
-          .append("text")
-          .attr("text-anchor", "middle")
-          .attr("y", (d: { type: string }) => (d.type === "center" ? 42 : 36))
-          .attr("fill", theme().text)
-          .attr("font-size", 11)
-          .text((d: { label: string }) => d.label.slice(0, 40));
+          const width = 480;
+          const height = 360;
+          const svg = d3.select(ref.current);
+          svg.selectAll("*").remove();
+          svg.attr("viewBox", `0 0 ${width} ${height}`);
 
-        const legendGroup = svg
-          .append("g")
-          .attr("transform", "translate(16,16)");
-        const legendData = [
-          { label: "same neighborhood", color: "#22c55e", y: 8 },
-          { label: "same zip", color: "#f59e0b", y: 32 },
-          { label: "vector similarity", color: "#8b5cf6", y: 56 },
-        ];
+          const theme = () => {
+            const isDark = document.documentElement.classList.contains("dark");
+            return {
+              isDark,
+              text: isDark ? "#e5e7eb" : "#111827",
+              link: isDark ? "#475569" : "#cbd5e1",
+              legend: isDark ? "#e5e7eb" : "#111827",
+            };
+          };
 
-        legendGroup
-          .selectAll("circle")
-          .data(legendData)
-          .join("circle")
-          .attr("cx", 6)
-          .attr("cy", (d: { y: number }) => d.y)
-          .attr("r", 6)
-          .attr("fill", (d: { color: string }) => d.color);
+          const colorForReasons = (reasons: string[]) => {
+            if (reasons.includes("vector similarity")) return "#8b5cf6";
+            if (reasons.includes("same neighborhood")) return "#22c55e";
+            if (reasons.includes("same zip code")) return "#f59e0b";
+            return "#64748b";
+          };
 
-        legendGroup
-          .selectAll("text")
-          .data(legendData)
-          .join("text")
-          .attr("x", 18)
-          .attr("y", (d: { y: number }) => d.y + 4)
-          .attr("font-size", 10)
-          .attr("fill", theme().legend)
-          .text((d: { label: string }) => d.label);
+          const dataNodes = [
+            {
+              id: "center",
+              type: "center",
+              label: centerLabel || "Target",
+              reasons: [] as string[],
+            },
+            ...nodes.map((n, idx) => ({
+              id: n.id || `similar-${idx}`,
+              type: "similar",
+              label: n.label || "Property",
+              reasons: Array.isArray(n.reasons) ? n.reasons : [],
+              order: idx,
+            })),
+          ];
 
-        const applyTheme = () => {
-          const { text, link: linkColor, legend } = theme();
-          link.attr("stroke", linkColor);
-          nodeLabels.attr("fill", text);
-          legendGroup.selectAll("text").attr("fill", legend);
-        };
+          const dataLinks = nodes.map((n, idx) => ({
+            source: "center",
+            target: n.id || `similar-${idx}`,
+          }));
 
-        applyTheme();
+          const g = svg.append("g");
 
-        themeObserver = new MutationObserver(() => applyTheme());
-        themeObserver.observe(document.documentElement, {
-          attributes: true,
-          attributeFilter: ["class"],
-        });
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const zoomed = (event: any) => {
+            g.attr("transform", event.transform);
+          };
+          svg.call(d3.zoom().scaleExtent([0.6, 3]).on("zoom", zoomed));
 
-        const ringRadius = Math.max(80, Math.min(width, height - 140) / 2);
-        const centerY = height / 2 - 20;
+          const link = g
+            .append("g")
+            .selectAll("line")
+            .data(dataLinks)
+            .join("line")
+            .attr("stroke", theme().link)
+            .attr("stroke-width", 1.6);
 
-        simulation = d3
-          .forceSimulation(dataNodes)
-          .force(
-            "link",
-            d3
-              .forceLink(dataLinks)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .id((d: any) => d.id)
-              .distance(140)
-              .strength(0.9),
-          )
-          .force("charge", d3.forceManyBody().strength(-180))
-          .force(
-            "collide",
-            d3
-              .forceCollide()
-              .radius((d: { type: string }) => (d.type === "center" ? 46 : 32)),
-          )
-          .force(
-            "radial",
-            d3
-              .forceRadial(
+          const nodeGroup = g
+            .append("g")
+            .selectAll("g")
+            .data(dataNodes)
+            .join("g")
+            .call(
+              d3
+                .drag()
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                (d: any) => (d.type === "center" ? 0 : ringRadius),
-                width / 2,
-                centerY,
-              )
-              .strength(0.9),
-          )
-          .force("center", d3.forceCenter(width / 2, centerY))
-          .on("tick", () => {
-            link
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .attr("x1", (d: any) => d.source.x)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .attr("y1", (d: any) => d.source.y)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .attr("x2", (d: any) => d.target.x)
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              .attr("y2", (d: any) => d.target.y);
-
-            nodeGroup.attr(
-              "transform",
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (d: any) => `translate(${d.x}, ${d.y})`,
+                .on("start", (event: any, d: { fx?: number; fy?: number }) => {
+                  if (!event.active && simulation)
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    simulation.alphaTarget(0.3).restart();
+                  d.fx = event.x;
+                  d.fy = event.y;
+                })
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .on("drag", (event: any, d: { fx?: number; fy?: number }) => {
+                  d.fx = event.x;
+                  d.fy = event.y;
+                })
+                .on(
+                  "end",
+                  (
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    event: any,
+                    d: { fx?: number | null; fy?: number | null },
+                  ) => {
+                    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                    // @ts-ignore
+                    if (!event.active && simulation) simulation.alphaTarget(0);
+                    d.fx = null;
+                    d.fy = null;
+                  },
+                ),
             );
+
+          nodeGroup
+            .append("circle")
+            .attr("r", (d: { type: string }) => (d.type === "center" ? 28 : 22))
+            .attr("fill", (d: { type: string; reasons: string[] }) =>
+              d.type === "center" ? "#0ea5e9" : colorForReasons(d.reasons),
+            )
+            .attr("fill-opacity", 0.92);
+
+          nodeGroup
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", "0.35em")
+            .attr("fill", "#ffffff")
+            .attr("font-size", 11)
+            .attr("font-weight", 600)
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .text((d: any) =>
+              d.type === "center" ? "Center" : `${(d.order ?? 0) + 1}`,
+            );
+
+          const nodeLabels = nodeGroup
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("y", (d: { type: string }) => (d.type === "center" ? 42 : 36))
+            .attr("fill", theme().text)
+            .attr("font-size", 11)
+            .text((d: { label: string }) => d.label.slice(0, 40));
+
+          const legendGroup = svg
+            .append("g")
+            .attr("transform", "translate(16,16)");
+          const legendData = [
+            { label: "same neighborhood", color: "#22c55e", y: 8 },
+            { label: "same zip", color: "#f59e0b", y: 32 },
+            { label: "vector similarity", color: "#8b5cf6", y: 56 },
+          ];
+
+          legendGroup
+            .selectAll("circle")
+            .data(legendData)
+            .join("circle")
+            .attr("cx", 6)
+            .attr("cy", (d: { y: number }) => d.y)
+            .attr("r", 6)
+            .attr("fill", (d: { color: string }) => d.color);
+
+          legendGroup
+            .selectAll("text")
+            .data(legendData)
+            .join("text")
+            .attr("x", 18)
+            .attr("y", (d: { y: number }) => d.y + 4)
+            .attr("font-size", 10)
+            .attr("fill", theme().legend)
+            .text((d: { label: string }) => d.label);
+
+          const applyTheme = () => {
+            const { text, link: linkColor, legend } = theme();
+            link.attr("stroke", linkColor);
+            nodeLabels.attr("fill", text);
+            legendGroup.selectAll("text").attr("fill", legend);
+          };
+
+          applyTheme();
+
+          themeObserver = new MutationObserver(() => applyTheme());
+          themeObserver.observe(document.documentElement, {
+            attributes: true,
+            attributeFilter: ["class"],
           });
-      } catch (err) {
-        console.error("Failed to render similar graph", err);
-      }
-    })();
 
-    return () => {
-      simulation?.stop?.();
-      themeObserver?.disconnect();
-    };
-  }, [centerLabel, nodes]);
+          const ringRadius = Math.max(80, Math.min(width, height - 140) / 2);
+          const centerY = height / 2 - 20;
 
-  return <svg ref={ref} className="w-full h-80" />;
-}
+          simulation = d3
+            .forceSimulation(dataNodes)
+            .force(
+              "link",
+              d3
+                .forceLink(dataLinks)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .id((d: any) => d.id)
+                .distance(140)
+                .strength(0.9),
+            )
+            .force("charge", d3.forceManyBody().strength(-180))
+            .force(
+              "collide",
+              d3
+                .forceCollide()
+                .radius((d: { type: string }) =>
+                  d.type === "center" ? 46 : 32,
+                ),
+            )
+            .force(
+              "radial",
+              d3
+                .forceRadial(
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (d: any) => (d.type === "center" ? 0 : ringRadius),
+                  width / 2,
+                  centerY,
+                )
+                .strength(0.9),
+            )
+            .force("center", d3.forceCenter(width / 2, centerY))
+            .on("tick", () => {
+              link
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .attr("x1", (d: any) => d.source.x)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .attr("y1", (d: any) => d.source.y)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .attr("x2", (d: any) => d.target.x)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .attr("y2", (d: any) => d.target.y);
+
+              nodeGroup.attr(
+                "transform",
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                (d: any) => `translate(${d.x}, ${d.y})`,
+              );
+            });
+        } catch (err) {
+          console.error("Failed to render similar graph", err);
+        }
+      })();
+
+      return () => {
+        simulation?.stop?.();
+        themeObserver?.disconnect();
+      };
+    }, [centerLabel, nodes]);
+
+    return <svg ref={ref} className="w-full h-80" />;
+  },
+);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function NeighborhoodForceGraph({

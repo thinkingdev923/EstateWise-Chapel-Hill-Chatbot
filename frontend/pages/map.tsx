@@ -57,6 +57,17 @@ declare global {
 function HelpDialog({ title, content }: { title: string; content: string }) {
   const [open, setOpen] = useState(false);
 
+  const renderInline = (text: string, keyPrefix: string) =>
+    text
+      .split("**")
+      .map((part, index) =>
+        index % 2 === 0 ? (
+          part
+        ) : (
+          <strong key={`${keyPrefix}-strong-${index}`}>{part}</strong>
+        ),
+      );
+
   return (
     <>
       <Button
@@ -73,45 +84,69 @@ function HelpDialog({ title, content }: { title: string; content: string }) {
             <DialogTitle>{title}</DialogTitle>
           </DialogHeader>
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            {content.split("\n\n").map((paragraph, i) => {
-              if (paragraph.startsWith("**") && paragraph.endsWith("**")) {
-                return (
-                  <h4 key={i} className="font-semibold mt-4 mb-2">
-                    {paragraph.slice(2, -2)}
-                  </h4>
+            {content.split(/\n{2,}/).map((block, blockIndex) => {
+              const lines = block
+                .split("\n")
+                .map((line) => line.trim())
+                .filter(Boolean);
+              if (lines.length === 0) return null;
+
+              const blockParts: React.ReactNode[] = [];
+              const headingMatch = lines[0].match(/^\*\*(.+)\*\*$/);
+              let startIndex = 0;
+              if (headingMatch) {
+                blockParts.push(
+                  <h4
+                    key={`heading-${blockIndex}`}
+                    className="font-semibold mt-4 mb-2"
+                  >
+                    {headingMatch[1]}
+                  </h4>,
                 );
+                startIndex = 1;
               }
-              if (paragraph.startsWith("•")) {
-                const items = paragraph
-                  .split("\n")
-                  .filter((line) => line.startsWith("•"));
-                return (
-                  <ul key={i} className="list-disc pl-5 space-y-1">
-                    {items.map((item, j) => {
-                      const text = item.slice(1).trim();
-                      const parts = text.split("**");
+
+              const restLines = lines.slice(startIndex);
+              const bulletLines = restLines.filter((line) =>
+                /^[-•]/.test(line),
+              );
+              const textLines = restLines.filter((line) => !/^[-•]/.test(line));
+
+              textLines.forEach((line, lineIndex) => {
+                blockParts.push(
+                  <p
+                    key={`text-${blockIndex}-${lineIndex}`}
+                    className="text-sm text-muted-foreground mb-3"
+                  >
+                    {renderInline(line, `${blockIndex}-text-${lineIndex}`)}
+                  </p>,
+                );
+              });
+
+              if (bulletLines.length > 0) {
+                blockParts.push(
+                  <ul
+                    key={`list-${blockIndex}`}
+                    className="list-disc pl-5 space-y-1"
+                  >
+                    {bulletLines.map((item, itemIndex) => {
+                      const itemText = item.replace(/^[-•]\s*/, "").trim();
                       return (
-                        <li key={j}>
-                          {parts.map((part, k) =>
-                            k % 2 === 0 ? (
-                              part
-                            ) : (
-                              <strong key={k}>{part}</strong>
-                            ),
+                        <li key={`item-${blockIndex}-${itemIndex}`}>
+                          {renderInline(
+                            itemText,
+                            `${blockIndex}-item-${itemIndex}`,
                           )}
                         </li>
                       );
                     })}
-                  </ul>
+                  </ul>,
                 );
               }
-              const parts = paragraph.split("**");
+
+              if (blockParts.length === 0) return null;
               return (
-                <p key={i} className="text-sm text-muted-foreground mb-3">
-                  {parts.map((part, j) =>
-                    j % 2 === 0 ? part : <strong key={j}>{part}</strong>,
-                  )}
-                </p>
+                <React.Fragment key={blockIndex}>{blockParts}</React.Fragment>
               );
             })}
           </div>
