@@ -626,7 +626,7 @@ const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-md h-16 overflow-x-auto whitespace-nowrap">
+    <div className="sticky top-0 z-20 flex items-center justify-between p-4 border-b border-border bg-background shadow-md h-16 overflow-visible whitespace-nowrap">
       <div className="flex items-center gap-2">
         {!sidebarVisible && (
           <button
@@ -642,7 +642,7 @@ const TopBar: React.FC<TopBarProps> = ({
           Hi {username}, welcome to EstateWise! 🏠
         </span>
       </div>
-      <div className="flex items-center gap-4 relative">
+      <div className="flex items-center gap-6 relative">
         <Tooltip>
           <TooltipTrigger asChild>
             <Link
@@ -719,7 +719,7 @@ const TopBar: React.FC<TopBarProps> = ({
             </Tooltip>
           </>
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-6">
             <div className="relative">
               <Tooltip>
                 <TooltipTrigger asChild>
