@@ -7,7 +7,10 @@ type Entry<V> = { value: V; expiresAt: number };
  */
 export class LruCache<K, V> {
   private map = new Map<K, Entry<V>>();
-  constructor(private max: number, private ttlMs: number) {}
+  constructor(
+    private max: number,
+    private ttlMs: number,
+  ) {}
 
   /** Get a value by key and refresh its recency if present and not expired. */
   get(key: K): V | undefined {
@@ -21,7 +24,7 @@ export class LruCache<K, V> {
     this.map.delete(key);
     this.map.set(key, ent);
     return ent.value;
-    }
+  }
 
   /** Set a value by key, updating expiry, and evict LRU if over capacity. */
   set(key: K, value: V) {

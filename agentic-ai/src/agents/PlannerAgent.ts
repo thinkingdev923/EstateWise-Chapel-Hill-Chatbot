@@ -1,4 +1,10 @@
-import { Agent, AgentContext, AgentMessage, Plan, PlanStep } from "../core/types.js";
+import {
+  Agent,
+  AgentContext,
+  AgentMessage,
+  Plan,
+  PlanStep,
+} from "../core/types.js";
 
 /** Drafts an initial coarse plan from the user goal. */
 export class PlannerAgent implements Agent {

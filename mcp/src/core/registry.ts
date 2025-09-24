@@ -1,5 +1,5 @@
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import type { ZodTypeAny } from 'zod';
+import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ZodTypeAny } from "zod";
 
 /**
  * Declarative description of an MCP tool to register on the server.

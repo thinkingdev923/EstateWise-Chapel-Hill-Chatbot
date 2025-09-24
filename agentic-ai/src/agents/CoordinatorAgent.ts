@@ -124,7 +124,9 @@ export class CoordinatorAgent implements Agent {
 
     // If something is in-flight and we have its result, mark it done.
     if (plan.inFlightStepKey) {
-      if (this.findToolResult(ctx, expectedTools(plan.inFlightStepKey as StepKey))) {
+      if (
+        this.findToolResult(ctx, expectedTools(plan.inFlightStepKey as StepKey))
+      ) {
         this.markDone(ctx, plan.inFlightStepKey as StepKey);
         return {
           from: this.role,
