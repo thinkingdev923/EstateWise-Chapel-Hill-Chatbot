@@ -10,11 +10,47 @@ import { CoordinatorAgent } from "./agents/CoordinatorAgent.js";
 import { DedupeRankingAgent } from "./agents/DedupeRankingAgent.js";
 import { ComplianceAgent } from "./agents/ComplianceAgent.js";
 import { AgentOrchestrator } from "./orchestrator/AgentOrchestrator.js";
+import { runEstateWiseAgent } from "./lang/graph.js";
+import { runCrewAIGoal } from "./crewai/CrewRunner.js";
 
 async function main() {
-  const goal =
-    process.argv.slice(2).join(" ") ||
+  const argv = process.argv.slice(2);
+  const goal = argv.filter((a) => !a.startsWith('--')).join(" ") ||
     "Find similar homes near Chapel Hill with 3 beds and explain how 123456 and 654321 are related.";
+  const runtimeFlag = argv.find((a) => a === '--langgraph' || a === '--runtime=langgraph');
+  const crewFlag = argv.find((a) => a === '--crewai' || a === '--runtime=crewai');
+  const threadId = process.env.THREAD_ID;
+
+  if (runtimeFlag || process.env.AGENT_RUNTIME === 'langgraph') {
+    // LangGraph + LangChain runtime
+    // eslint-disable-next-line no-console
+    console.log("Using LangGraph runtime...\n");
+    const result = await runEstateWiseAgent({ input: goal, threadId });
+    const messages = (result as any)?.messages || [];
+    for (const msg of messages) {
+      const role = msg._getType ? msg._getType() : msg.role || 'assistant';
+      const content = typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content);
+      console.log(`[${role}] ${content}`);
+    }
+    console.log("\n=== LangGraph Run Complete ===");
+    return;
+  }
+
+  if (crewFlag || process.env.AGENT_RUNTIME === 'crewai') {
+    console.log("Using CrewAI runtime...\n");
+    const result = await runCrewAIGoal(goal);
+    if (result.ok) {
+      if (result.json) console.log(JSON.stringify(result.json, null, 2));
+      else if (result.output) console.log(result.output);
+    } else {
+      console.error(result.error || 'CrewAI run failed');
+      process.exitCode = 1;
+    }
+    console.log("\n=== CrewAI Run Complete ===");
+    return;
+  }
+
+  // Default: round-based orchestrator runtime
   const orchestrator = new AgentOrchestrator().register(
     new PlannerAgent(),
     new CoordinatorAgent(),

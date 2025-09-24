@@ -208,6 +208,101 @@ flowchart LR
 - Orchestrator
   - Executes tool calls via MCP, retries transient failures once, and normalizes JSON results.
 
+### Agentic Runtimes (Pipeline Overview)
+
+The project supports three agentic runtimes: the default round‑based Orchestrator, a LangChain + LangGraph ReAct agent, and a CrewAI (Python) sequential crew.
+
+```mermaid
+flowchart LR
+  subgraph Entry
+    Goal[User Goal]
+  end
+
+  subgraph Orchestrator
+    PlannerO[Planner]
+    CoordO[Coordinator]
+    ParseO[util.parseGoal]
+    LookupO[properties.lookup]
+    SearchO[properties.search]
+    SummO[analytics.summarizeSearch]
+    GroupO[analytics.groupByZip]
+    RankO[Dedupe/Rank]
+    GraphO[graph.explain/similar]
+    MapO[map.linkForZpids]
+    FinO[finance.mortgage]
+    CompO[Compliance]
+    ReportO[Reporter]
+    PlannerO --> CoordO --> ParseO --> LookupO --> SearchO --> SummO --> GroupO --> RankO --> GraphO --> MapO --> FinO --> CompO --> ReportO
+  end
+
+  subgraph LangGraph
+    ReactA[ReAct Agent]
+    ToolsA[[MCP Tools]]
+    PineA[(Pinecone)]
+    NeoA[(Neo4j)]
+    ReactA --> ToolsA
+    ReactA --> PineA
+    ReactA --> NeoA
+  end
+
+  subgraph CrewAI
+    PlanC[Planner]
+    AnalC[Property Analyst]
+    GraphC[Graph Analyst]
+    FinC[Finance Analyst]
+    RepC[Reporter]
+    PlanC --> AnalC --> GraphC --> FinC --> RepC
+  end
+
+  Goal -->|--runtime=orchestrator| PlannerO
+  Goal -->|--runtime=langgraph| ReactA
+  Goal -->|--runtime=crewai| PlanC
+```
+
+### Integration with Overall System
+
+The agentic runtimes integrate with the rest of EstateWise via the MCP server and backend API. The diagram shows an end‑to‑end view (agent → tools → API/data) and UI entry points.
+
+```mermaid
+flowchart LR
+    subgraph UI;
+        FE[Next.js / React];
+        VSX[VS Code Extension];
+    end;
+
+    subgraph Agentic;
+        OrchestratorRuntime[Orchestrator CLI];
+        LangGraphRuntime[LangGraph Agent];
+        CrewAIRuntime[CrewAI Runner];
+    end;
+
+subgraph Tooling;
+MCP[MCP Server];
+end;
+
+subgraph Backend;
+API[Express API];
+Auth[/Auth/Chat/Props/Graph/];
+end;
+
+subgraph Data;
+Mongo[(MongoDB Atlas)];
+Pinecone[(Pinecone Index)];
+Neo4j[(Neo4j Graph)];
+end;
+
+FE --> API;
+VSX --> FE;
+OrchestratorRuntime -->|spawn stdio| MCP;
+LangGraphRuntime --> MCP;
+CrewAIRuntime --> API;
+MCP --> API;
+API --> Mongo;
+API --> Pinecone;
+API --> Neo4j;
+FE -->|/map deep links| FE;
+```
+
 ## VS Code Extension
 
 Simple WebView wrapper that loads `https://estatewise.vercel.app/chat` inside VS Code. No additional secrets are required; it leverages the hosted frontend.

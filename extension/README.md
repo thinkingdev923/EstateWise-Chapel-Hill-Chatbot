@@ -14,7 +14,7 @@ Embed the Estatewise chatbot directly into your VS Code editor and get instant p
 
 Don't want to build it yourself? Search for "Estatewise Chat" in the [VS Code Marketplace](https://marketplace.visualstudio.com/vscode) and install it directly!
 
-Here is the link to it, directly: [Estatewise Chat Extension](https://marketplace.visualstudio.com/items?itemName=hoangsonw.estatewise-chat).
+**Here is the link to it, directly: [Estatewise Chat Extension](https://marketplace.visualstudio.com/items?itemName=hoangsonw.estatewise-chat).**
 
 ## Launch with VS Code
 
