@@ -1128,7 +1128,8 @@ Notes
 - Returns are text content blocks; JSON payloads are stringified for portability across clients.
 - Graph tools require the backend to have Neo4j configured; otherwise they may return 503 from the API.
 
-For details and examples, see [mcp/README.md](mcp/README.md).
+> [!TIP]
+> **For details and examples, see [mcp/README.md](mcp/README.md).**
 
 ## Agentic AI Pipeline
 
@@ -1200,7 +1201,8 @@ flowchart LR
     end
 ```
 
-For details and examples, see `agentic-ai/README.md`.
+> [!IMPORTANT]
+> **For details and examples, see [agentic-ai/README.md](agentic-ai/README.md).**
 
 ## VS Code Extension
 
@@ -1229,6 +1231,9 @@ We have developed a VSCode extension to enhance the development experience with 
 </p>
 
 **For full installation, development, and configuration instructions, see the [VS Code Extension docs](extension/README.md).**
+
+> [!TIP]
+> VS Code Marketplace: [Estatewise Chat Extension](https://marketplace.visualstudio.com/items?itemName=hoangsonw.estatewise-chat).
 
 ## Contributing
 
