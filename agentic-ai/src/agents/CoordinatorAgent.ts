@@ -1,20 +1,25 @@
 import { Agent, AgentContext, AgentMessage, PlanStep } from "../core/types.js";
 
+/** Canonical keys for coordinator-managed steps. */
 type StepKey =
   | "parseGoal"
   | "lookup"
   | "search"
   | "summarize"
   | "groupByZip"
+  | "dedupeRank"
   | "graph"
   | "comparePairs"
   | "map"
   | "mortgage"
-  | "affordability";
+  | "affordability"
+  | "compliance";
 
+/** Drives plan execution and marks steps running/done as results arrive. */
 export class CoordinatorAgent implements Agent {
   role: "coordinator" = "coordinator";
 
+  /** Return true if a result from one of the provided tool names exists in history. */
   private findToolResult(ctx: AgentContext, toolNames: string[]): boolean {
     for (let i = ctx.history.length - 1; i >= 0; i--) {
       const m = ctx.history[i];
@@ -26,6 +31,7 @@ export class CoordinatorAgent implements Agent {
     return false;
   }
 
+  /** Initialize a default plan if the blackboard lacks one. */
   private ensurePlan(ctx: AgentContext) {
     if (ctx.blackboard.plan) return;
     const steps: PlanStep[] = [
@@ -85,6 +91,7 @@ export class CoordinatorAgent implements Agent {
     ctx.blackboard.plan = { steps };
   }
 
+  /** Identify current step: running step key or the next pending step key. */
   private currentStep(ctx: AgentContext): StepKey | null {
     const plan = ctx.blackboard.plan!;
     const running = plan.steps.find((s) => s.status === "running");
@@ -93,25 +100,33 @@ export class CoordinatorAgent implements Agent {
     return (next?.key as StepKey) || null;
   }
 
+  /** Mark a step done and clear in-flight state. */
   private markDone(ctx: AgentContext, key: StepKey) {
     const st = ctx.blackboard.plan?.steps.find((s) => s.key === key);
     if (st) st.status = "done";
     if (ctx.blackboard.plan) ctx.blackboard.plan.inFlightStepKey = undefined;
   }
 
+  /** Mark a step as running and set in-flight key. */
   private markRunning(ctx: AgentContext, key: StepKey) {
     const st = ctx.blackboard.plan?.steps.find((s) => s.key === key);
     if (st) st.status = "running";
     if (ctx.blackboard.plan) ctx.blackboard.plan.inFlightStepKey = key;
   }
 
+  /**
+   * Decide next action for the coordinator: set in-flight tool calls, or
+   * perform inline steps (dedupe/compliance), or confirm completion.
+   */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     this.ensurePlan(ctx);
     const plan = ctx.blackboard.plan!;
 
     // If something is in-flight and we have its result, mark it done.
     if (plan.inFlightStepKey) {
-      if (this.findToolResult(ctx, expectedTools(plan.inFlightStepKey))) {
+      if (
+        this.findToolResult(ctx, expectedTools(plan.inFlightStepKey as StepKey))
+      ) {
         this.markDone(ctx, plan.inFlightStepKey as StepKey);
         return {
           from: this.role,
@@ -388,6 +403,7 @@ export class CoordinatorAgent implements Agent {
   }
 }
 
+/** Expected tools that complete each step, by key. */
 function expectedTools(key: StepKey): string[] {
   switch (key) {
     case "parseGoal":

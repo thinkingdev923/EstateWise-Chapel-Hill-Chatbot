@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Requests mortgage breakdown using signals from goal or analytics. */
 export class FinanceAnalystAgent implements Agent {
   role: "finance-analyst" = "finance-analyst" as const;
 
+  /** Build a finance.mortgage request based on detected APR/price/years. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };

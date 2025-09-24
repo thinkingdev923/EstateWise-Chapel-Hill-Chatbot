@@ -11,6 +11,7 @@ import { ComplianceAgent } from "../agents/ComplianceAgent.js";
 import { ZpidFinderAgent } from "../agents/ZpidFinderAgent.js";
 import { AnalyticsAnalystAgent } from "../agents/AnalyticsAnalystAgent.js";
 
+/** Run the default orchestrator pipeline for a single goal. */
 export async function runMarketResearch(goal: string) {
   const orchestrator = new AgentOrchestrator().register(
     new PlannerAgent(),

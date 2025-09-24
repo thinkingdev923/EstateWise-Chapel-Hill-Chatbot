@@ -1,8 +1,9 @@
-import { MemorySaver } from '@langchain/langgraph';
+import { MemorySaver } from "@langchain/langgraph";
 
-// For production, swap to a persistent checkpointer (e.g., Redis/Postgres).
+/**
+ * Returns a checkpointer for LangGraph runs.
+ * For production, swap to a persistent backend (Redis/Postgres/etc.).
+ */
 export function getCheckpointer() {
-  // Placeholder for future pluggable backends
   return new MemorySaver();
 }
-

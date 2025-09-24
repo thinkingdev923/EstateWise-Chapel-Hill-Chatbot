@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Performs sanity checks over analytics, finance, and ZPID counts. */
 export class ComplianceAgent implements Agent {
   role: "compliance-analyst" = "compliance-analyst";
 
+  /** Produce a compact compliance summary and update blackboard. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     // Only run if not blocked by coordinator, or if coordinator wants this step
     const step = ctx.blackboard.plan?.inFlightStepKey;

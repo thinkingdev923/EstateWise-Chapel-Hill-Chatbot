@@ -1,7 +1,5 @@
-// @ts-ignore
-import { McpClient } from "@modelcontextprotocol/sdk/client/mcp.js";
+import { Client as McpClient } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import { spawn } from "node:child_process";
 
 /**
  * Spawns the local MCP server from ../mcp/dist/server.js and exposes list/call.
@@ -9,39 +7,39 @@ import { spawn } from "node:child_process";
  */
 export class ToolClient {
   private client: McpClient | null = null;
-  private child: ReturnType<typeof spawn> | null = null;
+  // We let StdioClientTransport manage the child process internally.
 
+  /** Start a background stdio MCP client, spawning the server if needed. */
   async start(): Promise<void> {
     if (this.client) return;
-    const child = spawn("node", ["dist/server.js"], {
-      cwd: new URL("../../../mcp/", import.meta.url).pathname,
-      stdio: ["pipe", "pipe", "inherit"],
+    const mcpDir = new URL("../../../mcp/", import.meta.url).pathname;
+    const transport = new StdioClientTransport({
+      command: process.execPath,
+      args: ["dist/server.js"],
+      cwd: mcpDir,
+      stderr: "inherit",
       env: process.env,
-    });
-    this.child = child;
-    // @ts-ignore
-    const transport = new StdioClientTransport(child.stdout!, child.stdin!);
+    } as any);
     const client = new McpClient({ name: "agentic-ai", version: "0.1.0" });
     await client.connect(transport);
     this.client = client;
   }
 
+  /** Stop the MCP client and terminate the spawned server process. */
   async stop(): Promise<void> {
     try {
       await this.client?.close();
     } catch {}
-    try {
-      this.child?.kill();
-    } catch {}
     this.client = null;
-    this.child = null;
   }
 
+  /** List available MCP tools reported by the server. */
   async listTools() {
     if (!this.client) throw new Error("ToolClient not started");
     return await this.client.listTools();
   }
 
+  /** Invoke an MCP tool with JSON arguments and return the raw MCP response. */
   async callTool(name: string, args: Record<string, unknown> = {}) {
     if (!this.client) throw new Error("ToolClient not started");
     return await this.client.callTool({ name, arguments: args });

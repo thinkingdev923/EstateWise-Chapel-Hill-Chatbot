@@ -1,13 +1,14 @@
-import { createReactAgent } from '@langchain/langgraph/prebuilt';
-import { mcpToolset, startMcp, stopMcp } from './tools.js';
-import { getChatModel } from './llm.js';
-import { getCheckpointer } from './memory.js';
+import { createReactAgent } from "@langchain/langgraph/prebuilt";
+import { mcpToolset, startMcp, stopMcp } from "./tools.js";
+import { getChatModel } from "./llm.js";
+import { getCheckpointer } from "./memory.js";
 
 export type RunInput = {
   input: string;
   threadId?: string;
 };
 
+/** Construct a LangGraph ReAct agent wired with EstateWise tools and memory. */
 export function createEstateWiseAgentGraph() {
   const llm = getChatModel();
   const tools = mcpToolset();
@@ -29,19 +30,31 @@ Guidelines:
 - Always sanity-check tool outputs. If a tool fails, try an alternative path.
 `;
 
-  const app = createReactAgent({ llm, tools, messageModifier: systemPrompt, checkpointer });
+  const app = createReactAgent({
+    llm,
+    tools,
+    messageModifier: systemPrompt,
+    checkpointer,
+  });
   return { app, tools, checkpointer };
 }
 
+/**
+ * Run a single LangGraph agent turn with MCP tools started around the call.
+ */
 export async function runEstateWiseAgent({ input, threadId }: RunInput) {
   await startMcp();
   try {
     const { app } = createEstateWiseAgentGraph();
-    const config = { configurable: { thread_id: threadId || 'default' } } as any;
-    const result = await app.invoke({ messages: [{ role: 'user', content: input }] }, config);
+    const config = {
+      configurable: { thread_id: threadId || "default" },
+    } as any;
+    const result = await app.invoke(
+      { messages: [{ role: "user", content: input }] },
+      config,
+    );
     return result;
   } finally {
     await stopMcp();
   }
 }
-

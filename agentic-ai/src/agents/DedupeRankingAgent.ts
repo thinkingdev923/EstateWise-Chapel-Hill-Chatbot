@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Dedupe and cap ZPID list, preserving insertion order. */
 export class DedupeRankingAgent implements Agent {
   role: "ranker-analyst" = "ranker-analyst";
 
+  /** Compute a rankedZpids list and mirror zpids for downstream tools. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     // Only run if not blocked by coordinator, or if coordinator wants this step
     const step = ctx.blackboard.plan?.inFlightStepKey;
