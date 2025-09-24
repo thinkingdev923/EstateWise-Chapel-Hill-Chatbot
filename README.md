@@ -93,12 +93,6 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![Jest](https://img.shields.io/badge/Jest-C21325?style=for-the-badge&logo=jest&logoColor=white)
 ![Selenium WebDriver](https://img.shields.io/badge/Selenium%20WebDriver-43B02A?style=for-the-badge&logo=selenium&logoColor=white)
 ![Cypress](https://img.shields.io/badge/Cypress-17202C?style=for-the-badge&logo=cypress&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
-![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-2EA44F?style=for-the-badge&logo=github&logoColor=white)
-![Dependabot](https://img.shields.io/badge/Dependabot-blue?style=for-the-badge&logo=dependabot&logoColor=white)
-![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
-![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
-![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
 ![VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-007ACC?style=for-the-badge&logo=gitextensions&logoColor=white) 
 ![Neo4j](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
 ![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
@@ -106,6 +100,12 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-F9A03C?style=for-the-badge&logo=d3&logoColor=white)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-6E6E6E?style=for-the-badge&logo=openapiinitiative&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
+![GitHub Packages](https://img.shields.io/badge/GitHub%20Packages-2EA44F?style=for-the-badge&logo=github&logoColor=white)
+![Dependabot](https://img.shields.io/badge/Dependabot-blue?style=for-the-badge&logo=dependabot&logoColor=white)
+![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
+![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
+![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -1132,34 +1132,50 @@ For details and examples, see [mcp/README.md](mcp/README.md).
 
 ## Agentic AI Pipeline
 
-A multi‑agent CLI orchestrator that uses the MCP server to research markets, find ZPIDs, analyze results, and produce links and estimates.
+A production-ready, multi‑agent CLI with three runtimes to drive research and analysis with tools:
 
-- Location: `agentic-ai/`
-- Pipeline: `src/pipelines/marketResearch.ts` (Planner → ZPID Finder → Property → Analytics → Graph → Map → Finance → Reporter)
-- Agents: Planner, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, MapAnalyst, FinanceAnalyst, Reporter
-- Agents: Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, MapAnalyst, FinanceAnalyst, Reporter
- - Agents: Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, DedupeRanking, MapAnalyst, FinanceAnalyst, Compliance, Reporter
- - Coordination: Shared blackboard plan + memory (ZPIDs, parsed filters, analytics, links, finance) powers agent hand‑offs; Coordinator drives step execution; orchestrator retries tool calls once and normalizes JSON results.
+- Orchestrator (default): Round‑based, MCP‑first agents using a shared blackboard.
+- LangChain + LangGraph: Tool‑calling ReAct agent with MCP, Pinecone, and Neo4j tools.
+- CrewAI (Python): Sequential crew for planning, analysis, graph insights, finance, and reporting.
 
-Quick start
+Location
+- `agentic-ai/`
+
+Agents (orchestrator runtime)
+- Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, DedupeRanking, MapAnalyst, FinanceAnalyst, Compliance, Reporter
+- Coordination: Shared blackboard (ZPIDs, parsed filters, analytics, links, finance) with retries and JSON normalization.
+
+Quick start (Orchestrator)
 ```
 cd mcp && npm run build
 cd ../agentic-ai && npm run dev "Find 3-bed homes in Chapel Hill, NC; explain 123456 vs 654321; estimate $600k at 6.25%."
 ```
 
-Build & run
+LangGraph runtime
 ```
 cd agentic-ai
-npm run build
-npm start "Lookup ZPID for 123 Main St, Chapel Hill, NC and show similars."
+npm run dev -- --langgraph "Compare 123456 vs 654321 and show a map"
+# or AGENT_RUNTIME=langgraph npm run dev -- "..."
+```
+
+CrewAI runtime
+```
+cd agentic-ai/crewai
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+export OPENAI_API_KEY=sk-...
+cd ..
+npm run dev -- --crewai "Find 3-bed homes in Chapel Hill; explain two ZPIDs and estimate mortgage"
 ```
 
 Notes
-- The orchestrator spawns `mcp/dist/server.js` over stdio; outputs are aggregated and summarized.
-- Extend by adding MCP tools in `mcp/` and agents in `agentic-ai/src/agents/`.
+- Orchestrator spawns `mcp/dist/server.js` over stdio; extend by adding MCP tools in `mcp/` and agents in `agentic-ai/src/agents/`.
+- LangGraph adds Pinecone vector retrieval and Neo4j Cypher QA; see `agentic-ai/src/lang/`.
+- CrewAI is optional and requires Python with the deps in `agentic-ai/crewai/requirements.txt`.
 
 ```mermaid
 flowchart LR
+    subgraph Orchestrator
     Goal --> Planner --> Coordinator
     Coordinator -->|parseGoal| UPG["util.parseGoal"]
     Coordinator -->|lookup| PL["properties.lookup"]
@@ -1171,9 +1187,20 @@ flowchart LR
     Coordinator -->|finance| FM["finance.mortgage"]
     Coordinator -->|compliance| Compliance
     Compliance --> Reporter
+    end
+
+    subgraph LangGraph
+    LG[ReAct Agent] --> MCP[MCP Tools]
+    LG --> Pinecone
+    LG --> Neo4j
+    end
+
+    subgraph CrewAI
+    PlannerC --> AnalystC --> GraphC --> FinanceC --> ReporterC
+    end
 ```
 
-For details and examples, see [agentic-ai/README.md](agentic-ai/README.md).
+For details and examples, see `agentic-ai/README.md`.
 
 ## VS Code Extension
 

@@ -5,11 +5,23 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "dev:langgraph": "tsx src/index.ts --langgraph",
+    "dev:crewai": "tsx src/index.ts --crewai",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "start:langgraph": "node dist/index.js --langgraph",
+    "start:crewai": "node dist/index.js --crewai"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.18.0",
+    "@pinecone-database/pinecone": "*",
+    "@langchain/community": "*",
+    "@langchain/core": "*",
+    "@langchain/google-genai": "*",
+    "@langchain/langgraph": "*",
+    "@langchain/openai": "*",
+    "@langchain/pinecone": "*",
+    "neo4j-driver": "*",
     "zod": "^3.23.8"
   },
   "devDependencies": {
