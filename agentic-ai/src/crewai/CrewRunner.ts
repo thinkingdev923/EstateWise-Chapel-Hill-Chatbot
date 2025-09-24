@@ -9,6 +9,9 @@ export interface CrewRunResult {
   error?: string;
 }
 
+/**
+ * Run the Python CrewAI runner with a goal and return a structured result.
+ */
 export async function runCrewAIGoal(goal: string, opts?: { python?: string; cwd?: string; timeoutMs?: number }) {
   const python = opts?.python || process.env.PYTHON_BIN || 'python3';
   const here = path.dirname(fileURLToPath(import.meta.url));
@@ -18,6 +21,7 @@ export async function runCrewAIGoal(goal: string, opts?: { python?: string; cwd?
   return await runPythonJson(python, script, { goal }, { cwd, env, timeoutMs: opts?.timeoutMs ?? 180_000 });
 }
 
+/** Spawn a Python script with a JSON payload and parse its JSON stdout. */
 function runPythonJson(
   python: string,
   scriptPath: string,

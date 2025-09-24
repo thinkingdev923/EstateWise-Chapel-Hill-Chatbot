@@ -6,11 +6,14 @@ import path from "node:path";
 
 // Simple MCP client example that spawns the local server (dist/server.js)
 // and demonstrates listing tools and calling one.
+// Gives you an idea/example of how to use the MCP client API in your project.
 
+/** Convert `import.meta.url` to a dirname path. */
 function dirnameFromImportMeta(url: string) {
   return path.dirname(fileURLToPath(url));
 }
 
+/** Render an MCP content block into a human-readable string. */
 function renderContentBlock(
   block: ContentBlock,
   opts?: { parseJsonText?: boolean },
@@ -46,6 +49,12 @@ function renderContentBlock(
   }
 }
 
+/**
+ * Minimal interactive MCP client.
+ * - `list` prints tools
+ * - `call <tool> <jsonArgs>` invokes a tool
+ * Default demo lists then calls `properties.search`.
+ */
 async function main() {
   const __dirname = dirnameFromImportMeta(import.meta.url);
   const distDir =

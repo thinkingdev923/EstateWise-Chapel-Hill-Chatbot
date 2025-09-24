@@ -5,10 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "tsx src/index.ts",
+    "serve": "tsx src/http/server.ts",
     "dev:langgraph": "tsx src/index.ts --langgraph",
     "dev:crewai": "tsx src/index.ts --crewai",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/index.js",
+    "start:server": "node dist/http/server.js",
     "start:langgraph": "node dist/index.js --langgraph",
     "start:crewai": "node dist/index.js --crewai"
   },

@@ -13,6 +13,13 @@ import { AgentOrchestrator } from "./orchestrator/AgentOrchestrator.js";
 import { runEstateWiseAgent } from "./lang/graph.js";
 import { runCrewAIGoal } from "./crewai/CrewRunner.js";
 
+/**
+ * Agentic AI CLI entrypoint.
+ * - Default: round-based orchestrator across specialized agents.
+ * - --langgraph or AGENT_RUNTIME=langgraph: run LangGraph ReAct agent.
+ * - --crewai or AGENT_RUNTIME=crewai: run CrewAI Python flow.
+ */
+
 async function main() {
   const argv = process.argv.slice(2);
   const goal = argv.filter((a) => !a.startsWith('--')).join(" ") ||

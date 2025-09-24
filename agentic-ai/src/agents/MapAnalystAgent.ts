@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Builds a map deep link from known ZPIDs or a query. */
 export class MapAnalystAgent implements Agent {
   role: "map-analyst" = "map-analyst";
 
+  /** Prefer map.linkForZpids using blackboard ZPIDs; else buildLinkByQuery. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };

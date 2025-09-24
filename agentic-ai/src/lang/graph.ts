@@ -8,6 +8,7 @@ export type RunInput = {
   threadId?: string;
 };
 
+/** Construct a LangGraph ReAct agent wired with EstateWise tools and memory. */
 export function createEstateWiseAgentGraph() {
   const llm = getChatModel();
   const tools = mcpToolset();
@@ -33,6 +34,9 @@ Guidelines:
   return { app, tools, checkpointer };
 }
 
+/**
+ * Run a single LangGraph agent turn with MCP tools started around the call.
+ */
 export async function runEstateWiseAgent({ input, threadId }: RunInput) {
   await startMcp();
   try {
@@ -44,4 +48,3 @@ export async function runEstateWiseAgent({ input, threadId }: RunInput) {
     await stopMcp();
   }
 }
-

@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Composes a concise, human-readable summary based on the blackboard. */
 export class ReporterAgent implements Agent {
   role: "reporter" = "reporter";
 
+  /** Gather key metrics and a brief trace of executed tools. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     const bb = ctx.blackboard;
     const lines: string[] = [];

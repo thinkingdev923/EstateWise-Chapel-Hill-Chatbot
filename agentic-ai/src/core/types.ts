@@ -1,3 +1,6 @@
+/**
+ * Enumerates all agent roles in the Agentic AI orchestrator.
+ */
 export type Role =
   | "planner"
   | "coordinator"
@@ -11,6 +14,9 @@ export type Role =
   | "compliance-analyst"
   | "reporter";
 
+/**
+ * Single message posted by an agent during a run.
+ */
 export interface AgentMessage {
   from: Role;
   to?: Role | "all";
@@ -18,11 +24,17 @@ export interface AgentMessage {
   data?: unknown;
 }
 
+/**
+ * Description of a single tool invocation.
+ */
 export interface ToolCall {
   name: string;
   args: Record<string, unknown>;
 }
 
+/**
+ * One step in a hierarchical plan, optionally linked to a tool call.
+ */
 export interface PlanStep {
   description: string;
   tool?: ToolCall;
@@ -32,11 +44,15 @@ export interface PlanStep {
   status?: "pending" | "running" | "done" | "skipped" | "error";
 }
 
+/** Full plan with top-level goal and ordered steps. */
 export interface Plan {
   goal: string;
   steps: PlanStep[];
 }
 
+/**
+ * Shared blackboard state used by all agents to coordinate work and persist results.
+ */
 export interface Blackboard {
   zpids: number[];
   rankedZpids?: number[];
@@ -63,12 +79,14 @@ export interface Blackboard {
   compliance?: { ok: boolean; issues: string[] } | null;
 }
 
+/** Context object provided to each agent on every turn. */
 export interface AgentContext {
   goal: string;
   history: AgentMessage[];
   blackboard: Blackboard;
 }
 
+/** Base interface for all agents. */
 export interface Agent {
   role: Role;
   think(ctx: AgentContext): Promise<AgentMessage>;

@@ -6,19 +6,23 @@ import { PineconeStore } from '@langchain/pinecone';
 import neo4j, { Driver } from 'neo4j-driver';
 import { ToolClient } from '../mcp/ToolClient.js';
 
+/** Alias for LangChain structured tool type. */
 export type LangTool = DynamicStructuredTool; // structured tools with Zod schemas
 
 // Shared MCP tool client (started by runtime)
 const mcp = new ToolClient();
 
+/** Start shared MCP client before LangGraph runs tools. */
 export async function startMcp() {
   await mcp.start();
 }
 
+/** Stop shared MCP client after LangGraph completes. */
 export async function stopMcp() {
   await mcp.stop();
 }
 
+/** Wrap an MCP tool as a LangChain structured tool. */
 export function mcpTool(name: string, schema: z.ZodTypeAny): LangTool {
   return new DynamicStructuredTool({
     name: `mcp:${name}`,
@@ -60,6 +64,7 @@ export function vectorSearchTool(): LangTool | null {
 
 let neoDriver: Driver | null = null;
 
+/** Lazy-init a single Neo4j driver for Cypher tools. */
 function getNeoDriver(): Driver {
   if (neoDriver) return neoDriver;
   const { NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD } = process.env as Record<string, string | undefined>;
@@ -132,6 +137,9 @@ export function graphCypherTool(): LangTool | null {
   });
 }
 
+/**
+ * Default MCP toolset exposed to the LangGraph agent. Mirrors the CLI orchestrator.
+ */
 export function mcpToolset(): LangTool[] {
   // Core MCP tools already supported by the existing orchestrator
   const tools: LangTool[] = [
@@ -195,6 +203,7 @@ export function mcpToolset(): LangTool[] {
   return tools;
 }
 
+/** Extract a JSON object from a model response (code fence or last braces). */
 function extractJson(text: string): string {
   const codeBlock = text.match(/```json\s*([\s\S]*?)```/i);
   if (codeBlock) return codeBlock[1].trim();

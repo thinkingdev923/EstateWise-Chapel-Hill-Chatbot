@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Runs properties searches using parsed filters or goal keywords. */
 export class PropertyAnalystAgent implements Agent {
   role: "property-analyst" = "property-analyst";
 
+  /** Prefer properties.searchAdvanced when parsed filters exist. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };

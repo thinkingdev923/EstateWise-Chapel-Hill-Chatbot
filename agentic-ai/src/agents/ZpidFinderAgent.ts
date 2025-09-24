@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Extracts address-like filters and requests ZPID lookup. */
 export class ZpidFinderAgent implements Agent {
   role: "zpid-finder" = "zpid-finder";
 
+  /** Parse goal (if needed) and call properties.lookup with inferred filters. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };

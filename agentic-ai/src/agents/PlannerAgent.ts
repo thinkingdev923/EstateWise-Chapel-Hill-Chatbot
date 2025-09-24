@@ -1,14 +1,10 @@
-import {
-  Agent,
-  AgentContext,
-  AgentMessage,
-  Plan,
-  PlanStep,
-} from "../core/types.js";
+import { Agent, AgentContext, AgentMessage, Plan, PlanStep } from "../core/types.js";
 
+/** Drafts an initial coarse plan from the user goal. */
 export class PlannerAgent implements Agent {
   role: "planner" = "planner";
 
+  /** Build a simple linear plan the coordinator and others can refine. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     const goal = ctx.goal.trim();
     const steps: PlanStep[] = [

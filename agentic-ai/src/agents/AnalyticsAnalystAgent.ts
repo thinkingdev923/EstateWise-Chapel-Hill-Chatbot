@@ -1,8 +1,10 @@
 import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Runs analytics steps: summaries and ZIP grouping. */
 export class AnalyticsAnalystAgent implements Agent {
   role: "analytics-analyst" = "analytics-analyst";
 
+  /** Prefer summary first; then groups, skipping if already present. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };

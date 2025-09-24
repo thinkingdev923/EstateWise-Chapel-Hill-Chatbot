@@ -1,8 +1,10 @@
-import { Agent, AgentContext, AgentMessage, Plan } from "../core/types.js";
+import { Agent, AgentContext, AgentMessage } from "../core/types.js";
 
+/** Uses the graph: similars or path explanations when ZPIDs are present. */
 export class GraphAnalystAgent implements Agent {
   role: "graph-analyst" = "graph-analyst";
 
+  /** Prefer graph.explain when at least two ZPIDs; else graph.similar for one. */
   async think(ctx: AgentContext): Promise<AgentMessage> {
     if (ctx.blackboard.plan?.inFlightStepKey) {
       return { from: this.role, content: "Coordinator in-flight; waiting." };
