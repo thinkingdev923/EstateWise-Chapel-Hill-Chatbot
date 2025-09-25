@@ -38,14 +38,24 @@ async function main() {
     // eslint-disable-next-line no-console
     console.log("Using LangGraph runtime...\n");
     const result = await runEstateWiseAgent({ input: goal, threadId });
-    const messages = (result as any)?.messages || [];
-    for (const msg of messages) {
-      const role = msg._getType ? msg._getType() : msg.role || "assistant";
-      const content =
-        typeof msg.content === "string"
-          ? msg.content
-          : JSON.stringify(msg.content);
-      console.log(`[${role}] ${content}`);
+    for (const msg of result.messages) {
+      const name = msg.name ? `${msg.role}:${msg.name}` : msg.role;
+      console.log(`[${name}] ${msg.content}`);
+    }
+    if (result.toolExecutions.length > 0) {
+      console.log("\n--- Tool Runs ---");
+      for (const toolRun of result.toolExecutions) {
+        const status = toolRun.status === "error" ? "failed" : "ok";
+        console.log(
+          `(${status}) ${toolRun.name} in ${toolRun.durationMs}ms -> ${
+            toolRun.error ?? JSON.stringify(toolRun.output)
+          }`,
+        );
+      }
+    }
+    if (result.finalMessage) {
+      console.log("\nFinal:");
+      console.log(result.finalMessage);
     }
     console.log("\n=== LangGraph Run Complete ===");
     return;
@@ -55,10 +65,22 @@ async function main() {
     console.log("Using CrewAI runtime...\n");
     const result = await runCrewAIGoal(goal);
     if (result.ok) {
-      if (result.json) console.log(JSON.stringify(result.json, null, 2));
-      else if (result.output) console.log(result.output);
+      if (result.structured) {
+        console.log(result.structured.summary || "(no summary)\n");
+        if (result.structured.timeline.length) {
+          console.log("--- Crew Timeline ---");
+          for (const entry of result.structured.timeline) {
+            console.log(`(${entry.agent}) ${entry.task}: ${entry.output}`);
+          }
+        }
+      } else if (result.json) {
+        console.log(JSON.stringify(result.json, null, 2));
+      } else if (result.output) {
+        console.log(result.output);
+      }
     } else {
       console.error(result.error || "CrewAI run failed");
+      if (result.stderr) console.error(result.stderr);
       process.exitCode = 1;
     }
     console.log("\n=== CrewAI Run Complete ===");

@@ -2,32 +2,208 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+export interface CrewTimelineEntry {
+  agent: string;
+  task: string;
+  output: string;
+}
+
+export interface CrewStructuredResult {
+  summary?: string;
+  plan?: string;
+  analysis?: string;
+  graph?: string;
+  finance?: string;
+  report?: string;
+  timeline: CrewTimelineEntry[];
+  artifacts?: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
 export interface CrewRunResult {
   ok: boolean;
   output?: string;
   json?: unknown;
+  structured?: CrewStructuredResult;
+  error?: string;
+  stderr?: string;
+}
+
+export interface CrewGoalOptions {
+  context?: Record<string, unknown>;
+  preferences?: string[];
+  hints?: string[];
+  emphasis?: string[];
+  mapFocus?: string;
+  includePlanner?: boolean;
+  includeAnalysis?: boolean;
+  includeGraph?: boolean;
+  includeFinance?: boolean;
+  includeReporter?: boolean;
+}
+
+export interface CrewRunnerOptions {
+  python?: string;
+  cwd?: string;
+  timeoutMs?: number;
+  env?: NodeJS.ProcessEnv;
+}
+
+interface PythonJsonResult {
+  ok: boolean;
+  stdout: string;
+  stderr: string;
+  status: number | null;
+  json?: unknown;
   error?: string;
 }
 
+function buildPayload(goal: string, opts: CrewGoalOptions) {
+  const include = {
+    planner: opts.includePlanner ?? true,
+    analysis: opts.includeAnalysis ?? true,
+    graph: opts.includeGraph ?? true,
+    finance: opts.includeFinance ?? true,
+    reporter: opts.includeReporter ?? true,
+  } satisfies Record<string, boolean>;
+
+  const payload: Record<string, unknown> = {
+    goal,
+    include,
+  };
+  if (opts.context) payload.context = opts.context;
+  if (opts.preferences?.length) payload.preferences = opts.preferences;
+  if (opts.hints?.length) payload.hints = opts.hints;
+  if (opts.emphasis?.length) payload.emphasis = opts.emphasis;
+  if (opts.mapFocus) payload.mapFocus = opts.mapFocus;
+  return payload;
+}
+
+function extractStructured(json: any): CrewStructuredResult | undefined {
+  if (!json || typeof json !== "object") return undefined;
+  const summary = typeof json.summary === "string" ? json.summary : undefined;
+  const sections =
+    typeof json.sections === "object" && json.sections !== null
+      ? json.sections
+      : {};
+  const timeline = Array.isArray(json.timeline)
+    ? json.timeline
+        .map((entry: any) => {
+          const agent = String(entry?.agent ?? entry?.role ?? "").trim();
+          const task = String(entry?.task ?? entry?.name ?? "").trim();
+          const outputRaw = entry?.output ?? entry?.result ?? "";
+          const output =
+            typeof outputRaw === "string"
+              ? outputRaw
+              : JSON.stringify(outputRaw, null, 2);
+          if (!agent || !output) return null;
+          return {
+            agent,
+            task: task || agent,
+            output,
+          } satisfies CrewTimelineEntry;
+        })
+        .filter(Boolean)
+    : [];
+
+  const structured: CrewStructuredResult = {
+    summary,
+    plan: typeof sections.plan === "string" ? sections.plan : undefined,
+    analysis:
+      typeof sections.analysis === "string" ? sections.analysis : json.analysis,
+    graph: typeof sections.graph === "string" ? sections.graph : json.graph,
+    finance:
+      typeof sections.finance === "string" ? sections.finance : json.finance,
+    report: typeof sections.report === "string" ? sections.report : json.result,
+    timeline: timeline as CrewTimelineEntry[],
+  };
+
+  if (json.artifacts && typeof json.artifacts === "object") {
+    structured.artifacts = json.artifacts as Record<string, unknown>;
+  }
+  if (json.metadata && typeof json.metadata === "object") {
+    structured.metadata = json.metadata as Record<string, unknown>;
+  }
+  return structured;
+}
+
+/** Execute the Python runner and translate the response. */
+export class CrewRuntime {
+  private readonly python: string;
+  private readonly cwd: string;
+  private readonly env: NodeJS.ProcessEnv;
+  private readonly timeoutMs: number;
+
+  constructor(private readonly defaults: CrewRunnerOptions = {}) {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    this.python = defaults.python || process.env.PYTHON_BIN || "python3";
+    this.cwd = defaults.cwd || path.resolve(here, "../../crewai");
+    this.env = { ...process.env, ...defaults.env };
+    this.timeoutMs = defaults.timeoutMs ?? 180_000;
+  }
+
+  async run(goal: string, opts: CrewGoalOptions & CrewRunnerOptions = {}) {
+    const payload = buildPayload(goal, opts);
+    const python = opts.python || this.python;
+    const cwd = opts.cwd || this.cwd;
+    const env = { ...this.env, ...opts.env };
+    const timeoutMs = opts.timeoutMs ?? this.timeoutMs;
+    const script = path.join(cwd, "runner.py");
+
+    const response = await runPythonJson(python, script, payload, {
+      cwd,
+      env,
+      timeoutMs,
+    });
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error: response.error || "CrewAI runner failed",
+        output: response.stdout || undefined,
+        stderr: response.stderr || undefined,
+      } satisfies CrewRunResult;
+    }
+
+    const json = response.json;
+    if (json && typeof json === "object" && (json as any).ok === false) {
+      return {
+        ok: false,
+        error: (json as any).error || "CrewAI returned error",
+        output: response.stdout || undefined,
+        json,
+        stderr: response.stderr || undefined,
+      } satisfies CrewRunResult;
+    }
+
+    const structured = extractStructured(json);
+
+    return {
+      ok: true,
+      output: response.stdout || undefined,
+      json,
+      structured,
+      stderr: response.stderr || undefined,
+    } satisfies CrewRunResult;
+  }
+}
+
 /**
- * Run the Python CrewAI runner with a goal and return a structured result.
+ * Convenience wrapper around CrewRuntime for single-run usage.
  */
 export async function runCrewAIGoal(
   goal: string,
-  opts?: { python?: string; cwd?: string; timeoutMs?: number },
+  opts: CrewGoalOptions & CrewRunnerOptions = {},
 ) {
-  const python = opts?.python || process.env.PYTHON_BIN || "python3";
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const cwd = opts?.cwd || path.resolve(here, "../../crewai");
-  const script = path.join(cwd, "runner.py");
-  const env = { ...process.env };
-  return await runPythonJson(
-    python,
-    script,
-    { goal },
-    { cwd, env, timeoutMs: opts?.timeoutMs ?? 180_000 },
-  );
+  const { python, cwd, timeoutMs, env, ...goalOptions } = opts;
+  const runtime = new CrewRuntime({ python, cwd, timeoutMs, env });
+  return runtime.run(goal, goalOptions);
 }
+
+export const __crewTestUtils = {
+  buildPayload,
+  extractStructured,
+};
 
 /** Spawn a Python script with a JSON payload and parse its JSON stdout. */
 function runPythonJson(
@@ -35,7 +211,7 @@ function runPythonJson(
   scriptPath: string,
   payload: unknown,
   opts: { cwd?: string; env?: NodeJS.ProcessEnv; timeoutMs?: number },
-): Promise<CrewRunResult> {
+): Promise<PythonJsonResult> {
   return new Promise((resolve) => {
     const child = spawn(python, [scriptPath], {
       cwd: opts.cwd,
@@ -45,25 +221,35 @@ function runPythonJson(
     const timer = opts.timeoutMs
       ? setTimeout(() => child.kill("SIGKILL"), opts.timeoutMs)
       : null;
-    let out = "";
-    let err = "";
-    child.stdout.on("data", (d) => (out += d.toString())).once("end", () => {});
-    child.stderr.on("data", (d) => (err += d.toString())).once("end", () => {});
+    let stdout = "";
+    let stderr = "";
+    child.stdout.on("data", (d) => (stdout += d.toString()));
+    child.stderr.on("data", (d) => (stderr += d.toString()));
     child.once("error", (e) => {
       if (timer) clearTimeout(timer);
-      resolve({ ok: false, error: String(e) });
+      resolve({
+        ok: false,
+        stdout,
+        stderr,
+        status: null,
+        error: `Failed to spawn Python runner: ${e}`,
+      });
     });
-    child.once("close", () => {
+    child.once("close", (code) => {
       if (timer) clearTimeout(timer);
-      const trimmed = out.trim();
+      const trimmed = stdout.trim();
       try {
-        const json = JSON.parse(trimmed);
-        resolve({ ok: true, json, output: trimmed });
-      } catch {
+        const json = trimmed ? JSON.parse(trimmed) : undefined;
+        resolve({ ok: true, stdout: trimmed, stderr, status: code, json });
+      } catch (err) {
         resolve({
-          ok: err.length === 0,
-          output: trimmed,
-          error: err || undefined,
+          ok: false,
+          stdout: trimmed,
+          stderr,
+          status: code,
+          error:
+            stderr ||
+            `CrewAI runner did not return valid JSON: ${(err as Error).message}`,
         });
       }
     });

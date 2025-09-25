@@ -171,15 +171,28 @@ const server = http.createServer(async (req, res) => {
           input: goal,
           threadId: threadId || undefined,
         });
-        const messages = (result as any)?.messages || [];
-        for (const msg of messages) {
-          const role = msg._getType ? msg._getType() : msg.role || "assistant";
-          const content =
-            typeof msg.content === "string"
-              ? msg.content
-              : JSON.stringify(msg.content);
-          send({ type: "message", message: { from: role, content } });
+        for (const msg of result.messages) {
+          send({
+            type: "message",
+            message: {
+              from: msg.name ? `${msg.role}:${msg.name}` : msg.role,
+              content: msg.content,
+            },
+          });
         }
+        if (result.toolExecutions.length > 0) {
+          send({
+            type: "tools",
+            tools: result.toolExecutions.map((tool) => ({
+              id: tool.callId,
+              name: tool.name,
+              status: tool.status,
+              durationMs: tool.durationMs,
+              output: tool.error ?? tool.output,
+            })),
+          });
+        }
+        send({ type: "final", message: result.finalMessage });
         send({ type: "done" });
         clearInterval(heartbeat);
         res.end();
@@ -188,13 +201,32 @@ const server = http.createServer(async (req, res) => {
       if (runtime === "crewai") {
         send({ type: "start", runtime, goal, rounds });
         const result = await runCrewAIGoal(goal);
-        send({
-          type: "message",
-          message: {
-            from: "crewai",
-            content: result?.output || JSON.stringify(result),
-          },
-        });
+        if (result.structured) {
+          send({
+            type: "message",
+            message: {
+              from: "crewai",
+              content: result.structured.summary || "",
+            },
+          });
+          for (const entry of result.structured.timeline) {
+            send({
+              type: "message",
+              message: {
+                from: `crewai:${entry.agent}`,
+                content: `${entry.task}: ${entry.output}`,
+              },
+            });
+          }
+        } else {
+          send({
+            type: "message",
+            message: {
+              from: "crewai",
+              content: result.output || JSON.stringify(result),
+            },
+          });
+        }
         send({ type: "done" });
         clearInterval(heartbeat);
         res.end();
