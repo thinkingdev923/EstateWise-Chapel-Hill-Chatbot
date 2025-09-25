@@ -1,0 +1,33 @@
+dist: focal
+language: node_js
+
+node_js:
+  - '20'
+
+env:
+  global:
+    - CI=true
+    - NEXT_TELEMETRY_DISABLED=1
+    - npm_config_loglevel=warn
+
+cache:
+  npm: true
+
+jobs:
+  include:
+    - stage: backend
+      name: 'Backend build & tests'
+      install:
+        - npm --prefix backend ci
+      script:
+        - npm --prefix backend run build
+        - npm --prefix backend test
+
+    - stage: frontend
+      name: 'Frontend build & tests'
+      install:
+        - npm --prefix frontend ci
+      script:
+        - npm --prefix frontend run lint
+        - npm --prefix frontend run build
+        - npm --prefix frontend test
