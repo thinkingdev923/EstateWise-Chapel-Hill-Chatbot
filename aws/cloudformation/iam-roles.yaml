@@ -1,11 +1,23 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: IAM roles and policies for ECS task execution and service
+Description: IAM execution/service roles for EstateWise ECS workloads.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
+  ArtifactBucketArn:
+    Type: String
+    Default: ''
+    Description: Optional artifact bucket ARN for CodeBuild/CodePipeline access.
+
+Conditions:
+  HasArtifactBucket: !Not [!Equals [!Ref ArtifactBucketArn, '']]
 
 Resources:
   ECSExecutionRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: estatewise-ecs-execution-role
+      RoleName: !Sub '${EnvironmentName}-ecs-execution-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -13,14 +25,16 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
-      Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   ECSServiceRole:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: estatewise-ecs-service-role
+      RoleName: !Sub '${EnvironmentName}-ecs-service-role'
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:
@@ -28,10 +42,41 @@ Resources:
             Principal:
               Service: ecs.amazonaws.com
             Action: sts:AssumeRole
-      Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSServiceRolePolicy
+      Policies:
+        - PolicyName: AlbRegistration
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:RegisterTargets
+                  - elasticloadbalancing:DeregisterTargets
+                Resource: '*'
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
+  PipelineArtifactsPolicy:
+    Type: AWS::IAM::Policy
+    Condition: HasArtifactBucket
+    Properties:
+      PolicyName: !Sub '${EnvironmentName}-pipeline-artifacts'
+      Roles:
+        - !Ref ECSExecutionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:ListBucket
+            Resource:
+              - !Ref ArtifactBucketArn
+              - !Sub '${ArtifactBucketArn}/*'
 Outputs:
   ExecutionRoleArn:
     Description: ECS Task Execution Role ARN

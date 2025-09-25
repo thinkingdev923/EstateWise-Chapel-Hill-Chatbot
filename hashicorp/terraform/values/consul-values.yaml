@@ -1,0 +1,52 @@
+global:
+  name: consul
+  datacenter: estatewise
+  enablePodSecurityPolicies: false
+  metrics:
+    enabled: true
+  tls:
+    enabled: true
+    httpsOnly: false
+  gossipEncryption:
+    autoGenerate: true
+  acls:
+    manageSystemACLs: true
+
+connectInject:
+  enabled: true
+  default: true
+  logLevel: info
+  centralConfig:
+    enabled: true
+    defaultProtocol: http
+    proxyDefaults: |
+      {
+        "envoy_prometheus_bind_addr": "0.0.0.0:9102"
+      }
+
+controller:
+  enabled: true
+
+meshGateway:
+  enabled: true
+  replicas: 2
+  service:
+    type: LoadBalancer
+
+server:
+  replicas: 3
+  bootstrapExpect: 3
+  disruptionBudget:
+    maxUnavailable: 1
+  storage: 10Gi
+  storageClass: standard
+
+ui:
+  enabled: true
+  service:
+    type: LoadBalancer
+    port: 80
+
+syncCatalog:
+  enabled: true
+  default: true

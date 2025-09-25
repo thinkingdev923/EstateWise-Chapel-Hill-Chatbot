@@ -1,128 +1,165 @@
-param location string = 'eastus'
-param appName string = 'estatewise-backend'
-param acrName string = 'estatewiseacr'
-param storageAccountName string = 'estatewisestorage'
-param cosmosAccountName string = 'estatewisecosmos'
-param vaultName string = 'estatewisekv'
-param appInsightsName string = 'estatewise-ai'
+@description('Azure region to deploy EstateWise resources into.')
+param location string = resourceGroup().location
+@description('Short environment name used to prefix resources.')
+param environmentName string = 'estatewise'
+@description('Container image name stored in Azure Container Registry (without registry).')
+param imageName string = 'estatewise-backend'
+@description('Container image tag to deploy.')
+param imageTag string = 'latest'
+@description('Mongo/Cosmos database name to provision.')
 param databaseName string = 'estatewisedb'
+@description('Minimum container app replicas.')
+param minReplicas int = 1
+@description('Maximum container app replicas.')
+param maxReplicas int = 4
+@description('Optional administrators (object IDs) that should have Key Vault admin access.')
+param administrators array = []
+@secure()
+@description('JWT secret used by the backend. Leave empty to manage manually later.')
+param jwtSecret string = ''
+@secure()
+@description('Google Vertex/Gemini API key for LLM access. Optional.')
+param googleAiApiKey string = ''
+@secure()
+@description('Pinecone API key for vector search. Optional.')
+param pineconeApiKey string = ''
+@description('Pinecone index name injected into the container app.')
+param pineconeIndex string = 'estatewise-index'
+@secure()
+@description('Optional OpenAI API key (if using OpenAI models).')
+param openAiApiKey string = ''
 
-resource acr 'Microsoft.ContainerRegistry/registries@2022-02-01' = {
-  name: acrName
-  location: location
-  sku: {
-    name: 'Basic'
-  }
-  adminUserEnabled: true
-}
-
-resource storage 'Microsoft.Storage/storageAccounts@2023-01-01' = {
-  name: storageAccountName
-  location: location
-  sku: {
-    name: 'Standard_LRS'
-  }
-  kind: 'StorageV2'
-}
-
-resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2023-04-15' = {
-  name: cosmosAccountName
-  location: location
-  kind: 'MongoDB'
-  properties: {
-    apiProperties: {
-      serverVersion: '4.2'
-    }
-    locations: [
-      {
-        locationName: location
-        failoverPriority: 0
-      }
-    ]
-    databaseAccountOfferType: 'Standard'
+module network './modules/network.bicep' = {
+  name: 'network'
+  params: {
+    location: location
+    environmentName: environmentName
   }
 }
 
-resource cosmosDb 'Microsoft.DocumentDB/databaseAccounts/apis/databases@2023-04-15' = {
-  parent: cosmos
-  name: 'mongo/${databaseName}'
-  properties: {}
+module logging './modules/logAnalytics.bicep' = {
+  name: 'observability'
+  params: {
+    location: location
+    environmentName: environmentName
+  }
 }
 
-resource kv 'Microsoft.KeyVault/vaults@2022-07-01' = {
-  name: vaultName
-  location: location
-  properties: {
-    sku: {
-      name: 'standard'
-      family: 'A'
-    }
+module data './modules/data.bicep' = {
+  name: 'data'
+  params: {
+    location: location
+    environmentName: environmentName
+    databaseName: databaseName
+  }
+}
+
+var baseSecrets = {
+  'cosmos-connection-string': data.outputs.cosmosConnectionString
+  'storage-connection-string': data.outputs.storageConnectionString
+  'pinecone-index': pineconeIndex
+}
+
+var optionalSecrets = union(
+  length(jwtSecret) > 0 ? {
+    'jwt-secret': jwtSecret
+  } : {},
+  length(googleAiApiKey) > 0 ? {
+    'google-ai-api-key': googleAiApiKey
+  } : {},
+  length(pineconeApiKey) > 0 ? {
+    'pinecone-api-key': pineconeApiKey
+  } : {},
+  length(openAiApiKey) > 0 ? {
+    'openai-api-key': openAiApiKey
+  } : {}
+)
+
+var compiledSecrets = union(baseSecrets, optionalSecrets)
+
+module security './modules/security.bicep' = {
+  name: 'security'
+  params: {
+    location: location
+    environmentName: environmentName
     tenantId: subscription().tenantId
-    accessPolicies: []
-    enableRbacAuthorization: true
+    secrets: compiledSecrets
+    administrators: administrators
   }
 }
 
-resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: appInsightsName
-  location: location
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
+var containerImage = '${data.outputs.acrLoginServer}/${imageName}:${imageTag}'
+
+var secretMappingsBase = [
+  {
+    appSecretName: 'mongo-uri'
+    keyVaultSecretName: 'cosmos-connection-string'
+    environmentVariable: 'MONGO_URI'
   }
+  {
+    appSecretName: 'storage-connection'
+    keyVaultSecretName: 'storage-connection-string'
+    environmentVariable: 'AZURE_STORAGE_CONNECTION_STRING'
+  }
+  {
+    appSecretName: 'pinecone-index'
+    keyVaultSecretName: 'pinecone-index'
+    environmentVariable: 'PINECONE_INDEX'
+  }
+]
+
+var secretMappingsOptional = [
+  if (length(jwtSecret) > 0) {
+    appSecretName: 'jwt-secret'
+    keyVaultSecretName: 'jwt-secret'
+    environmentVariable: 'JWT_SECRET'
+  }
+  if (length(googleAiApiKey) > 0) {
+    appSecretName: 'google-ai-api-key'
+    keyVaultSecretName: 'google-ai-api-key'
+    environmentVariable: 'GOOGLE_AI_API_KEY'
+  }
+  if (length(pineconeApiKey) > 0) {
+    appSecretName: 'pinecone-api-key'
+    keyVaultSecretName: 'pinecone-api-key'
+    environmentVariable: 'PINECONE_API_KEY'
+  }
+  if (length(openAiApiKey) > 0) {
+    appSecretName: 'openai-api-key'
+    keyVaultSecretName: 'openai-api-key'
+    environmentVariable: 'OPENAI_API_KEY'
+  }
+]
+
+var secretMappings = concat(secretMappingsBase, secretMappingsOptional)
+
+module containerApp './modules/container-app.bicep' = {
+  name: 'containerApp'
+  params: {
+    location: location
+    environmentName: environmentName
+    appSubnetId: network.outputs.workloadSubnetId
+    infrastructureSubnetId: network.outputs.infrastructureSubnetId
+    logAnalyticsWorkspaceId: logging.outputs.workspaceId
+    logAnalyticsCustomerId: logging.outputs.workspaceCustomerId
+    logAnalyticsSharedKey: logging.outputs.workspaceSharedKey
+    appInsightsConnectionString: logging.outputs.appInsightsConnectionString
+    containerImage: containerImage
+    targetPort: 3001
+    minReplicas: minReplicas
+    maxReplicas: maxReplicas
+    acrResourceId: resourceId('Microsoft.ContainerRegistry/registries', data.outputs.acrName)
+    containerRegistryServer: data.outputs.acrLoginServer
+    keyVaultResourceId: security.outputs.vaultId
+    keyVaultUri: security.outputs.vaultUri
+    secretsMapping: secretMappings
+  }
+  dependsOn: [security]
 }
 
-var storageKey = listKeys(storage.id, '2023-01-01').keys[0].value
-var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storage.name};AccountKey=${storageKey};EndpointSuffix=${environment().suffixes.storage}'
-
-var cosmosConnectionString = listConnectionStrings(cosmos.id, '2023-04-15').connectionStrings[0].connectionString
-
-resource plan 'Microsoft.Web/serverfarms@2022-03-01' = {
-  name: '${appName}-plan'
-  location: location
-  sku: {
-    name: 'B1'
-    tier: 'Basic'
-  }
-  kind: 'linux'
-  properties: {
-    reserved: true
-  }
-}
-
-resource web 'Microsoft.Web/sites@2022-03-01' = {
-  name: appName
-  location: location
-  kind: 'app,linux'
-  properties: {
-    serverFarmId: plan.id
-    siteConfig: {
-      linuxFxVersion: 'DOCKER|${acr.properties.loginServer}/${appName}:latest'
-      appSettings: [
-        {
-          name: 'MONGO_URI'
-          value: cosmosConnectionString
-        }
-        {
-          name: 'AZURE_STORAGE_CONNECTION_STRING'
-          value: storageConnectionString
-        }
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: appInsights.properties.ConnectionString
-        }
-        {
-          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
-          value: appInsights.properties.InstrumentationKey
-        }
-      ]
-    }
-  }
-}
-
-output registryLoginServer string = acr.properties.loginServer
-output webAppUrl string = web.properties.defaultHostName
-output storageAccount string = storage.name
-output cosmosDbConnection string = cosmosConnectionString
-output keyVaultName string = kv.name
-output appInsightsInstrumentationKey string = appInsights.properties.InstrumentationKey
+output containerAppFqdn string = containerApp.outputs.fqdn
+output containerAppName string = containerApp.outputs.containerAppName
+output keyVaultUri string = security.outputs.vaultUri
+output acrLoginServer string = data.outputs.acrLoginServer
+output storageAccountConnection string = data.outputs.storageConnectionString
+output cosmosConnectionString string = data.outputs.cosmosConnectionString

@@ -1,85 +1,271 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: EstateWise backend CI/CD pipeline
+Description: EstateWise continuous delivery pipeline (CodePipeline + CodeBuild + ECS deploy).
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
   GitHubOwner:
     Type: String
-    Description: GitHub owner or org
+    Description: GitHub owner or organisation.
   GitHubRepo:
     Type: String
-    Description: GitHub repository name
+    Description: Repository name containing the EstateWise backend.
   GitHubBranch:
     Type: String
     Default: main
-  GitHubOAuthToken:
+  CodeStarConnectionArn:
     Type: String
-    NoEcho: true
-    Description: Token with repo:read permissions
-  ECRRepoUri:
+    Description: CodeStar Connections ARN authorised for the repository.
+  EcrRepositoryUri:
     Type: String
-    Description: ECR URI for backend image (no tag)
+    Description: Base URI of the ECR repository (no tag).
+  ClusterName:
+    Type: String
+    Description: ECS cluster to deploy to.
+  ServiceName:
+    Type: String
+    Description: ECS service name to receive new task definition revisions.
 
 Resources:
+  ArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub '${EnvironmentName}-${AWS::Region}-pipeline-artifacts-${AWS::AccountId}'
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  ArtifactBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref ArtifactBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: EnforceTLS
+            Effect: Deny
+            Principal: '*'
+            Action: 's3:*'
+            Resource:
+              - !Sub '${ArtifactBucket.Arn}/*'
+              - !GetAtt ArtifactBucket.Arn
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  CodeBuildLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/codebuild/${EnvironmentName}-backend'
+      RetentionInDays: 30
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-codebuild-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codebuild.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: BuildPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:CompleteLayerUpload
+                  - ecr:InitiateLayerUpload
+                  - ecr:PutImage
+                  - ecr:UploadLayerPart
+                  - ecr:BatchGetImage
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub '${ArtifactBucket.Arn}/*'
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-codepipeline-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: codepipeline.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: PipelinePermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                  - s3:PutObject
+                  - s3:ListBucket
+                Resource:
+                  - !GetAtt ArtifactBucket.Arn
+                  - !Sub '${ArtifactBucket.Arn}/*'
+              - Effect: Allow
+                Action:
+                  - codebuild:BatchGetBuilds
+                  - codebuild:StartBuild
+                Resource: '*'
+              - Effect: Allow
+                Action:
+                  - codestar-connections:UseConnection
+                Resource: !Ref CodeStarConnectionArn
+              - Effect: Allow
+                Action:
+                  - ecs:DescribeServices
+                  - ecs:DescribeTaskDefinition
+                  - ecs:UpdateService
+                  - ecs:RegisterTaskDefinition
+                  - iam:PassRole
+                Resource: '*'
+
   CodeBuildProject:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: estatewise-backend-build
-      Source:
-        Type: CODEPIPELINE
+      Name: !Sub '${EnvironmentName}-backend-build'
+      ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
       Environment:
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: aws/codebuild/standard:7.0
         Type: LINUX_CONTAINER
         PrivilegedMode: true
-      ServiceRole: arn:aws:iam::123456789012:role/estatewise-codebuild-role
+        EnvironmentVariables:
+          - Name: IMAGE_REPO_URI
+            Value: !Ref EcrRepositoryUri
+          - Name: CLUSTER_NAME
+            Value: !Ref ClusterName
+          - Name: SERVICE_NAME
+            Value: !Ref ServiceName
+      LogsConfig:
+        CloudWatchLogs:
+          GroupName: !Ref CodeBuildLogGroup
+          Status: ENABLED
+      Source:
+        Type: CODEPIPELINE
+      TimeoutInMinutes: 30
+      Cache:
+        Type: LOCAL
+        Modes:
+          - LOCAL_SOURCE_CACHE
+      BuildSpec: |
+        version: 0.2
+        phases:
+          pre_build:
+            commands:
+              - echo Logging in to Amazon ECR...
+              - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $IMAGE_REPO_URI
+              - COMMIT_SHA=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | head -c 7)
+              - IMAGE_TAG=${COMMIT_SHA:-latest}
+              - echo "IMAGE_TAG=$IMAGE_TAG" > image-tag.txt
+          build:
+            commands:
+              - echo Building Docker image $IMAGE_REPO_URI:$IMAGE_TAG
+              - docker build -t $IMAGE_REPO_URI:$IMAGE_TAG -f backend/Dockerfile .
+              - docker push $IMAGE_REPO_URI:$IMAGE_TAG
+          post_build:
+            commands:
+              - printf '[{"name":"backend","imageUri":"%s"}]' "$IMAGE_REPO_URI:$IMAGE_TAG" > imagedefinitions.json
+        artifacts:
+          files:
+            - imagedefinitions.json
+            - image-tag.txt
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      Name: estatewise-backend-pipeline
-      RoleArn: arn:aws:iam::123456789012:role/estatewise-codepipeline-role
+      Name: !Sub '${EnvironmentName}-backend-pipeline'
       ArtifactStore:
         Type: S3
-        Location: estatewise-codepipeline-artifacts
+        Location: !Ref ArtifactBucket
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      RestartExecutionOnUpdate: true
       Stages:
         - Name: Source
           Actions:
-            - Name: GitHubSource
+            - Name: GitHub
               ActionTypeId:
                 Category: Source
-                Owner: ThirdParty
-                Provider: GitHub
-                Version: "1"
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
               Configuration:
-                Owner: !Ref GitHubOwner
-                Repo: !Ref GitHubRepo
-                Branch: !Ref GitHubBranch
-                OAuthToken: !Ref GitHubOAuthToken
-              OutputArtifacts: [{ Name: SourceOutput }]
+                ConnectionArn: !Ref CodeStarConnectionArn
+                FullRepositoryId: !Sub '${GitHubOwner}/${GitHubRepo}'
+                BranchName: !Ref GitHubBranch
+                OutputArtifactFormat: CODE_ZIP
+              OutputArtifacts:
+                - Name: SourceOutput
         - Name: Build
           Actions:
-            - Name: Build
+            - Name: BuildImage
               ActionTypeId:
                 Category: Build
                 Owner: AWS
                 Provider: CodeBuild
-                Version: "1"
+                Version: '1'
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
               Configuration:
                 ProjectName: !Ref CodeBuildProject
-              InputArtifacts: [{ Name: SourceOutput }]
-              OutputArtifacts: [{ Name: BuildOutput }]
         - Name: Deploy
           Actions:
-            - Name: ECSDeploy
+            - Name: DeployECS
               ActionTypeId:
                 Category: Deploy
                 Owner: AWS
                 Provider: ECS
-                Version: "1"
+                Version: '1'
+              InputArtifacts:
+                - Name: BuildOutput
               Configuration:
-                ClusterName: estatewise-cluster
-                ServiceName: estatewise-backend-service
+                ClusterName: !Ref ClusterName
+                ServiceName: !Ref ServiceName
                 FileName: imagedefinitions.json
-              InputArtifacts: [{ Name: BuildOutput }]
+
+Outputs:
+  PipelineName:
+    Value: !Ref Pipeline
+  ArtifactBucketName:
+    Value: !Ref ArtifactBucket
+  CodeBuildProjectName:
+    Value: !Ref CodeBuildProject

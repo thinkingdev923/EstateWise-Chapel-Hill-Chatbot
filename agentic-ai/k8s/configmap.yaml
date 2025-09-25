@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agentic-ai-config
+  namespace: estatewise
+  labels:
+    app: estatewise-agentic
+  annotations:
+    consul.hashicorp.com/connect-inject: "true"
+data:
+  AGENT_RUNTIME: "langgraph"
+  PINECONE_INDEX: "estatewise-index"

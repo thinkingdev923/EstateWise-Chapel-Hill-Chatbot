@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DynamicStructuredTool } from "@langchain/core/tools";
+import { randomUUID } from "node:crypto";
 import { getEmbeddings, getChatModel } from "./llm.js";
 import { Pinecone } from "@pinecone-database/pinecone";
 import { PineconeStore } from "@langchain/pinecone";
@@ -11,6 +12,86 @@ export type LangTool = DynamicStructuredTool; // structured tools with Zod schem
 
 // Shared MCP tool client (started by runtime)
 const mcp = new ToolClient();
+
+export interface ToolCallStartEvent {
+  callId: string;
+  toolName: string;
+  params: unknown;
+  timestamp: number;
+}
+
+export interface ToolCallSuccessEvent extends ToolCallStartEvent {
+  durationMs: number;
+  output: unknown;
+}
+
+export interface ToolCallErrorEvent extends ToolCallStartEvent {
+  durationMs: number;
+  error: string;
+}
+
+export interface ToolObserver {
+  onToolStart?(event: ToolCallStartEvent): void;
+  onToolSuccess?(event: ToolCallSuccessEvent): void;
+  onToolError?(event: ToolCallErrorEvent): void;
+}
+
+let observer: ToolObserver | null = null;
+
+/** Register a global observer used to instrument LangChain tool calls. */
+export function setToolObserver(next: ToolObserver | null) {
+  observer = next;
+}
+
+function notifyStart(name: string, params: unknown) {
+  const event: ToolCallStartEvent = {
+    callId: randomUUID(),
+    toolName: name,
+    params,
+    timestamp: Date.now(),
+  };
+  observer?.onToolStart?.(event);
+  return event;
+}
+
+function notifySuccess(
+  start: ToolCallStartEvent,
+  output: unknown,
+): ToolCallSuccessEvent {
+  const event: ToolCallSuccessEvent = {
+    ...start,
+    durationMs: Date.now() - start.timestamp,
+    output,
+  };
+  observer?.onToolSuccess?.(event);
+  return event;
+}
+
+function notifyError(start: ToolCallStartEvent, error: unknown) {
+  const event: ToolCallErrorEvent = {
+    ...start,
+    durationMs: Date.now() - start.timestamp,
+    error: error instanceof Error ? error.message : String(error),
+  };
+  observer?.onToolError?.(event);
+  return event;
+}
+
+async function withToolInstrumentation<T>(
+  name: string,
+  params: unknown,
+  fn: () => Promise<T>,
+): Promise<T> {
+  const start = notifyStart(name, params);
+  try {
+    const result = await fn();
+    notifySuccess(start, result);
+    return result;
+  } catch (err) {
+    notifyError(start, err);
+    throw err;
+  }
+}
 
 /** Start shared MCP client before LangGraph runs tools. */
 export async function startMcp() {
@@ -30,9 +111,12 @@ export function mcpTool(name: string, schema: z.ZodTypeAny): LangTool {
     schema,
     async func(input) {
       const args = typeof input === "string" ? { input } : (input as any);
-      const res = await mcp.callTool(name, args);
-      const text = res?.content?.find?.((c: any) => c.type === "text")?.text;
-      return text || JSON.stringify(res);
+      return await withToolInstrumentation(`mcp:${name}`, args, async () => {
+        const res: any = await mcp.callTool(name, args);
+        const content = Array.isArray(res?.content) ? res.content : [];
+        const text = content.find((c: any) => c?.type === "text")?.text;
+        return text || JSON.stringify(res);
+      });
     },
   });
 }
@@ -52,18 +136,24 @@ export function vectorSearchTool(): LangTool | null {
     async func(raw) {
       const { query, topK } =
         typeof raw === "string" ? { query: raw, topK: 10 } : (raw as any);
-      const pinecone = new Pinecone({ apiKey });
-      const pcIndex = pinecone.Index(index);
-      const store = await PineconeStore.fromExistingIndex(getEmbeddings(), {
-        pineconeIndex: pcIndex,
-      });
-      const results = await store.similaritySearchWithScore(query, topK);
-      return JSON.stringify(
-        results.map(([doc, score]) => ({
-          score,
-          metadata: doc.metadata,
-          pageContent: doc.pageContent,
-        })),
+      return await withToolInstrumentation(
+        "retrieval.vectorSearch",
+        { query, topK },
+        async () => {
+          const pinecone = new Pinecone({ apiKey });
+          const pcIndex = pinecone.Index(index);
+          const store = await PineconeStore.fromExistingIndex(getEmbeddings(), {
+            pineconeIndex: pcIndex,
+          });
+          const results = await store.similaritySearchWithScore(query, topK);
+          return JSON.stringify(
+            results.map(([doc, score]) => ({
+              score,
+              metadata: doc.metadata,
+              pageContent: doc.pageContent,
+            })),
+          );
+        },
       );
     },
   });
@@ -104,35 +194,41 @@ export function graphCypherQATool(): LangTool | null {
     async func(raw) {
       const { question } =
         typeof raw === "string" ? { question: raw } : (raw as any);
-      const llm = getChatModel();
-      const prompt = `You write concise Cypher for a property graph with nodes Property(zpid, city, state, zipcode, price, bedrooms, bathrooms, livingArea), Zip(code), Neighborhood(name) and relationships (Property)-[:IN_ZIP]->(Zip), (Property)-[:IN_NEIGHBORHOOD]->(Neighborhood), and optional similarity edges.
+      return await withToolInstrumentation(
+        "graph.cypherQA",
+        { question },
+        async () => {
+          const llm = getChatModel();
+          const prompt = `You write concise Cypher for a property graph with nodes Property(zpid, city, state, zipcode, price, bedrooms, bathrooms, livingArea), Zip(code), Neighborhood(name) and relationships (Property)-[:IN_ZIP]->(Zip), (Property)-[:IN_NEIGHBORHOOD]->(Neighborhood), and optional similarity edges.
 Question: ${question}
 Return only JSON: {"cypher":"..."}`;
-      const ai = await llm.invoke(prompt as any);
-      const text =
-        typeof (ai as any).content === "string"
-          ? (ai as any).content
-          : Array.isArray((ai as any).content)
-            ? (ai as any).content.map((p: any) => p?.text || "").join("\n")
-            : String((ai as any).content ?? "");
-      const jsonText = extractJson(text);
-      let cypher = "";
-      try {
-        const parsed = JSON.parse(jsonText);
-        cypher = String(parsed?.cypher || "");
-      } catch {
-        // last resort: accept raw text
-        cypher = text.trim();
-      }
-      if (!cypher) return JSON.stringify({ error: "No Cypher generated" });
-      const driver = getNeoDriver();
-      const session = driver.session();
-      try {
-        const res = await session.run(cypher);
-        return JSON.stringify(res.records.map((r) => r.toObject()));
-      } finally {
-        await session.close();
-      }
+          const ai = await llm.invoke(prompt as any);
+          const text =
+            typeof (ai as any).content === "string"
+              ? (ai as any).content
+              : Array.isArray((ai as any).content)
+                ? (ai as any).content.map((p: any) => p?.text || "").join("\n")
+                : String((ai as any).content ?? "");
+          const jsonText = extractJson(text);
+          let cypher = "";
+          try {
+            const parsed = JSON.parse(jsonText);
+            cypher = String(parsed?.cypher || "");
+          } catch {
+            // last resort: accept raw text
+            cypher = text.trim();
+          }
+          if (!cypher) return JSON.stringify({ error: "No Cypher generated" });
+          const driver = getNeoDriver();
+          const session = driver.session();
+          try {
+            const res = await session.run(cypher);
+            return JSON.stringify(res.records.map((r) => r.toObject()));
+          } finally {
+            await session.close();
+          }
+        },
+      );
     },
   });
 }
@@ -151,14 +247,20 @@ export function graphCypherTool(): LangTool | null {
     async func(raw) {
       const { cypher } =
         typeof raw === "string" ? { cypher: raw } : (raw as any);
-      const driver = getNeoDriver();
-      const session = driver.session();
-      try {
-        const res = await session.run(cypher);
-        return JSON.stringify(res.records.map((r) => r.toObject()));
-      } finally {
-        await session.close();
-      }
+      return await withToolInstrumentation(
+        "graph.cypherQuery",
+        { cypher },
+        async () => {
+          const driver = getNeoDriver();
+          const session = driver.session();
+          try {
+            const res = await session.run(cypher);
+            return JSON.stringify(res.records.map((r) => r.toObject()));
+          } finally {
+            await session.close();
+          }
+        },
+      );
     },
   });
 }

@@ -1,10 +1,43 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: VPC with public and private subnets for EstateWise
+Description: >-
+  EstateWise network foundation with public/private subnets, NAT gateway, and
+  opinionated tagging for multi-AZ ECS workloads.
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
+    Description: Prefix used for tags and resource names.
   VpcCidr:
     Type: String
     Default: 10.0.0.0/16
+    Description: CIDR block for the VPC.
+  PublicSubnetACidr:
+    Type: String
+    Default: 10.0.0.0/24
+  PublicSubnetBCidr:
+    Type: String
+    Default: 10.0.1.0/24
+  PrivateSubnetACidr:
+    Type: String
+    Default: 10.0.10.0/24
+  PrivateSubnetBCidr:
+    Type: String
+    Default: 10.0.11.0/24
+  EnableFlowLogs:
+    Type: String
+    AllowedValues: [true, false]
+    Default: false
+    Description: Enable VPC flow logs to CloudWatch.
+  FlowLogsRetentionDays:
+    Type: Number
+    Default: 14
+    MinValue: 1
+    MaxValue: 3653
+    Description: Retention period for VPC flow logs if enabled.
+
+Conditions:
+  ShouldEnableFlowLogs: !Equals [!Ref EnableFlowLogs, true]
 
 Resources:
   EstateWiseVPC:
@@ -15,36 +48,16 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: Name
-          Value: estatewise-vpc
-
-  PublicSubnetA:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EstateWiseVPC
-      CidrBlock: 10.0.1.0/24
-      AvailabilityZone: !Select [0, !GetAZs '']
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: public-subnet-a
-
-  PublicSubnetB:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref EstateWiseVPC
-      CidrBlock: 10.0.2.0/24
-      AvailabilityZone: !Select [1, !GetAZs '']
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: public-subnet-b
+          Value: !Sub '${EnvironmentName}-vpc'
+        - Key: Environment
+          Value: !Ref EnvironmentName
 
   InternetGateway:
     Type: AWS::EC2::InternetGateway
     Properties:
       Tags:
         - Key: Name
-          Value: estatewise-igw
+          Value: !Sub '${EnvironmentName}-igw'
 
   AttachGateway:
     Type: AWS::EC2::VPCGatewayAttachment
@@ -58,7 +71,7 @@ Resources:
       VpcId: !Ref EstateWiseVPC
       Tags:
         - Key: Name
-          Value: public-rt
+          Value: !Sub '${EnvironmentName}-public-rt'
 
   PublicRoute:
     Type: AWS::EC2::Route
@@ -68,22 +81,179 @@ Resources:
       DestinationCidrBlock: 0.0.0.0/0
       GatewayId: !Ref InternetGateway
 
-  PublicSubnetARouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
     Properties:
-      SubnetId: !Ref PublicSubnetA
-      RouteTableId: !Ref PublicRouteTable
+      VpcId: !Ref EstateWiseVPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetACidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-public-a'
+        - Key: Tier
+          Value: public
 
-  PublicSubnetBRouteTableAssociation:
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EstateWiseVPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PublicSubnetBCidr
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-public-b'
+        - Key: Tier
+          Value: public
+
+  PublicSubnetATableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      SubnetId: !Ref PublicSubnetB
       RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  PublicSubnetBTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  NatEip:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-nat-eip'
+
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: AttachGateway
+    Properties:
+      AllocationId: !GetAtt NatEip.AllocationId
+      SubnetId: !Ref PublicSubnetA
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-nat'
+
+  PrivateRouteTableA:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EstateWiseVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-a-rt'
+
+  PrivateRouteTableB:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref EstateWiseVPC
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-b-rt'
+
+  PrivateRouteA:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateRouteB:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      DestinationCidrBlock: 0.0.0.0/0
+      NatGatewayId: !Ref NatGateway
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EstateWiseVPC
+      AvailabilityZone: !Select [0, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnetACidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-a'
+        - Key: Tier
+          Value: application
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref EstateWiseVPC
+      AvailabilityZone: !Select [1, !GetAZs '']
+      CidrBlock: !Ref PrivateSubnetBCidr
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-private-b'
+        - Key: Tier
+          Value: application
+
+  PrivateSubnetARouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableA
+      SubnetId: !Ref PrivateSubnetA
+
+  PrivateSubnetBRouteAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PrivateRouteTableB
+      SubnetId: !Ref PrivateSubnetB
+
+  FlowLogGroup:
+    Type: AWS::Logs::LogGroup
+    Condition: ShouldEnableFlowLogs
+    Properties:
+      LogGroupName: !Sub '/aws/vpc/${EnvironmentName}-flowlogs'
+      RetentionInDays: !Ref FlowLogsRetentionDays
+
+  VpcFlowLogs:
+    Type: AWS::EC2::FlowLog
+    Condition: ShouldEnableFlowLogs
+    Properties:
+      DeliverLogsPermissionArn: !GetAtt FlowLogsRole.Arn
+      ResourceId: !Ref EstateWiseVPC
+      ResourceType: VPC
+      TrafficType: ALL
+      LogDestinationType: cloud-watch-logs
+      LogGroupName: !Ref FlowLogGroup
+
+  FlowLogsRole:
+    Type: AWS::IAM::Role
+    Condition: ShouldEnableFlowLogs
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: vpc-flow-logs.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonEC2FlowLogsRole
+      RoleName: !Sub '${EnvironmentName}-vpc-flowlogs-role'
 
 Outputs:
   VpcId:
-    Description: VPC ID
+    Description: ID of the provisioned VPC.
     Value: !Ref EstateWiseVPC
   PublicSubnetIds:
-    Description: Public Subnets
+    Description: Comma separated list of public subnet IDs.
     Value: !Join [',', [!Ref PublicSubnetA, !Ref PublicSubnetB]]
+  PrivateSubnetIds:
+    Description: Comma separated list of private subnet IDs.
+    Value: !Join [',', [!Ref PrivateSubnetA, !Ref PrivateSubnetB]]
+  NatGatewayId:
+    Value: !Ref NatGateway
+    Description: NAT gateway ID for private outbound traffic.
+  PublicRouteTableId:
+    Value: !Ref PublicRouteTable
+  PrivateRouteTableAId:
+    Value: !Ref PrivateRouteTableA
+  PrivateRouteTableBId:
+    Value: !Ref PrivateRouteTableB

@@ -1,89 +1,131 @@
 #!/usr/bin/env bash
-# Deploys the EstateWise backend to Azure Web App for Containers.
-# Requires Azure CLI to be logged in.
-
+# Deploy EstateWise backend to Azure Container Apps using the modular Bicep stack.
+#
+# Prerequisites:
+#   - Azure CLI >= 2.49 logged in (`az login`)
+#   - Azure CLI extensions: containerapp, log-analytics
+#   - Docker (if using local builds)
+#
+# Usage:
+#   ./deploy.sh \
+#     --resource-group estatewise-rg \
+#     --location eastus \
+#     --env estatewise \
+#     --image-tag $(git rev-parse --short HEAD)
+#
 set -euo pipefail
 
-RESOURCE_GROUP=${RESOURCE_GROUP:-estatewise-rg}
-LOCATION=${LOCATION:-eastus}
-ACR_NAME=${ACR_NAME:-estatewiseacr}
-APP_NAME=${APP_NAME:-estatewise-backend}
-IMAGE_TAG=${IMAGE_TAG:-latest}
-STORAGE_ACCOUNT=${STORAGE_ACCOUNT:-estatewisestorage}
-COSMOS_ACCOUNT=${COSMOS_ACCOUNT:-estatewisecosmos}
-APP_INSIGHTS=${APP_INSIGHTS:-estatewise-ai}
-VAULT_NAME=${VAULT_NAME:-estatewisekv}
-DATABASE_NAME=${DATABASE_NAME:-estatewisedb}
+RESOURCE_GROUP="estatewise-rg"
+LOCATION="eastus"
+ENVIRONMENT_NAME="estatewise"
+IMAGE_TAG="latest"
+IMAGE_NAME="estatewise-backend"
+JWT_SECRET=""
+GOOGLE_AI_API_KEY=""
+PINECONE_API_KEY=""
+OPENAI_API_KEY=""
+PINECONE_INDEX="estatewise-index"
+DATABASE_NAME="estatewisedb"
+PARAM_FILE=""
 
-# Create resource group
-az group create --name "$RESOURCE_GROUP" --location "$LOCATION"
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --resource-group)
+      RESOURCE_GROUP="$2"; shift 2 ;;
+    --location)
+      LOCATION="$2"; shift 2 ;;
+    --env|--environment-name)
+      ENVIRONMENT_NAME="$2"; shift 2 ;;
+    --image-tag)
+      IMAGE_TAG="$2"; shift 2 ;;
+    --image-name)
+      IMAGE_NAME="$2"; shift 2 ;;
+    --jwt-secret)
+      JWT_SECRET="$2"; shift 2 ;;
+    --google-ai-api-key)
+      GOOGLE_AI_API_KEY="$2"; shift 2 ;;
+    --pinecone-api-key)
+      PINECONE_API_KEY="$2"; shift 2 ;;
+    --openai-api-key)
+      OPENAI_API_KEY="$2"; shift 2 ;;
+    --pinecone-index)
+      PINECONE_INDEX="$2"; shift 2 ;;
+    --database-name)
+      DATABASE_NAME="$2"; shift 2 ;;
+    --parameters)
+      PARAM_FILE="$2"; shift 2 ;;
+    *)
+      echo "Unknown flag: $1" >&2; exit 1 ;;
+  esac
+done
 
-# Create Azure Container Registry if it doesn't exist
-if ! az acr show --name "$ACR_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-  az acr create --resource-group "$RESOURCE_GROUP" --name "$ACR_NAME" --sku Basic --admin-enabled true
+az config set defaults.group="$RESOURCE_GROUP" defaults.location="$LOCATION" >/dev/null
+
+echo "➡️  Ensuring resource group $RESOURCE_GROUP exists in $LOCATION"
+az group create --name "$RESOURCE_GROUP" --location "$LOCATION" >/dev/null
+
+# Build + push container into ACR once registry exists (Bicep will create it if needed)
+BUILD_TAG="$IMAGE_TAG"
+
+# Deploy infrastructure first (ACR is provisioned here)
+BICEP_ARGS=(
+  --template-file infra/main.bicep
+  --parameters environmentName="$ENVIRONMENT_NAME" \
+               imageName="$IMAGE_NAME" \
+               imageTag="$BUILD_TAG" \
+               databaseName="$DATABASE_NAME" \
+               pineconeIndex="$PINECONE_INDEX"
+)
+
+if [[ -n "$JWT_SECRET" ]]; then
+  BICEP_ARGS+=(jwtSecret="$JWT_SECRET")
+fi
+if [[ -n "$GOOGLE_AI_API_KEY" ]]; then
+  BICEP_ARGS+=(googleAiApiKey="$GOOGLE_AI_API_KEY")
+fi
+if [[ -n "$PINECONE_API_KEY" ]]; then
+  BICEP_ARGS+=(pineconeApiKey="$PINECONE_API_KEY")
+fi
+if [[ -n "$OPENAI_API_KEY" ]]; then
+  BICEP_ARGS+=(openAiApiKey="$OPENAI_API_KEY")
+fi
+if [[ -n "$PARAM_FILE" ]]; then
+  BICEP_ARGS+=("@${PARAM_FILE}")
 fi
 
-# Create Storage Account if it doesn't exist
-if ! az storage account show --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-  az storage account create --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" --location "$LOCATION" --sku Standard_LRS
+DEPLOYMENT_NAME="estatewise-$(date +%s)"
+
+echo "🚀 Deploying infrastructure via Bicep (deployment $DEPLOYMENT_NAME)"
+az deployment group create --name "$DEPLOYMENT_NAME" "${BICEP_ARGS[@]}"
+
+ACR_NAME=$(az deployment group show --name "$DEPLOYMENT_NAME" --query "properties.outputs.acrLoginServer.value" -o tsv)
+ACR_REGISTRY=${ACR_NAME%%.*}
+FULL_REGISTRY="${ACR_NAME}"
+IMAGE_URI="$FULL_REGISTRY/$IMAGE_NAME:$BUILD_TAG"
+
+# Build & push container image
+if ! az acr show --name "$ACR_REGISTRY" >/dev/null 2>&1; then
+  echo "Waiting for ACR $ACR_REGISTRY to finish provisioning..."
+  az acr show --name "$ACR_REGISTRY" --query name -o tsv >/dev/null
 fi
 
-# Create Cosmos DB for Mongo API if it doesn't exist
-if ! az cosmosdb show --name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-  az cosmosdb create --name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" --kind MongoDB --locations regionName="$LOCATION" failoverPriority=0 isZoneRedundant=False
-  az cosmosdb mongodb database create --account-name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" --name "$DATABASE_NAME"
-fi
+echo "🔐 Logging in to Azure Container Registry $FULL_REGISTRY"
+az acr login --name "$ACR_REGISTRY" >/dev/null
 
-# Create Application Insights if it doesn't exist
-if ! az monitor app-insights component show --app "$APP_INSIGHTS" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-  az monitor app-insights component create --app "$APP_INSIGHTS" --location "$LOCATION" --resource-group "$RESOURCE_GROUP" --application-type web
-fi
+echo "🐳 Building Docker image $IMAGE_URI"
+docker build -t "$IMAGE_URI" -f backend/Dockerfile .
 
-# Create Key Vault if it doesn't exist
-if ! az keyvault show --name "$VAULT_NAME" --resource-group "$RESOURCE_GROUP" >/dev/null 2>&1; then
-  az keyvault create --name "$VAULT_NAME" --resource-group "$RESOURCE_GROUP" --location "$LOCATION"
-fi
+echo "📦 Pushing image to ACR"
+docker push "$IMAGE_URI"
 
-LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query "loginServer" -o tsv)
+echo "📡 Forcing Container Apps revision update"
+az containerapp revision list --name "${ENVIRONMENT_NAME}-backend-ca" --environment "${ENVIRONMENT_NAME}-aca-env" >/dev/null 2>&1 || true
+az containerapp update \
+  --name "${ENVIRONMENT_NAME}-backend-ca" \
+  --environment "${ENVIRONMENT_NAME}-aca-env" \
+  --image "$IMAGE_URI" \
+  --set-env-vars VERSION="$BUILD_TAG" >/dev/null
 
-# Build and push image to ACR
-az acr build \
-  --registry "$ACR_NAME" \
-  --image "$APP_NAME:$IMAGE_TAG" \
-  -f backend/Dockerfile .
+APP_FQDN=$(az containerapp show --name "${ENVIRONMENT_NAME}-backend-ca" --output tsv --query properties.configuration.ingress.fqdn)
 
-# Create App Service plan and Web App
-az appservice plan create \
-  --name "${APP_NAME}-plan" \
-  --resource-group "$RESOURCE_GROUP" \
-  --sku B1 --is-linux
-
-az webapp create \
-  --name "$APP_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --plan "${APP_NAME}-plan" \
-  --deployment-container-image-name "$LOGIN_SERVER/$APP_NAME:$IMAGE_TAG"
-
-# Configure container registry credentials
-az webapp config container set \
-  --name "$APP_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --docker-custom-image-name "$LOGIN_SERVER/$APP_NAME:$IMAGE_TAG" \
-  --docker-registry-server-url "https://$LOGIN_SERVER"
-
-# Retrieve connection strings and configure app settings
-COSMOS_CONN=$(az cosmosdb keys list --name "$COSMOS_ACCOUNT" --resource-group "$RESOURCE_GROUP" --type connection-strings --query "connectionStrings[0].connectionString" -o tsv)
-STORAGE_CONN=$(az storage account show-connection-string --name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" -o tsv)
-APPINSIGHTS_KEY=$(az monitor app-insights component show --app "$APP_INSIGHTS" --resource-group "$RESOURCE_GROUP" --query instrumentationKey -o tsv)
-APPINSIGHTS_CONN=$(az monitor app-insights component show --app "$APP_INSIGHTS" --resource-group "$RESOURCE_GROUP" --query connectionString -o tsv)
-
-az webapp config appsettings set \
-  --name "$APP_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --settings \
-    MONGO_URI="$COSMOS_CONN" \
-    AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONN" \
-    APPINSIGHTS_INSTRUMENTATIONKEY="$APPINSIGHTS_KEY" \
-    APPLICATIONINSIGHTS_CONNECTION_STRING="$APPINSIGHTS_CONN"
-
-echo "Deployment complete. Web app URL: https://$APP_NAME.azurewebsites.net"
+echo "✅ Deployment complete: https://$APP_FQDN"

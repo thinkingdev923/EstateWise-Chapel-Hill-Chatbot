@@ -1,0 +1,55 @@
+resources:
+  - name: estatewise-agentic-ai
+    type: gcp-types/run-v1:projects.locations.services
+    properties:
+      parent: projects/$(projectId)/locations/${region}
+      metadata:
+        name: estatewise-agentic-ai
+      spec:
+        template:
+          metadata:
+            annotations:
+              run.googleapis.com/execution-environment: gen2
+              run.googleapis.com/cpu-throttling: 'false'
+          spec:
+            containerConcurrency: 80
+            serviceAccountName: ${serviceAccount}
+            containers:
+              - image: ${image}
+                args: ["--langgraph"]
+                env:
+                  - name: AGENT_RUNTIME
+                    value: ${runtime}
+                  - name: PINECONE_INDEX
+                    value: ${pineconeIndex}
+                  - name: GOOGLE_AI_API_KEY
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/GOOGLE_AI_API_KEY
+                        version: latest
+                  - name: OPENAI_API_KEY
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/OPENAI_API_KEY
+                        version: latest
+                  - name: PINECONE_API_KEY
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/PINECONE_API_KEY
+                        version: latest
+                  - name: NEO4J_URI
+                    value: ${neo4jUri}
+                  - name: NEO4J_USERNAME
+                    value: ${neo4jUser}
+                  - name: NEO4J_PASSWORD
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/NEO4J_PASSWORD
+                        version: latest
+                resources:
+                  limits:
+                    cpu: 1
+                    memory: 2Gi
+        traffic:
+          - percent: 100
+            latestRevision: true

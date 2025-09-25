@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: estatewise
+  labels:
+    app.kubernetes.io/part-of: estatewise
+  annotations:
+    consul.hashicorp.com/connect-inject: "true"

@@ -2,14 +2,18 @@ resources:
   - name: estatewise-assets
     type: storage.v1.bucket
     properties:
-      location: US-EAST1
+      location: us-east1
       storageClass: STANDARD
       iamConfiguration:
         uniformBucketLevelAccess:
           enabled: true
-      website:
-        mainPageSuffix: index.html
-        notFoundPage: 404.html
+      cors:
+        - origin: ['https://*.estatewise.app']
+          method: ['GET', 'HEAD']
+          responseHeader: ['*']
+          maxAgeSeconds: 3600
+      versioning:
+        enabled: true
 
 outputs:
   - name: bucketUrl

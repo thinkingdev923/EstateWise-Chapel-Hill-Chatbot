@@ -25,6 +25,7 @@ In addition to being the CLI, this agentic pipeline is also being used in our ma
 - [Overview](#overview)
 - [What’s New](#whats-new)
 - [Quick Start](#quick-start)
+- [Deployment](#deployment)
 - [Use With Your Own Clients](#use-with-your-own-clients)
   - [LangChain + LangGraph Runtime](#langchain--langgraph-runtime)
   - [CrewAI Runtime](#crewai-runtime)
@@ -79,10 +80,20 @@ flowchart LR
 ## What’s New
 
 - Expanded agent roles and clearer hand‑offs via a coordinator plan.
-- LangGraph runtime: ReAct agent, tool calling, in‑memory checkpointer.
+- LangGraph runtime: ReAct agent, tool calling, in-memory checkpointer.
+- EstateWiseLangGraphRuntime class: contextual system prompts, thread-aware memory, and instrumented tool telemetry you can consume programmatically.
 - CrewAI runtime: Python crew with planner/analyst/reporter sequence.
+- CrewRuntime helper: structured timeline/sections JSON so Node/TS clients can reason about plan, analysis, graph, and finance outputs.
 - More MCP tools (lookup, analytics, finance, groupings, graph pairs, map).
 - Better examples, configuration, and architecture diagrams.
+
+## Deployment
+
+- **Container Image** – Production Dockerfile is provided; see [DEPLOYMENT.md](DEPLOYMENT.md) for build/push instructions.
+- **Docker Compose** – `docker-compose.yaml` launches the orchestrator with all dependencies.
+- **Kubernetes** – Manifests under [`k8s/`](k8s) deploy the CLI (with embedded MCP server) to a cluster.
+
+> Refer to [DEPLOYMENT.md](DEPLOYMENT.md) for end-to-end instructions, environment variables, and integration tips.
 
 ```mermaid
 flowchart TD
@@ -121,8 +132,8 @@ npm start "Lookup ZPID for 123 Main St, Chapel Hill, NC and show similar homes n
 
 You can integrate Agentic AI in multiple ways depending on your stack and requirements.
 
-1) HTTP (recommended for web/mobile)
-- Bring up the server: `npm run serve` (dev) or `npm run start:server` (prod)
+1) **HTTP (recommended for web/mobile)**
+- **Bring up the server:** `npm run serve` (dev) or `npm run start:server` (prod)
 - Call `POST /run` from your app with a `goal` and optional `runtime`/`rounds`/`threadId`.
 
 Browser (vanilla JS)
@@ -160,7 +171,7 @@ r = requests.post('http://localhost:4318/run', json={
 print(r.json())
 ```
 
-2) Spawn the CLI (simple servers/services)
+2) **Spawn the CLI (simple servers/services)**
 - Use Node’s child_process to run the CLI and capture stdout.
 ```js
 import { spawn } from 'node:child_process';
@@ -169,7 +180,7 @@ p.stdout.on('data', (d)=> process.stdout.write(d));
 p.stderr.on('data', (d)=> process.stderr.write(d));
 ```
 
-3) Programmatic (monorepo / library usage)
+3) **Programmatic (monorepo / library usage)**
 - Inside this repo (or if you publish it), you can instantiate the orchestrator directly.
 ```ts
 import { AgentOrchestrator } from 'agentic-ai/dist/orchestrator/AgentOrchestrator.js';
@@ -183,9 +194,9 @@ const orchestrator = new AgentOrchestrator().register(
 const messages = await orchestrator.run('Find 3 beds near Chapel Hill', 5);
 ```
 
-4) LangGraph or CrewAI directly
-- LangGraph: set `runtime: 'langgraph'` in `/run` (HTTP), or run `npm run dev -- --langgraph`.
-- CrewAI: set `runtime: 'crewai'` in `/run`, or run `npm run dev -- --crewai`.
+4) **LangGraph or CrewAI directly**
+- **LangGraph:** set `runtime: 'langgraph'` in `/run` (HTTP), or run `npm run dev -- --langgraph`.
+- **CrewAI:** set `runtime: 'crewai'` in `/run`, or run `npm run dev -- --crewai`.
 
 Tips
 - Choose `default` runtime for deterministic, stepwise orchestration, `langgraph` for autonomous tool-calling, or `crewai` for CrewAI-style flows.
@@ -208,8 +219,28 @@ What it adds:
 - Tool-calling agent built with `@langchain/langgraph` prebuilt ReAct agent.
 - Tools include MCP tools (search/lookup/analytics/graph/map/finance), Pinecone vector retrieval, and Neo4j Cypher QA.
 - Lightweight in-memory checkpointer; easy to swap for Redis/Postgres in production.
+- Structured telemetry via `toolExecutions` (duration, status, JSON/text output) so you can surface traces in your UI.
+- Programmatic `EstateWiseLangGraphRuntime` class to inject custom context, instructions, or additional tools per thread.
 
-LangGraph orchestration:
+**Programmatic usage**
+```ts
+import { EstateWiseLangGraphRuntime } from './lang/graph.js';
+
+const runtime = new EstateWiseLangGraphRuntime({
+  defaultContext: { portfolio: 'Triangle relocation', mustHave: ['3+ beds'] },
+  defaultInstructions: 'Highlight walkability and school quality.',
+});
+
+const run = await runtime.run({
+  goal: 'Compare Chapel Hill listings with similar graph neighbors',
+  context: { budget: 850000, focus: 'Briar Chapel' },
+});
+
+console.log(run.finalMessage);
+console.table(run.toolExecutions.map(({ name, status, durationMs }) => ({ name, status, durationMs })));
+```
+
+**LangGraph orchestration:**
 
 ```mermaid
 stateDiagram-v2
@@ -268,7 +299,27 @@ PYTHON_BIN=python3.11 npm run dev -- --crewai "..."
 Notes
 - Python runner path: `agentic-ai/crewai/runner.py`. It reads a JSON payload `{goal}` on stdin and returns JSON.
 - Model: uses `OPENAI_MODEL` env (default `gpt-4o-mini`).
-- Output: a structured JSON with final `result` plus intermediate artifacts (plan/search/graph/finance).
+- Output: structured JSON with `summary`, `sections` (plan/analysis/graph/finance/report), and a `timeline` of agent/task outputs.
+- Programmatic: import `CrewRuntime` from `src/crewai/CrewRunner.ts` to drive the Python crew with custom context or include flags.
+
+Programmatic usage
+```ts
+import { CrewRuntime } from './crewai/CrewRunner.js';
+
+const runtime = new CrewRuntime({ timeoutMs: 240_000 });
+const result = await runtime.run('Scout Chapel Hill new construction under $900k', {
+  includeFinance: true,
+  hints: ['prefer energy-efficient builds'],
+  context: { mustHave: ['3 beds', 'home office'], timeframeMonths: 6 },
+});
+
+if (result.ok && result.structured) {
+  console.log(result.structured.summary);
+  for (const step of result.structured.timeline) {
+    console.log(`- ${step.agent}: ${step.output}`);
+  }
+}
+```
 
 CrewAI flow:
 

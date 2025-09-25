@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estatewise-agentic
+  namespace: estatewise
+  labels:
+    app: estatewise-agentic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: estatewise-agentic
+  template:
+    metadata:
+      labels:
+        app: estatewise-agentic
+    spec:
+      containers:
+        - name: agentic-ai
+          image: ghcr.io/your-org/estatewise-agentic:latest
+          envFrom:
+            - configMapRef:
+                name: agentic-ai-config
+            - secretRef:
+                name: agentic-ai-secrets
+          args: ["--langgraph"]
+        - name: mcp-server
+          image: ghcr.io/your-org/estatewise-mcp:latest
+          envFrom:
+            - configMapRef:
+                name: agentic-ai-config
+            - secretRef:
+                name: agentic-ai-secrets
+          tty: true
+          stdinOnce: false
+          command: ["node", "dist/server.js"]
+      restartPolicy: Always

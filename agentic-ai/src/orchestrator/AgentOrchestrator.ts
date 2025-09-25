@@ -6,6 +6,18 @@ import {
 } from "../core/types.js";
 import { ToolClient } from "../mcp/ToolClient.js";
 
+function extractToolText(result: unknown) {
+  const res = result as any;
+  const content = Array.isArray(res?.content) ? res.content : [];
+  const block = content.find((c: any) => c?.type === "text");
+  if (block && typeof block.text === "string") return block.text;
+  try {
+    return JSON.stringify(result);
+  } catch (_err) {
+    return String(result);
+  }
+}
+
 /**
  * Event payloads emitted during a streaming run.
  */
@@ -60,9 +72,7 @@ export class AgentOrchestrator {
         if (tool?.name) {
           try {
             const result = await this.callWithRetry(tool.name, tool.args || {});
-            const textBlock =
-              result?.content?.find((c: any) => c.type === "text")?.text ||
-              JSON.stringify(result);
+            const textBlock = extractToolText(result);
             history.push({
               from: agent.role,
               content: `Tool ${tool.name} result`,
@@ -111,9 +121,7 @@ export class AgentOrchestrator {
         if (tool?.name) {
           try {
             const result = await this.callWithRetry(tool.name, tool.args || {});
-            const textBlock =
-              result?.content?.find((c: any) => c.type === "text")?.text ||
-              JSON.stringify(result);
+            const textBlock = extractToolText(result);
             history.push({
               from: agent.role,
               content: `Tool ${tool.name} result`,

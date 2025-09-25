@@ -1,59 +1,209 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ECS Task Definition and Service for EstateWise backend
+Description: EstateWise ECS Fargate service (backend API) with Secrets Manager wiring and autoscaling.
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
   ClusterName:
     Type: String
   ExecutionRoleArn:
     Type: String
-  ServiceRoleArn:
-    Type: String
   ContainerImage:
     Type: String
+    Description: Backend container image URI (ECR or registry URL).
   ContainerPort:
     Type: Number
     Default: 3001
+  DesiredCount:
+    Type: Number
+    Default: 2
+  MinCapacity:
+    Type: Number
+    Default: 2
+  MaxCapacity:
+    Type: Number
+    Default: 6
+  CpuUnits:
+    Type: String
+    Default: '512'
+  MemoryMiB:
+    Type: String
+    Default: '1024'
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for the service.
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+  TargetGroupArn:
+    Type: String
+  MongoUriSecretArn:
+    Type: String
+  JwtSecretArn:
+    Type: String
+  GoogleApiKeySecretArn:
+    Type: String
+  PineconeApiKeySecretArn:
+    Type: String
+  PineconeIndex:
+    Type: String
+    Default: estatewise-index
+  LogRetentionDays:
+    Type: Number
+    Default: 30
+  HealthCheckGracePeriodSeconds:
+    Type: Number
+    Default: 60
 
 Resources:
+  TaskLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/ecs/${EnvironmentName}/backend'
+      RetentionInDays: !Ref LogRetentionDays
+
+  EstateWiseTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${EnvironmentName}-ecs-task-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SecretsAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameter
+                  - kms:Decrypt
+                Resource:
+                  - !Ref MongoUriSecretArn
+                  - !Ref JwtSecretArn
+                  - !Ref GoogleApiKeySecretArn
+                  - !Ref PineconeApiKeySecretArn
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
   EstateWiseTaskDef:
     Type: AWS::ECS::TaskDefinition
     Properties:
-      Family: estatewise-backend
-      Cpu: '512'
-      Memory: '1024'
+      Family: !Sub '${EnvironmentName}-backend'
+      Cpu: !Ref CpuUnits
+      Memory: !Ref MemoryMiB
       NetworkMode: awsvpc
       RequiresCompatibilities:
         - FARGATE
       ExecutionRoleArn: !Ref ExecutionRoleArn
+      TaskRoleArn: !GetAtt EstateWiseTaskRole.Arn
       ContainerDefinitions:
         - Name: backend
           Image: !Ref ContainerImage
+          Essential: true
           PortMappings:
             - ContainerPort: !Ref ContainerPort
+              Protocol: tcp
           Environment:
             - Name: NODE_ENV
               Value: production
+            - Name: PORT
+              Value: !Sub '${ContainerPort}'
+            - Name: PINECONE_INDEX
+              Value: !Ref PineconeIndex
+          Secrets:
             - Name: MONGO_URI
-              Value: # set via SecretsManager or use Parameter Store
-                Ref: MongoUriParameter
+              ValueFrom: !Ref MongoUriSecretArn
+            - Name: JWT_SECRET
+              ValueFrom: !Ref JwtSecretArn
+            - Name: GOOGLE_AI_API_KEY
+              ValueFrom: !Ref GoogleApiKeySecretArn
+            - Name: PINECONE_API_KEY
+              ValueFrom: !Ref PineconeApiKeySecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref TaskLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: backend
+          HealthCheck:
+            Command: ['CMD-SHELL', 'curl -f http://localhost:${ContainerPort}/health || exit 1']
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 15
 
   EstateWiseService:
     Type: AWS::ECS::Service
+    DependsOn: TaskLogGroup
     Properties:
-      ServiceName: estatewise-backend-service
       Cluster: !Ref ClusterName
+      ServiceName: !Sub '${EnvironmentName}-backend-service'
       LaunchType: FARGATE
+      DesiredCount: !Ref DesiredCount
       TaskDefinition: !Ref EstateWiseTaskDef
-      DesiredCount: 2
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      HealthCheckGracePeriodSeconds: !Ref HealthCheckGracePeriodSeconds
+      EnableExecuteCommand: true
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
-          Subnets: !Split [',', !Ref PublicSubnetIds]
-          SecurityGroups:
-            - !Ref ServiceSecurityGroup
-      Role: !Ref ServiceRoleArn
+          AssignPublicIp: DISABLED
+          SecurityGroups: !Ref SecurityGroupIds
+          Subnets: !Ref SubnetIds
+      LoadBalancers:
+        - ContainerName: backend
+          ContainerPort: !Ref ContainerPort
+          TargetGroupArn: !Ref TargetGroupArn
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+
+  AppAutoScalingServiceRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    Properties:
+      AWSServiceName: ecs.application-autoscaling.amazonaws.com
+
+  ServiceScalingTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: !Ref MaxCapacity
+      MinCapacity: !Ref MinCapacity
+      ResourceId: !Join
+        - ''
+        - - 'service/'
+          - !Ref ClusterName
+          - '/'
+          - !GetAtt EstateWiseService.Name
+      RoleARN: !GetAtt AppAutoScalingServiceRole.Arn
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  CpuScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub '${EnvironmentName}-backend-target-cpu'
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref ServiceScalingTarget
+      TargetTrackingScalingPolicyConfiguration:
+        TargetValue: 60
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        ScaleInCooldown: 120
+        ScaleOutCooldown: 60
 
 Outputs:
+  TaskDefinitionArn:
+    Value: !Ref EstateWiseTaskDef
   ServiceName:
-    Description: ECS Service Name
     Value: !Ref EstateWiseService
+  TaskRoleArn:
+    Value: !GetAtt EstateWiseTaskRole.Arn
+  LogGroupName:
+    Value: !Ref TaskLogGroup

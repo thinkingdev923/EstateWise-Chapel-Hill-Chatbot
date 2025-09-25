@@ -429,6 +429,14 @@ The project structure is as follows:
 - Clear at runtime with `system.cache.clear`.
 - Enable debug logs by setting `MCP_DEBUG=true`.
 
+## Deployment
+
+- **Container Image** – A production-ready Dockerfile lives in this directory; see [DEPLOYMENT.md](DEPLOYMENT.md) for build instructions.
+- **Docker Compose** – `docker-compose.yaml` bootstraps a managed container with stdio exposed.
+- **Kubernetes** – Example sidecar manifest (`k8s/sidecar-example.yaml`) shows how to run MCP alongside the Agentic AI runtime in a pod.
+
+> For a full walkthrough, refer to [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ## Scripts
 
 The following npm scripts are available:

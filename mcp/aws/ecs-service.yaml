@@ -1,0 +1,101 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EstateWise MCP server on ECS Fargate.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
+  ClusterName:
+    Type: String
+  ExecutionRoleArn:
+    Type: String
+  ContainerImage:
+    Type: String
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+  ApiBaseUrl:
+    Type: String
+    Default: https://estatewise-backend.vercel.app
+  FrontendBaseUrl:
+    Type: String
+    Default: https://estatewise.vercel.app
+  CacheTtlMs:
+    Type: Number
+    Default: 30000
+  CacheMax:
+    Type: Number
+    Default: 200
+  DesiredCount:
+    Type: Number
+    Default: 1
+  CpuUnits:
+    Type: String
+    Default: '512'
+  MemoryMiB:
+    Type: String
+    Default: '1024'
+
+Resources:
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/ecs/${EnvironmentName}/mcp'
+      RetentionInDays: 30
+
+  McpTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${EnvironmentName}-mcp'
+      Cpu: !Ref CpuUnits
+      Memory: !Ref MemoryMiB
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !Ref ExecutionRoleArn
+      ContainerDefinitions:
+        - Name: estatewise-mcp
+          Image: !Ref ContainerImage
+          Essential: true
+          Environment:
+            - Name: API_BASE_URL
+              Value: !Ref ApiBaseUrl
+            - Name: FRONTEND_BASE_URL
+              Value: !Ref FrontendBaseUrl
+            - Name: MCP_CACHE_TTL_MS
+              Value: !Ref CacheTtlMs
+            - Name: MCP_CACHE_MAX
+              Value: !Ref CacheMax
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: mcp
+          LinuxParameters:
+            InitProcessEnabled: true
+
+  McpService:
+    Type: AWS::ECS::Service
+    DependsOn: LogGroup
+    Properties:
+      Cluster: !Ref ClusterName
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      ServiceName: !Sub '${EnvironmentName}-mcp'
+      TaskDefinition: !Ref McpTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: !Ref SecurityGroupIds
+          Subnets: !Ref SubnetIds
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+
+Outputs:
+  TaskDefinitionArn:
+    Value: !Ref McpTaskDefinition
+  ServiceName:
+    Value: !Ref McpService
+  LogGroupName:
+    Value: !Ref LogGroup

@@ -1,0 +1,20 @@
+version: "3.9"
+services:
+  agentic-ai:
+    build:
+      context: ..
+      dockerfile: agentic-ai/Dockerfile
+    image: ghcr.io/your-org/estatewise-agentic:latest
+    environment:
+      AGENT_RUNTIME: ${AGENT_RUNTIME:-langgraph}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      PINECONE_API_KEY: ${PINECONE_API_KEY}
+      PINECONE_INDEX: ${PINECONE_INDEX:-estatewise-index}
+      THREAD_ID: ${THREAD_ID:-}
+      NEO4J_URI: ${NEO4J_URI:-}
+      NEO4J_USERNAME: ${NEO4J_USERNAME:-}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD:-}
+    tty: true
+    stdin_open: true
+    command: ["--langgraph"]

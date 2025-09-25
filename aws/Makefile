@@ -35,6 +35,22 @@ AWS_REGION    ?= us-east-1
 STACK_PREFIX  ?= estatewise
 CF_DIR         = cloudformation
 
+# ECS service deployment parameters (override via environment or make vars)
+CLUSTER_NAME ?=
+EXECUTION_ROLE_ARN ?=
+CONTAINER_IMAGE ?=
+SUBNET_IDS ?=
+SECURITY_GROUP_IDS ?=
+TARGET_GROUP_ARN ?=
+MONGO_SECRET_ARN ?=
+JWT_SECRET_ARN ?=
+GOOGLE_SECRET_ARN ?=
+PINECONE_SECRET_ARN ?=
+PINECONE_INDEX ?= estatewise-index
+DESIRED_COUNT ?= 2
+MIN_CAPACITY ?= 2
+MAX_CAPACITY ?= 6
+
 .PHONY: help validate \
         deploy-vpc deploy-iam deploy-alb deploy-ecs-cluster deploy-ecs-service deploy-all \
         codepipeline \
@@ -111,12 +127,32 @@ deploy-ecs-cluster:
 	  --region $(AWS_REGION)
 
 deploy-ecs-service:
+	@if [ -z "$(CLUSTER_NAME)" ] || [ -z "$(EXECUTION_ROLE_ARN)" ] || [ -z "$(CONTAINER_IMAGE)" ] || [ -z "$(SUBNET_IDS)" ] || [ -z "$(SECURITY_GROUP_IDS)" ] || [ -z "$(TARGET_GROUP_ARN)" ] || [ -z "$(MONGO_SECRET_ARN)" ] || [ -z "$(JWT_SECRET_ARN)" ] || [ -z "$(GOOGLE_SECRET_ARN)" ] || [ -z "$(PINECONE_SECRET_ARN)" ]; then \
+	  echo "Missing required parameters. Set CLUSTER_NAME, EXECUTION_ROLE_ARN, CONTAINER_IMAGE, SUBNET_IDS, SECURITY_GROUP_IDS, TARGET_GROUP_ARN, MONGO_SECRET_ARN, JWT_SECRET_ARN, GOOGLE_SECRET_ARN, PINECONE_SECRET_ARN." >&2; \
+	  exit 1; \
+	fi
 	@echo "📦  Deploying ECS service..."
 	aws cloudformation deploy \
 	  --template-file $(CF_DIR)/ecs-service.yaml \
 	  --stack-name $(STACK_PREFIX)-ecs-service \
 	  --capabilities CAPABILITY_NAMED_IAM \
-	  --region $(AWS_REGION)
+	  --region $(AWS_REGION) \
+	  --parameter-overrides \
+	    EnvironmentName=$(STACK_PREFIX) \
+	    ClusterName=$(CLUSTER_NAME) \
+	    ExecutionRoleArn=$(EXECUTION_ROLE_ARN) \
+	    ContainerImage=$(CONTAINER_IMAGE) \
+	    SubnetIds=$(SUBNET_IDS) \
+	    SecurityGroupIds=$(SECURITY_GROUP_IDS) \
+	    TargetGroupArn=$(TARGET_GROUP_ARN) \
+	    MongoUriSecretArn=$(MONGO_SECRET_ARN) \
+	    JwtSecretArn=$(JWT_SECRET_ARN) \
+	    GoogleApiKeySecretArn=$(GOOGLE_SECRET_ARN) \
+	    PineconeApiKeySecretArn=$(PINECONE_SECRET_ARN) \
+	    PineconeIndex=$(PINECONE_INDEX) \
+	    DesiredCount=$(DESIRED_COUNT) \
+	    MinCapacity=$(MIN_CAPACITY) \
+	    MaxCapacity=$(MAX_CAPACITY)
 
 deploy-all: deploy-vpc deploy-iam deploy-alb deploy-ecs-cluster deploy-ecs-service
 

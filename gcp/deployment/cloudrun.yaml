@@ -6,21 +6,54 @@ resources:
       serviceAccount: $(ref.estatewise-run-sa.email)
       metadata:
         name: estatewise-backend
+        annotations:
+          run.googleapis.com/launch-stage: GA
+          autoscaling.knative.dev/minScale: '1'
+          autoscaling.knative.dev/maxScale: '20'
+          run.googleapis.com/vpc-access-connector: projects/$(projectId)/locations/us-east1/connectors/estatewise-connector
+          run.googleapis.com/vpc-access-egress: all-traffic
       spec:
         template:
+          metadata:
+            annotations:
+              run.googleapis.com/execution-environment: gen2
+              run.googleapis.com/cpu-throttling: 'false'
           spec:
+            serviceAccountName: $(ref.estatewise-run-sa.email)
             containers:
               - image: us-east1-docker.pkg.dev/$(projectId)/estatewise/backend:latest
+                resources:
+                  limits:
+                    memory: 1Gi
+                    cpu: 1
                 env:
                   - name: NODE_ENV
                     value: production
+                  - name: MONGO_URI
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/MONGO_URI
+                        version: latest
+                  - name: PINECONE_API_KEY
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/PINECONE_API_KEY
+                        version: latest
+                  - name: GOOGLE_AI_API_KEY
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/GOOGLE_AI_API_KEY
+                        version: latest
+                  - name: JWT_SECRET
+                    valueSource:
+                      secretKeyRef:
+                        secret: projects/$(projectId)/secrets/JWT_SECRET
+                        version: latest
+                  - name: PINECONE_INDEX
+                    value: estatewise-index
                 ports:
                   - containerPort: 3001
             containerConcurrency: 80
-            vpcAccess:
-              connector: projects/$(projectId)/locations/us-east1/connectors/estatewise-connector
-              egress: ALL_TRAFFIC
-            serviceAccountName: $(ref.estatewise-run-sa.email)
         traffic:
           - percent: 100
             latestRevision: true

@@ -1,54 +1,126 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Application Load Balancer for EstateWise backend
+Description: Application Load Balancer stack for EstateWise services with HTTP->HTTPS redirect.
 
 Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
   VpcId:
-    Type: String
+    Type: AWS::EC2::VPC::Id
   PublicSubnetIds:
-    Type: CommaDelimitedList
-  ServiceSecurityGroup:
+    Type: List<AWS::EC2::Subnet::Id>
+  CertificateArn:
     Type: String
+    Default: ''
+    Description: ACM certificate ARN for HTTPS listener. Leave blank to use HTTP only.
   TargetGroupPort:
     Type: Number
     Default: 3001
+  HealthCheckPath:
+    Type: String
+    Default: /health
+
+Conditions:
+  UseHttps: !Not [!Equals [!Ref CertificateArn, '']]
 
 Resources:
+  AlbSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Ingress for EstateWise ALB
+      GroupName: !Sub '${EnvironmentName}-alb-sg'
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          Description: HTTP ingress
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: -1
+      Tags:
+        - Key: Name
+          Value: !Sub '${EnvironmentName}-alb-sg'
+
+  AlbHttpsIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Condition: UseHttps
+    Properties:
+      GroupId: !Ref AlbSecurityGroup
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      CidrIp: 0.0.0.0/0
+      Description: HTTPS ingress
+
   EstateWiseALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: estatewise-alb
+      Name: !Sub '${EnvironmentName}-alb'
       Scheme: internet-facing
+      Type: application
       Subnets: !Ref PublicSubnetIds
       SecurityGroups:
-        - !Ref ServiceSecurityGroup
+        - !Ref AlbSecurityGroup
+      LoadBalancerAttributes:
+        - Key: idle_timeout.timeout_seconds
+          Value: '60'
+        - Key: routing.http2.enabled
+          Value: 'true'
 
   EstateWiseTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: estatewise-tg
+      Name: !Sub '${EnvironmentName}-tg'
       Port: !Ref TargetGroupPort
       Protocol: HTTP
       VpcId: !Ref VpcId
       TargetType: ip
-      HealthCheckProtocol: HTTP
-      HealthCheckPath: /health
+      HealthCheckPath: !Ref HealthCheckPath
+      HealthCheckIntervalSeconds: 30
+      HealthCheckTimeoutSeconds: 10
+      HealthyThresholdCount: 3
+      UnhealthyThresholdCount: 3
       Matcher:
-        HttpCode: '200'
+        HttpCode: '200-399'
 
-  EstateWiseListener:
+  HttpListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref EstateWiseALB
       Port: 80
       Protocol: HTTP
       DefaultActions:
+        - !If
+          - UseHttps
+          - Type: redirect
+            RedirectConfig:
+              Protocol: HTTPS
+              Port: '443'
+              StatusCode: HTTP_301
+          - Type: forward
+            TargetGroupArn: !Ref EstateWiseTargetGroup
+
+  HttpsListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Condition: UseHttps
+    Properties:
+      LoadBalancerArn: !Ref EstateWiseALB
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref CertificateArn
+      DefaultActions:
         - Type: forward
           TargetGroupArn: !Ref EstateWiseTargetGroup
 
 Outputs:
+  LoadBalancerArn:
+    Value: !Ref EstateWiseALB
   LoadBalancerDNS:
-    Description: ALB DNS Name
     Value: !GetAtt EstateWiseALB.DNSName
   TargetGroupArn:
-    Description: Target Group ARN
     Value: !Ref EstateWiseTargetGroup
+  AlbSecurityGroupId:
+    Value: !Ref AlbSecurityGroup

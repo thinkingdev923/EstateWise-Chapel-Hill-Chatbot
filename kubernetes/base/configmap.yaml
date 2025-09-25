@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: estatewise-shared-config
+  labels:
+    app.kubernetes.io/part-of: estatewise
+  namespace: estatewise
+data:
+  NODE_ENV: production
+  PORT: "3001"
+  FRONTEND_PORT: "3000"

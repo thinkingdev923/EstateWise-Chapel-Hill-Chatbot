@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: EstateWise Agentic AI ECS Fargate service.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
+  ClusterName:
+    Type: String
+  ExecutionRoleArn:
+    Type: String
+  ContainerImage:
+    Type: String
+    Description: Container image for the Agentic AI runtime.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+  SecurityGroupIds:
+    Type: List<AWS::EC2::SecurityGroup::Id>
+  GoogleApiKeySecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing GOOGLE_AI_API_KEY (optional).
+    Default: ''
+  OpenAiKeySecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing OPENAI_API_KEY (optional).
+    Default: ''
+  PineconeKeySecretArn:
+    Type: String
+    Description: Secrets Manager ARN containing PINECONE_API_KEY (optional).
+    Default: ''
+  PineconeIndex:
+    Type: String
+    Default: estatewise-index
+  Neo4jUri:
+    Type: String
+    Default: ''
+  Neo4jUser:
+    Type: String
+    Default: ''
+  Neo4jPasswordSecretArn:
+    Type: String
+    Default: ''
+  RuntimeSelector:
+    Type: String
+    AllowedValues: [default, langgraph, crewai]
+    Default: langgraph
+  DesiredCount:
+    Type: Number
+    Default: 1
+  CpuUnits:
+    Type: String
+    Default: '1024'
+  MemoryMiB:
+    Type: String
+    Default: '2048'
+
+Conditions:
+  HasGoogleKey: !Not [!Equals [!Ref GoogleApiKeySecretArn, '']]
+  HasOpenAiKey: !Not [!Equals [!Ref OpenAiKeySecretArn, '']]
+  HasPineconeKey: !Not [!Equals [!Ref PineconeKeySecretArn, '']]
+  HasNeo4jPassword: !Not [!Equals [!Ref Neo4jPasswordSecretArn, '']]
+  HasNeo4jUri: !Not [!Equals [!Ref Neo4jUri, '']]
+  HasNeo4jUser: !Not [!Equals [!Ref Neo4jUser, '']]
+
+Resources:
+  AgenticTaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowSecrets
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
+                Resource:
+                  - !If [HasGoogleKey, !Ref GoogleApiKeySecretArn, !Ref 'AWS::NoValue']
+                  - !If [HasOpenAiKey, !Ref OpenAiKeySecretArn, !Ref 'AWS::NoValue']
+                  - !If [HasPineconeKey, !Ref PineconeKeySecretArn, !Ref 'AWS::NoValue']
+                  - !If [HasNeo4jPassword, !Ref Neo4jPasswordSecretArn, !Ref 'AWS::NoValue']
+      Tags:
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/ecs/${EnvironmentName}/agentic-ai'
+      RetentionInDays: 30
+
+  AgenticTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub '${EnvironmentName}-agentic-ai'
+      Cpu: !Ref CpuUnits
+      Memory: !Ref MemoryMiB
+      NetworkMode: awsvpc
+      RequiresCompatibilities: [FARGATE]
+      ExecutionRoleArn: !Ref ExecutionRoleArn
+      TaskRoleArn: !GetAtt AgenticTaskRole.Arn
+      ContainerDefinitions:
+        - Name: agentic-ai
+          Image: !Ref ContainerImage
+          Essential: true
+          PortMappings:
+            - ContainerPort: 3001
+          Environment:
+            - Name: AGENT_RUNTIME
+              Value: !Ref RuntimeSelector
+            - !If [HasNeo4jUri, { Name: NEO4J_URI, Value: !Ref Neo4jUri }, { Ref: 'AWS::NoValue' }]
+            - !If [HasNeo4jUser, { Name: NEO4J_USERNAME, Value: !Ref Neo4jUser }, { Ref: 'AWS::NoValue' }]
+            - Name: PINECONE_INDEX
+              Value: !Ref PineconeIndex
+          Secrets:
+            - !If [HasGoogleKey, { Name: GOOGLE_AI_API_KEY, ValueFrom: !Ref GoogleApiKeySecretArn }, { Ref: 'AWS::NoValue' }]
+            - !If [HasOpenAiKey, { Name: OPENAI_API_KEY, ValueFrom: !Ref OpenAiKeySecretArn }, { Ref: 'AWS::NoValue' }]
+            - !If [HasPineconeKey, { Name: PINECONE_API_KEY, ValueFrom: !Ref PineconeKeySecretArn }, { Ref: 'AWS::NoValue' }]
+            - !If [HasNeo4jPassword, { Name: NEO4J_PASSWORD, ValueFrom: !Ref Neo4jPasswordSecretArn }, { Ref: 'AWS::NoValue' }]
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref LogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: agentic-ai
+
+  AgenticService:
+    Type: AWS::ECS::Service
+    DependsOn: LogGroup
+    Properties:
+      Cluster: !Ref ClusterName
+      DesiredCount: !Ref DesiredCount
+      LaunchType: FARGATE
+      ServiceName: !Sub '${EnvironmentName}-agentic-ai'
+      TaskDefinition: !Ref AgenticTaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups: !Ref SecurityGroupIds
+          Subnets: !Ref SubnetIds
+      EnableExecuteCommand: true
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+
+Outputs:
+  TaskDefinitionArn:
+    Value: !Ref AgenticTaskDefinition
+  ServiceName:
+    Value: !Ref AgenticService
+  LogGroupName:
+    Value: !Ref LogGroup
