@@ -42,6 +42,7 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Dockerization](#dockerization)
 - [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
 - [GitHub Actions CI/CD](#github-actions)
+- [Travis CI](#travis-ci)
 - [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
@@ -52,7 +53,6 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
-- [Acknowledgments](#acknowledgments)
 
 ## Live App
 
@@ -969,6 +969,17 @@ Our pipeline is set up to run the following steps:
 
 This ensures that the application is always in a deployable state and that any issues are caught early in the development process.
 
+## Travis CI
+
+Travis CI complements the existing GitHub Actions workflows by running the Node 20 pipeline defined in `.travis.yml`. Each build caches npm dependencies and executes backend and frontend jobs in isolation.
+
+- **Backend stage:** Installs dependencies with `npm --prefix backend ci`, then runs the TypeScript build and Jest suite.
+- **Frontend stage:** Installs dependencies with `npm --prefix frontend ci`, performs linting, builds the Next.js app, and runs Jest.
+- **Secrets:** Configure the same environment variables used locally (database URIs, Pinecone, Google AI keys, etc.) through the Travis project settings.
+
+> [!NOTE]
+> **More details:** See [`TRAVIS_CI.md`](TRAVIS_CI.md) for enablement steps, local parity commands, and maintenance tips.
+
 ## Testing
 
 The application includes unit tests for both the backend and frontend components. These tests ensure that the application functions correctly and that any changes made do not break existing functionality.
@@ -1310,13 +1321,6 @@ This project is licensed under the [MIT License](LICENSE).
 
 For any questions or inquiries, please contact the [repository maintainer](https://github.com/hoangsonww) or open an issue in the repository [here](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/issues). You're also welcome to join our ongoing discussions [at this link](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot/discussions).
 
-## Acknowledgments
-
-- **SPECIAL THANKS** to: [David Nguyen](https://sonnguyenhoang.com), Rikhil Fellner, Muskaan Joshi, Vinir Rai, Rishabh Singh, and Rajbalan Yogarajan for their hard work and contributions to this project!
-- Thanks to the BUSI/COMP-488 course at UNC-Chapel Hill for the inspiration and opportunity to build this project.
-  - Thanks to the professors and TAs for the comprehensive Chapel Hill real-estate datasets provided. Without them, we would not have been able to build this project.
-  - Thanks to our instructor and TA for their guidance and support throughout the course.
-  
 ---
 
 Thank you for checking out **EstateWise**! We hope you find it useful in your real estate journey. If you have any questions or feedback, feel free to reach out or contribute to the project. 🏡🚀
