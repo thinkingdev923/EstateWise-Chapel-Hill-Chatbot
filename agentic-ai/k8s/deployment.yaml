@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estatewise-agentic
+  namespace: estatewise
+  labels:
+    app: estatewise-agentic
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: estatewise-agentic
+  template:
+    metadata:
+      labels:
+        app: estatewise-agentic
+    spec:
+      containers:
+        - name: agentic-ai
+          image: ghcr.io/your-org/estatewise-agentic:latest
+          imagePullPolicy: IfNotPresent
+          envFrom:
+            - configMapRef:
+                name: agentic-ai-config
+            - secretRef:
+                name: agentic-ai-secrets
+          args: ["--langgraph"]
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          tty: true
+          stdinOnce: false
+      restartPolicy: Always

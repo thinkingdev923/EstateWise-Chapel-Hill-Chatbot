@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estatewise-backend
+  labels:
+    app: estatewise-backend
+    app.kubernetes.io/part-of: estatewise
+  namespace: estatewise
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: estatewise-backend
+  template:
+    metadata:
+      labels:
+        app: estatewise-backend
+        app.kubernetes.io/part-of: estatewise
+      annotations:
+        consul.hashicorp.com/connect-service: "estatewise-backend"
+        consul.hashicorp.com/connect-service-port: "http"
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/your-org/estatewise-app-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3001
+              name: http
+          envFrom:
+            - configMapRef:
+                name: estatewise-shared-config
+          env:
+            - name: MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: estatewise-secrets
+                  key: mongoUri
+            - name: GOOGLE_AI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: estatewise-secrets
+                  key: googleAiApiKey
+            - name: PINECONE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: estatewise-secrets
+                  key: pineconeApiKey
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: estatewise-secrets
+                  key: jwtSecret
+            - name: PINECONE_INDEX
+              valueFrom:
+                secretKeyRef:
+                  name: estatewise-secrets
+                  key: pineconeIndex
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi

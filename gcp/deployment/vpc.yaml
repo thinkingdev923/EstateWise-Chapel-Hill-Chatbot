@@ -3,32 +3,46 @@ resources:
     type: compute.v1.network
     properties:
       autoCreateSubnetworks: false
+      routingConfig:
+        routingMode: REGIONAL
 
-  - name: public-subnet-a
+  - name: estatewise-subnet-private-a
     type: compute.v1.subnetwork
     properties:
-      ipCidrRange: 10.10.1.0/24
-      region: us-east1
       network: $(ref.estatewise-vpc.selfLink)
+      region: us-east1
+      ipCidrRange: 10.40.1.0/24
       privateIpGoogleAccess: true
 
-  - name: public-subnet-b
+  - name: estatewise-subnet-private-b
     type: compute.v1.subnetwork
     properties:
-      ipCidrRange: 10.10.2.0/24
-      region: us-east1
       network: $(ref.estatewise-vpc.selfLink)
+      region: us-central1
+      ipCidrRange: 10.40.2.0/24
       privateIpGoogleAccess: true
 
-  - name: estatewise-igw
+  - name: estatewise-router
     type: compute.v1.router
     properties:
+      region: us-east1
       network: $(ref.estatewise-vpc.selfLink)
+      bgp:
+        asn: 64514
+
+  - name: estatewise-nat
+    type: compute.v1.routerNat
+    properties:
+      router: $(ref.estatewise-router.name)
+      region: us-east1
+      natIpAllocateOption: AUTO_ONLY
+      sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+      enableEndpointIndependentMapping: true
 
 outputs:
   - name: network
     value: $(ref.estatewise-vpc.selfLink)
-  - name: subnets
-    value:
-      - $(ref.public-subnet-a.selfLink)
-      - $(ref.public-subnet-b.selfLink)
+  - name: subnetEast
+    value: $(ref.estatewise-subnet-private-a.selfLink)
+  - name: subnetCentral
+    value: $(ref.estatewise-subnet-private-b.selfLink)

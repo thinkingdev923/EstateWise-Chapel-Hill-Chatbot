@@ -25,6 +25,7 @@ In addition to being the CLI, this agentic pipeline is also being used in our ma
 - [Overview](#overview)
 - [What’s New](#whats-new)
 - [Quick Start](#quick-start)
+- [Deployment](#deployment)
 - [Use With Your Own Clients](#use-with-your-own-clients)
   - [LangChain + LangGraph Runtime](#langchain--langgraph-runtime)
   - [CrewAI Runtime](#crewai-runtime)
@@ -85,6 +86,14 @@ flowchart LR
 - CrewRuntime helper: structured timeline/sections JSON so Node/TS clients can reason about plan, analysis, graph, and finance outputs.
 - More MCP tools (lookup, analytics, finance, groupings, graph pairs, map).
 - Better examples, configuration, and architecture diagrams.
+
+## Deployment
+
+- **Container Image** – Production Dockerfile is provided; see [DEPLOYMENT.md](DEPLOYMENT.md) for build/push instructions.
+- **Docker Compose** – `docker-compose.yaml` launches the orchestrator with all dependencies.
+- **Kubernetes** – Manifests under [`k8s/`](k8s) deploy the CLI (with embedded MCP server) to a cluster.
+
+> Refer to [DEPLOYMENT.md](DEPLOYMENT.md) for end-to-end instructions, environment variables, and integration tips.
 
 ```mermaid
 flowchart TD

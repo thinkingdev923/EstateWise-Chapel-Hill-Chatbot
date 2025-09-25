@@ -96,7 +96,7 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![VS Code Extension](https://img.shields.io/badge/VS%20Code%20Extension-007ACC?style=for-the-badge&logo=gitextensions&logoColor=white) 
 ![Neo4j](https://img.shields.io/badge/Neo4j-008CC1?style=for-the-badge&logo=neo4j&logoColor=white)
 ![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=for-the-badge&logo=leaflet&logoColor=white)
-![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-6E56CF?style=for-the-badge)
+![MCP](https://img.shields.io/badge/MCP-Model%20Context%20Protocol-6E56CF?style=for-the-badge&logo=modelcontextprotocol&logoColor=white)
 ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
 ![D3.js](https://img.shields.io/badge/D3.js-F9A03C?style=for-the-badge&logo=d3&logoColor=white)
 ![OpenAPI](https://img.shields.io/badge/OpenAPI-6E6E6E?style=for-the-badge&logo=openapiinitiative&logoColor=white)
@@ -106,6 +106,12 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![Trivy](https://img.shields.io/badge/Trivy-5B8FF9?style=for-the-badge&logo=trivy&logoColor=white)
 ![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
 ![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
+![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
+![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
+![Kustomize & K8s](https://img.shields.io/badge/Kustomize_&_Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![Consul](https://img.shields.io/badge/Consul-CA2171?style=for-the-badge&logo=consul&logoColor=white)
+![Nomad](https://img.shields.io/badge/Nomad-00BC7F?style=for-the-badge&logo=hashicorp&logoColor=white)
+![HashiCorp](https://img.shields.io/badge/HashiCorp-4F5D95?style=for-the-badge&logo=hashicorp&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -202,6 +208,12 @@ EstateWise is packed with both UI and AI features to enhance your home-finding e
   - For security, this data isn’t included in the repo—please plug in your own.
   - Peek at our sample dataset here:  
     [Google Drive CSV (50k+ records)](https://drive.google.com/file/d/1vJCSlQgnQyVxoINosfWJWl6Jg1f0ltyo/view?usp=sharing)
+
+- **Production-Ready DevOps & Multi-Cloud Delivery**  
+  - Turn-key deployments for **AWS (ECS Fargate)**, **Azure (Container Apps)**, **GCP (Cloud Run)**, and **HashiCorp Terraform + Kubernetes (Consul/Nomad mesh)**.  
+  - Built-in support for **Vercel** (frontend + optional backend edge) and **kustomize/Helm** manifests for any Kubernetes cluster.  
+  - CI/CD ready with **Jenkins**, **GitHub Actions**, **Azure Pipelines**, and **Cloud Build**.  
+  - See [DEPLOYMENTS.md](DEPLOYMENTS.md) for diagrams, step-by-step guides, and environment toggles.
   - After cleaning, approx. **30,772 properties** remain in the database, available for the chatbot to use.
   - Explore `Initial-Data-Analysis.ipynb` in the repo root for an initial, quick Jupyter‑powered dive into the data.
   - Explore `EDA-CLI-Chatbot.ipynb` in the repo root for a more detailed and comprehensive analysis of the data, as well as a CLI version of our chatbot.
@@ -600,7 +612,33 @@ Example managed credentials
 
 ## Deployment
 
-Our app is fully deployed/hosted on the cloud using modern, powerful tech stacks (AWS, GCP, Terraform, Vercel, and more)! Below are its specifics:
+> Looking for a one-stop playbook? See [DEPLOYMENTS.md](DEPLOYMENTS.md) for platform-by-platform guides, environment matrices, Mermaid diagrams, and CI/CD instructions.
+
+EstateWise is production-ready across the major clouds. Pick the path that suits your organisation, or mix and match:
+
+- **AWS Fargate Stack** – [`aws/`](aws/README.md)  
+  CloudFormation templates for VPC, ALB, IAM, ECS, plus CodePipeline/CodeBuild automation and a full `deploy.sh` helper that also provisions DocumentDB.  
+  <sub>Observability via CloudWatch/Container Insights, secrets in AWS Secrets Manager.</sub>
+- **Azure Container Apps Stack** – [`azure/`](azure/README.md)  
+  Modular Bicep (network, Log Analytics + App Insights, ACR, Cosmos DB, Key Vault, Container Apps), `deploy.sh`, and Azure DevOps pipeline support.  
+  <sub>Secrets managed by Key Vault, logs shipped to Log Analytics.</sub>
+- **GCP Cloud Run Stack** – [`gcp/`](gcp/README.md)  
+  Deployment Manager configs (VPC + NAT + Serverless connector, Cloud Run, IAM, Storage), Cloud Build pipeline, and `deploy.sh` wrapper.  
+  <sub>Secrets from Secret Manager, instrumentation via Cloud Logging/Monitoring.</sub>
+- **HashiCorp + Kubernetes Stack** – [`hashicorp/`](hashicorp/README.md) & [`kubernetes/`](kubernetes/README.md)  
+  Terraform installs Consul + Nomad on any Kubernetes cluster, while curated Kustomize bases/overlays deploy backend & frontend workloads (with Consul sidecars, ingress, TLS).  
+  <sub>Great for self-managed clusters, hybrid, or multi-cloud service mesh deployments.</sub>
+- **Vercel Frontend/Edge** – [`frontend/`](frontend/)  
+  Next.js app ready for Vercel (`vercel.json`), with optional backend edge routes or reverse proxy to the primary API.
+
+CI/CD integration highlights:
+
+- **Jenkins** (`jenkins/workflow.Jenkinsfile`) – toggles AWS/Azure/GCP/HashiCorp/Kubernetes/Vercel deploy stages via environment flags.  
+- **GitHub Actions / GitLab CI** – reuse the same scripts, or trigger the native cloud pipelines.  
+- **Azure Pipelines** – container build/update pipeline for Container Apps.  
+- **GCP Cloud Build** – docker build + Cloud Run deploy in a single step.
+
+Our infrastructure-as-code investments include Terraform modules (`terraform/` + HashiCorp stack), CloudFormation, Deployment Manager, Helm, and Kustomize to ensure reproducible, auditable releases.
 
 - **Infrastructure as Code (IaC)**
 
@@ -1088,7 +1126,7 @@ This approach ensures faster onboarding for developers, simplifies deployments, 
 
 Bring EstateWise data, graphs, analytics, and utilities to MCP‑compatible clients (IDEs/assistants) via the `mcp/` package.
 
-![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
+![MCP](https://img.shields.io/badge/MCP-Server-6E56CF?style=for-the-badge&logo=modelcontextprotocol) ![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white) ![Zod](https://img.shields.io/badge/Zod-3068B7?style=for-the-badge&logo=zod&logoColor=white)
 
 - Location: `mcp/`
 - Transport: stdio (works with typical MCP launchers)

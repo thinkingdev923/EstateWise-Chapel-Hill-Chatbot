@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: estatewise-frontend
+  labels:
+    app: estatewise-frontend
+    app.kubernetes.io/part-of: estatewise
+  namespace: estatewise
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: estatewise-frontend
+  template:
+    metadata:
+      labels:
+        app: estatewise-frontend
+        app.kubernetes.io/part-of: estatewise
+      annotations:
+        consul.hashicorp.com/connect-service: "estatewise-frontend"
+        consul.hashicorp.com/connect-service-port: "http"
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/your-org/estatewise-app-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              value: "https://api.estatewise.local"
+          resources:
+            requests:
+              cpu: 150m
+              memory: 256Mi
+            limits:
+              cpu: 300m
+              memory: 512Mi

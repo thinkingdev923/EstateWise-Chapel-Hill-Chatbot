@@ -7,6 +7,13 @@ def run() {
       REGISTRY = 'ghcr.io/your-org'
       BACKEND_IMAGE = "${REGISTRY}/estatewise-app-backend"
       FRONTEND_IMAGE = "${REGISTRY}/estatewise-app-frontend"
+      DEPLOY_AWS = "${env.DEPLOY_AWS ?: '0'}"
+      DEPLOY_AZURE = "${env.DEPLOY_AZURE ?: '0'}"
+      DEPLOY_GCP = "${env.DEPLOY_GCP ?: '0'}"
+      DEPLOY_HASHICORP = "${env.DEPLOY_HASHICORP ?: '0'}"
+      DEPLOY_K8S_MANIFESTS = "${env.DEPLOY_K8S_MANIFESTS ?: '0'}"
+      DEPLOY_AGENTIC = "${env.DEPLOY_AGENTIC ?: '0'}"
+      DEPLOY_MCP = "${env.DEPLOY_MCP ?: '0'}"
     }
 
     options {
@@ -128,6 +135,76 @@ def run() {
             chmod +x deploy.sh
             ./deploy.sh
           '''
+        }
+      }
+
+      stage('Multi-Cloud Deploy') {
+        when {
+          expression {
+            return (env.DEPLOY_AWS == '1' || env.DEPLOY_AZURE == '1' || env.DEPLOY_GCP == '1' || env.DEPLOY_HASHICORP == '1' || env.DEPLOY_K8S_MANIFESTS == '1')
+          }
+        }
+        steps {
+          script {
+            def tasks = [:]
+
+            def commandWithArgs = { String scriptPath, String argsEnv ->
+              def args = env[argsEnv]
+              if (args?.trim()) {
+                return "bash ${scriptPath} ${args.trim()}"
+              }
+              return "bash ${scriptPath}"
+            }
+
+            if (env.DEPLOY_AWS == '1') {
+              tasks['AWS ECS'] = {
+                sh commandWithArgs('aws/deploy.sh', 'AWS_DEPLOY_ARGS')
+              }
+            }
+
+            if (env.DEPLOY_AZURE == '1') {
+              tasks['Azure Container Apps'] = {
+                sh commandWithArgs('azure/deploy.sh', 'AZURE_DEPLOY_ARGS')
+              }
+            }
+
+            if (env.DEPLOY_GCP == '1') {
+              tasks['GCP Cloud Run'] = {
+                sh commandWithArgs('gcp/deploy.sh', 'GCP_DEPLOY_ARGS')
+              }
+            }
+
+            if (env.DEPLOY_HASHICORP == '1') {
+              tasks['HashiCorp Terraform'] = {
+                sh commandWithArgs('hashicorp/deploy.sh', 'HASHICORP_DEPLOY_ARGS')
+              }
+            }
+
+            if (env.DEPLOY_K8S_MANIFESTS == '1') {
+              tasks['Kubernetes Manifests'] = {
+                def applyPath = env.K8S_APPLY_PATH ?: 'kubernetes/base'
+                sh "kubectl apply -k ${applyPath}"
+              }
+            }
+
+            if (env.DEPLOY_AGENTIC == '1') {
+              tasks['Agentic AI Deploy'] = {
+                sh commandWithArgs('agentic-ai/deploy.sh', 'AGENTIC_DEPLOY_ARGS')
+              }
+            }
+
+            if (env.DEPLOY_MCP == '1') {
+              tasks['MCP Server Deploy'] = {
+                sh commandWithArgs('mcp/deploy.sh', 'MCP_DEPLOY_ARGS')
+              }
+            }
+
+            if (tasks) {
+              parallel tasks
+            } else {
+              echo 'Multi-cloud deployment skipped (no tasks requested).'
+            }
+          }
         }
       }
 

@@ -1,0 +1,40 @@
+global:
+  name: nomad
+  datacenter: estatewise
+  tlsDisable: false
+
+server:
+  replicas: 3
+  disruptionBudget:
+    maxUnavailable: 1
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+
+client:
+  enabled: true
+  replicaCount: 3
+  hostNetwork: false
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "250m"
+  networkPolicy:
+    enabled: true
+  extraLabels:
+    consul.hashicorp.com/connect-inject: "true"
+  extraEnv:
+    - name: CONSUL_HTTP_ADDR
+      value: http://consul-server:8500
+    - name: CONSUL_GRPC_ADDR
+      value: consul-server:8502
+
+ui:
+  enabled: true
+  service:
+    type: LoadBalancer
+    port: 4646
+
+storage:
+  enabled: false

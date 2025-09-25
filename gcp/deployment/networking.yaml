@@ -1,0 +1,50 @@
+resources:
+  - name: estatewise-vpc
+    type: compute.v1.network
+    properties:
+      autoCreateSubnetworks: false
+      routingConfig:
+        routingMode: REGIONAL
+
+  - name: estatewise-subnet-private-a
+    type: compute.v1.subnetwork
+    properties:
+      network: $(ref.estatewise-vpc.selfLink)
+      region: us-east1
+      ipCidrRange: 10.40.1.0/24
+      privateIpGoogleAccess: true
+
+  - name: estatewise-router
+    type: compute.v1.router
+    properties:
+      region: us-east1
+      network: $(ref.estatewise-vpc.selfLink)
+      bgp:
+        asn: 64514
+
+  - name: estatewise-nat
+    type: compute.v1.routerNat
+    properties:
+      router: $(ref.estatewise-router.name)
+      region: us-east1
+      natIpAllocateOption: AUTO_ONLY
+      sourceSubnetworkIpRangesToNat: ALL_SUBNETWORKS_ALL_IP_RANGES
+      enableEndpointIndependentMapping: true
+
+  - name: estatewise-connector
+    type: gcp-types/vpcaccess-v1:projects.locations.connectors
+    properties:
+      parent: projects/$(projectId)/locations/us-east1
+      connectorId: estatewise-connector
+      network: $(ref.estatewise-vpc.name)
+      ipCidrRange: 10.8.0.0/28
+      minThroughput: 200
+      maxThroughput: 300
+
+outputs:
+  - name: network
+    value: $(ref.estatewise-vpc.selfLink)
+  - name: connector
+    value: projects/$(projectId)/locations/us-east1/connectors/estatewise-connector
+  - name: subnetEast
+    value: $(ref.estatewise-subnet-private-a.selfLink)

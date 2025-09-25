@@ -1,0 +1,33 @@
+resources:
+  - name: estatewise-mcp
+    type: gcp-types/run-v1:projects.locations.services
+    properties:
+      parent: projects/$(projectId)/locations/${region}
+      metadata:
+        name: estatewise-mcp
+      spec:
+        template:
+          metadata:
+            annotations:
+              run.googleapis.com/execution-environment: gen2
+          spec:
+            serviceAccountName: ${serviceAccount}
+            containers:
+              - image: ${image}
+                env:
+                  - name: API_BASE_URL
+                    value: ${apiBaseUrl}
+                  - name: FRONTEND_BASE_URL
+                    value: ${frontendBaseUrl}
+                  - name: MCP_CACHE_TTL_MS
+                    value: "${cacheTtlMs}"
+                  - name: MCP_CACHE_MAX
+                    value: "${cacheMax}"
+                resources:
+                  limits:
+                    cpu: 0.5
+                    memory: 1Gi
+            containerConcurrency: 80
+        traffic:
+          - percent: 100
+            latestRevision: true

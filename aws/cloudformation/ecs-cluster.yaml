@@ -1,11 +1,26 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: ECS Cluster for EstateWise
+Description: EstateWise ECS cluster with Container Insights enabled.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: estatewise
+  EnableContainerInsights:
+    Type: String
+    AllowedValues: [enabled, disabled]
+    Default: enabled
 
 Resources:
   EstateWiseCluster:
     Type: AWS::ECS::Cluster
     Properties:
-      ClusterName: estatewise-cluster
+      ClusterName: !Sub '${EnvironmentName}-ecs-cluster'
+      ClusterSettings:
+        - Name: containerInsights
+          Value: !Ref EnableContainerInsights
+      Configuration:
+        ExecuteCommandConfiguration:
+          Logging: DEFAULT
 
 Outputs:
   ClusterName:
