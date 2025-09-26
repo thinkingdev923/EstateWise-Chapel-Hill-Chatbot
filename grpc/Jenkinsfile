@@ -1,0 +1,71 @@
+pipeline {
+  agent any
+
+  environment {
+    NODE_VERSION = '20'
+    DOCKER_IMAGE = "estatewise/market-pulse-grpc:${env.BUILD_NUMBER ?: 'local'}"
+  }
+
+  options {
+    timestamps()
+    ansiColor('xterm')
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        dir('grpc') {
+          script {
+            sh 'node -v'
+          }
+        }
+      }
+    }
+
+    stage('Install') {
+      steps {
+        dir('grpc') {
+          sh 'npm ci'
+        }
+      }
+    }
+
+    stage('Lint & Test') {
+      steps {
+        dir('grpc') {
+          sh 'npm run lint'
+          sh 'npm test'
+        }
+      }
+    }
+
+    stage('Build') {
+      steps {
+        dir('grpc') {
+          sh 'npm run build'
+        }
+      }
+    }
+
+    stage('Docker Image') {
+      when {
+        expression { return env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'master' }
+      }
+      steps {
+        dir('grpc') {
+          sh "docker build -t ${env.DOCKER_IMAGE} ."
+        }
+      }
+    }
+  }
+
+  post {
+    success {
+      echo 'gRPC service pipeline completed successfully.'
+    }
+    failure {
+      echo 'gRPC service pipeline failed. Review above logs.'
+    }
+  }
+}

@@ -1,0 +1,94 @@
+syntax = "proto3";
+
+package estatewise.marketpulse;
+
+option go_package = "github.com/estatewise/grpc-service/gen";
+
+service MarketPulseService {
+  rpc GetSnapshot (MarketSnapshotRequest) returns (MarketSnapshotResponse);
+  rpc StreamHotZips (HotZipStreamRequest) returns (stream HotZip);
+  rpc ListMarkets (ListMarketsRequest) returns (ListMarketsResponse);
+}
+
+message MarketSnapshotRequest {
+  string query = 1;
+}
+
+message MarketSnapshotResponse {
+  MarketMetadata metadata = 1;
+  Scorecard scorecard = 2;
+  repeated TimelinePoint timeline = 3;
+  repeated HotZip top_zips = 4;
+  repeated Opportunity opportunities = 5;
+  repeated Opportunity risks = 6;
+  repeated RecommendedAction actions = 7;
+}
+
+message MarketMetadata {
+  string dataset_id = 1;
+  string dataset_version = 2;
+  string market_label = 3;
+  string summary = 4;
+  Metrics metrics = 5;
+  int32 latest_demand_index = 6;
+  string fallback_notice = 7;
+}
+
+message Metrics {
+  double median_list_price = 1;
+  double yoy_price_change = 2;
+  double inventory_months = 3;
+  double rent_yield = 4;
+  double affordability_index = 5;
+  double job_growth = 6;
+}
+
+message Scorecard {
+  int32 buying_window = 1;
+  int32 rental_demand = 2;
+  int32 competition = 3;
+  int32 risk = 4;
+}
+
+message TimelinePoint {
+  string month = 1;
+  double demand_index = 2;
+  double absorption_rate = 3;
+  double delta = 4;
+}
+
+message HotZip {
+  string name = 1;
+  double median_price = 2;
+  double rent_yield = 3;
+  double yoy = 4;
+}
+
+message Opportunity {
+  string text = 1;
+}
+
+message RecommendedAction {
+  string label = 1;
+  string description = 2;
+  string impact = 3;
+}
+
+message HotZipStreamRequest {
+  string query = 1;
+  double min_rent_yield = 2;
+}
+
+message ListMarketsRequest {
+  string search = 1;
+}
+
+message ListMarketsResponse {
+  repeated MarketSummary markets = 1;
+}
+
+message MarketSummary {
+  string dataset_id = 1;
+  string market_label = 2;
+  repeated string aliases = 3;
+}

@@ -1,0 +1,36 @@
+{
+  "family": "estatewise-market-pulse-grpc",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::AWS_ACCOUNT_ID:role/EXECUTION_ROLE_ARN",
+  "taskRoleArn": "arn:aws:iam::AWS_ACCOUNT_ID:role/TASK_ROLE_ARN",
+  "containerDefinitions": [
+    {
+      "name": "market-pulse-grpc",
+      "image": "AWS_ACCOUNT_ID.dkr.ecr.AWS_REGION.amazonaws.com/CONTAINER_IMAGE:latest",
+      "portMappings": [
+        {
+          "containerPort": 50051,
+          "hostPort": 50051,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        { "name": "GRPC_HOST", "value": "0.0.0.0" },
+        { "name": "GRPC_PORT", "value": "50051" },
+        { "name": "LOG_LEVEL", "value": "info" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/estatewise-market-pulse",
+          "awslogs-region": "AWS_REGION",
+          "awslogs-stream-prefix": "grpc"
+        }
+      }
+    }
+  ]
+}
