@@ -27,6 +27,7 @@ import {
   Users,
   Compass,
   Loader2,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MapPin,
   ChevronLeft,
 } from "lucide-react";
@@ -592,6 +593,7 @@ export default function MarketPulsePage() {
                     <CardContent>
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         {snapshot.topZips.map(
+                          // eslint-disable-next-line @typescript-eslint/no-unused-vars
                           (zip: HotZipPoint, index: number) => (
                             <li
                               key={zip.name}
