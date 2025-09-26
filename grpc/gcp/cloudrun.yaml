@@ -1,0 +1,27 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: market-pulse-grpc
+  namespace: estatewise
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        run.googleapis.com/ingress: internal-and-cloud-load-balancing
+        run.googleapis.com/cloudsql-instances: ""
+    spec:
+      containerConcurrency: 80
+      timeoutSeconds: 30
+      containers:
+        - image: us-central1-docker.pkg.dev/estatewise/estatewise/market-pulse-grpc:latest
+          ports:
+            - name: h2c
+              containerPort: 50051
+          env:
+            - name: GRPC_HOST
+              value: 0.0.0.0
+            - name: GRPC_PORT
+              value: "50051"
+            - name: LOG_LEVEL
+              value: info

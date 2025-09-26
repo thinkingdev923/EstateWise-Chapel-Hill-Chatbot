@@ -42,11 +42,12 @@ import {
   BarChart3,
   Calculator,
   Info,
-  Sun,
-  Moon,
   MessageCircleMore,
   HelpCircle,
+  TrendingUp,
+  ArrowRight,
 } from "lucide-react";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type GraphNode = Record<string, any>;
@@ -66,12 +67,15 @@ function prettyMoney(n?: number | null) {
 function Field({
   label,
   children,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
+  className?: string;
 }) {
+  const classes = ["flex flex-col gap-1", className].filter(Boolean).join(" ");
   return (
-    <div className="flex flex-col gap-1">
+    <div className={classes}>
       <Label className="text-sm text-muted-foreground">{label}</Label>
       {children}
     </div>
@@ -504,35 +508,6 @@ function HelpDialog({ title, content }: { title: string; content: string }) {
 }
 
 export default function InsightsPage() {
-  const DarkModeToggle: React.FC = () => {
-    const [darkMode, setDarkMode] = useState<boolean>(() => {
-      if (typeof window === "undefined") return false;
-      const saved = localStorage.getItem("dark-mode");
-      if (saved !== null) return saved === "true";
-      return document.documentElement.classList.contains("dark");
-    });
-
-    useEffect(() => {
-      const root = document.documentElement;
-      // eslint-disable-next-line @typescript-eslint/no-unused-expressions
-      darkMode ? root.classList.add("dark") : root.classList.remove("dark");
-      localStorage.setItem("dark-mode", String(darkMode));
-      document
-        .querySelector("meta[name='theme-color']")
-        ?.setAttribute("content", darkMode ? "#262626" : "#faf9f2");
-    }, [darkMode]);
-
-    return (
-      <button
-        aria-label="Toggle theme"
-        onClick={() => setDarkMode((v) => !v)}
-        className="inline-flex h-8 w-8 items-center justify-center rounded-full p-0 transition-colors cursor-pointer hover:text-primary"
-        title="Toggle theme"
-      >
-        {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-      </button>
-    );
-  };
   // ────────────────────────────────────────────────────────────────────────
   // Graph Similar
   const [similarZpid, setSimilarZpid] = useState(0);
@@ -807,6 +782,55 @@ export default function InsightsPage() {
             </p>
           </header>
 
+          <Card className="mb-8 overflow-hidden border-primary/30 bg-gradient-to-r from-primary/20 via-primary/10 to-transparent shadow-sm">
+            <CardContent className="p-6 md:p-8">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-3 max-w-2xl">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                    <TrendingUp className="h-4 w-4" /> Market Pulse
+                  </span>
+                  <h2 className="text-2xl font-semibold leading-tight">
+                    Live market dashboards for the neighborhoods you monitor
+                  </h2>
+                  <p className="text-muted-foreground">
+                    Track listing velocity, median price shifts, and absorption
+                    rates without leaving your workflow. Market Pulse distills
+                    the essentials into actionable visuals.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+                    <div className="rounded-lg border border-primary/20 bg-background/70 px-3 py-2">
+                      Rolling price change snapshots
+                    </div>
+                    <div className="rounded-lg border border-primary/20 bg-background/70 px-3 py-2">
+                      Inventory &amp; demand ratio alerts
+                    </div>
+                    <div className="rounded-lg border border-primary/20 bg-background/70 px-3 py-2">
+                      Fresh comp highlights
+                    </div>
+                    <div className="rounded-lg border border-primary/20 bg-background/70 px-3 py-2">
+                      Export-friendly chart views
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-col items-start gap-4 md:items-end">
+                  <div className="rounded-full border border-primary/30 bg-background/70 px-4 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                    Updated daily
+                  </div>
+                  <Button asChild size="lg" className="group">
+                    <Link href="/market-pulse">
+                      Explore Market Pulse
+                      <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                    </Link>
+                  </Button>
+                  <p className="text-xs text-muted-foreground md:text-right">
+                    Preview coverage for Raleigh-Durham, Charlotte, and coastal
+                    NC markets.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
             {/* Graph Tools */}
             <div className="flex flex-col gap-6">
@@ -983,13 +1007,17 @@ The tool searches for connections through:
                         placeholder="e.g. 123456"
                       />
                     </Field>
-                    <Field label={`Limit: ${similarLimit}`}>
+                    <Field
+                      label={`Limit: ${similarLimit}`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[similarLimit]}
                         min={1}
                         max={20}
                         step={1}
                         onValueChange={(v) => setSimilarLimit(v[0])}
+                        className="w-full"
                       />
                     </Field>
                     <Button
@@ -1124,13 +1152,17 @@ The tool searches for connections through:
                         placeholder="e.g. Meadowmont"
                       />
                     </Field>
-                    <Field label={`Limit: ${hoodLimit}`}>
+                    <Field
+                      label={`Limit: ${hoodLimit}`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[hoodLimit]}
                         min={5}
                         max={100}
                         step={5}
                         onValueChange={(v) => setHoodLimit(v[0])}
+                        className="w-full"
                       />
                     </Field>
                     <Button
@@ -1243,7 +1275,10 @@ The tool searches for connections through:
                         onChange={(e) => setPrice(Number(e.target.value))}
                       />
                     </Field>
-                    <Field label={`Down Payment: ${downPct}%`}>
+                    <Field
+                      label={`Down Payment: ${downPct}%`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[downPct]}
                         min={0}
@@ -1252,7 +1287,10 @@ The tool searches for connections through:
                         onValueChange={(v) => setDownPct(v[0])}
                       />
                     </Field>
-                    <Field label={`Interest Rate (APR): ${rate}%`}>
+                    <Field
+                      label={`Interest Rate (APR): ${rate}%`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[rate]}
                         min={1}
@@ -1261,7 +1299,10 @@ The tool searches for connections through:
                         onValueChange={(v) => setRate(v[0])}
                       />
                     </Field>
-                    <Field label={`Term: ${termYears} years`}>
+                    <Field
+                      label={`Term: ${termYears} years`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[termYears]}
                         min={10}
@@ -1270,7 +1311,10 @@ The tool searches for connections through:
                         onValueChange={(v) => setTermYears(v[0])}
                       />
                     </Field>
-                    <Field label={`Property Tax Rate: ${taxRatePct}%`}>
+                    <Field
+                      label={`Property Tax Rate: ${taxRatePct}%`}
+                      className="md:self-center md:h-full md:justify-center"
+                    >
                       <Slider
                         value={[taxRatePct]}
                         min={0.2}
@@ -1404,7 +1448,10 @@ The tool searches for connections through:
                       onChange={(e) => setMonthlyIncome(Number(e.target.value))}
                     />
                   </Field>
-                  <Field label={`Target DTI: ${targetDTI}%`}>
+                  <Field
+                    label={`Target DTI: ${targetDTI}%`}
+                    className="md:self-center md:h-full md:justify-center"
+                  >
                     <Slider
                       value={[targetDTI]}
                       min={25}

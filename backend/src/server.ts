@@ -13,6 +13,9 @@ import commuteProfileRoutes from "./routes/commute-profile.routes";
 import graphRoutes from "./routes/graph.routes";
 import { errorHandler } from "./middleware/error.middleware";
 import cookieParser from "cookie-parser";
+import * as trpcExpress from "@trpc/server/adapters/express";
+import { appRouter } from "./trpc/routers";
+import { createContext } from "./trpc/trpc";
 
 // ─── Winston Logger Setup ────────────────────────────────────────────────────
 import winston from "winston";
@@ -140,6 +143,18 @@ app.use("/api/conversations", conversationRoutes);
 app.use("/api/properties", propertyRoutes);
 app.use("/api/commute-profiles", commuteProfileRoutes);
 app.use("/api/graph", graphRoutes);
+
+// tRPC endpoint - non-blocking, optional alternative API
+app.use(
+  "/trpc",
+  trpcExpress.createExpressMiddleware({
+    router: appRouter,
+    createContext,
+    onError: ({ error, path }) => {
+      logger.error(`tRPC error on ${path}: ${error.message}`);
+    },
+  }),
+);
 
 // Serve Swagger JSON definition
 app.get("/swagger.json", (req, res) => {

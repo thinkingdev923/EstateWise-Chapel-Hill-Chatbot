@@ -4,7 +4,7 @@
 featuring a sleek, responsive UI with smart, agentic AI capabilities powered by comprehensive data analysis and advanced machine learning techniques to help you find your dream home! 🏠✨
 
 Under the hood, it leverages **agentic AI, Retrieval‑Augmented Generation (RAG) with Pinecone (kNN & cosine similarity), k‑Means clustering, Chain-of-Thought (CoT),
-Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver _fast,_ _hyper‑personalized_ property recommendations based on your preferences! 📲🧠
+Large Language Models (LLMs), a Mixture‑of‑Experts ensemble, and many more** to deliver _fast,_ _hyper‑personalized_ property recommendations based on your preferences! 📲🧠
 
 <p align="center">
   <a href="https://estatewise.vercel.app/">
@@ -42,13 +42,21 @@ Large Language Models (LLMs), and a Mixture‑of‑Experts ensemble** to deliver
 - [Dockerization](#dockerization)
 - [Prometheus Monitoring & Visualizations](#prometheus-monitoring--visualizations)
 - [GitHub Actions CI/CD](#github-actions)
+- [MCP Server](#mcp-server)
+- [Agentic AI Pipeline](#agentic-ai-pipeline)
+- [tRPC API](#trpc-api)
+  - [Features](#trpc-features)
+  - [Router Structure](#trpc-router-structure)
+  - [Type Safety](#trpc-type-safety)
+- [gRPC Services](#grpc-services)
+  - [Protocol Buffers](#protocol-buffers)
+  - [Service Definitions](#service-definitions)
+  - [Performance Benefits](#grpc-performance-benefits)
 - [Travis CI](#travis-ci)
 - [Testing](#testing)
 - [OpenAPI Specification](#openapi-specification)
 - [JSDoc & TypeDoc](#jsdoc--typedoc)
 - [Containerization](#containerization)
-- [MCP Server](#mcp-server)
-- [Agentic AI Pipeline](#agentic-ai-pipeline)
 - [VS Code Extension](#vs-code-extension)
 - [Contributing](#contributing)
 - [License](#license)
@@ -107,11 +115,15 @@ _Feel free to use the app as a guest or sign up for an account to save your conv
 ![CodeQL](https://img.shields.io/badge/CodeQL-2B7489?style=for-the-badge&logo=codeblocks&logoColor=white)
 ![Yelp Detect Secrets](https://img.shields.io/badge/Yelp%20Detect--Secrets-red?style=for-the-badge&logo=yelp&logoColor=white)
 ![Jenkins](https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white)
+![Travis CI](https://img.shields.io/badge/Travis%20CI-3EAAAF?style=for-the-badge&logo=travis&logoColor=white)
 ![Helm](https://img.shields.io/badge/Helm-0F1689?style=for-the-badge&logo=helm&logoColor=white)
 ![Kustomize & K8s](https://img.shields.io/badge/Kustomize_&_Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
 ![Consul](https://img.shields.io/badge/Consul-CA2171?style=for-the-badge&logo=consul&logoColor=white)
 ![Nomad](https://img.shields.io/badge/Nomad-00BC7F?style=for-the-badge&logo=hashicorp&logoColor=white)
 ![HashiCorp](https://img.shields.io/badge/HashiCorp-4F5D95?style=for-the-badge&logo=hashicorp&logoColor=white)
+![tRPC](https://img.shields.io/badge/tRPC-2596BE?style=for-the-badge&logo=trpc&logoColor=white)
+![gRPC](https://img.shields.io/badge/gRPC-4285F4?style=for-the-badge&logo=grocy&logoColor=white)
+![Protocol Buffers](https://img.shields.io/badge/Protocol%20Buffers-4285F4?style=for-the-badge&logo=proton&logoColor=white)
 
 For a more detailed technical overview, check out the [Technical Documentation](TECH_DOCS.md) file. It includes more information on how the app was built, how it works, how the data was processed, and more.
 
@@ -389,7 +401,7 @@ Below is a high-level diagram that illustrates the flow of the application, incl
          │   responses                   │
          └─────────────┬─────────────────┘
                        │
-                       │ (REST API Calls)
+                       │ (REST APIs & gRPC & tRPC Calls)
                        │
                        ▼
          ┌─────────────────────────────┐
@@ -590,7 +602,7 @@ Example managed credentials
 2. **Install dependencies:**
 
    ```bash
-   npm install
+   npm install --legacy-peer-deps
    ```
 
 3. **Run the Frontend Development Server:**
@@ -712,6 +724,8 @@ Infrastructure and deployment scripts for Microsoft Azure live in the [`azure/`]
   View properties on an interactive map with markers, search functionality, and links to Zillow listings.
 - **Visualizations Page:**  
   Explore aggregate charts and insights for all Chapel Hill properties.
+- **Market Insights Page:**  
+  Get the latest market trends and insights for Chapel Hill real estate and other markets across the US.
 - **Expert View:**  
   Toggle between the combined AI response and individual expert responses (Data Analyst, Lifestyle Concierge, Financial Advisor, Neighborhood Expert, Cluster Analyst) to see different perspectives on your query.
 - **Interactive Charts:**  
@@ -787,6 +801,12 @@ EstateWise features a modern, animated, and fully responsive user interface buil
 
 <p align="center">
   <img src="img/more-tools.png" alt="EstateWise UI" width="100%" />
+</p>
+
+### Market Insights Page
+
+<p align="center">
+  <img src="img/market-insights.png" alt="EstateWise UI" width="100%" />
 </p>
 
 ### Map Page
@@ -969,170 +989,6 @@ Our pipeline is set up to run the following steps:
 
 This ensures that the application is always in a deployable state and that any issues are caught early in the development process.
 
-## Travis CI
-
-Travis CI complements the existing GitHub Actions workflows by running the Node 20 pipeline defined in `.travis.yml`. Each build caches npm dependencies and executes backend and frontend jobs in isolation.
-
-- **Backend stage:** Installs dependencies with `npm --prefix backend ci`, then runs the TypeScript build and Jest suite.
-- **Frontend stage:** Installs dependencies with `npm --prefix frontend ci`, performs linting, builds the Next.js app, and runs Jest.
-- **Secrets:** Configure the same environment variables used locally (database URIs, Pinecone, Google AI keys, etc.) through the Travis project settings.
-
-> [!NOTE]
-> **More details:** See [`TRAVIS_CI.md`](TRAVIS_CI.md) for enablement steps, local parity commands, and maintenance tips.
-
-## Testing
-
-The application includes unit tests for both the backend and frontend components. These tests ensure that the application functions correctly and that any changes made do not break existing functionality.
-
-### Running Tests
-
-To run the tests, follow these steps:
-
-1. **Backend Unit & Integration Tests:**
-   - Navigate to the `backend` directory.
-   - Run the tests using the following command:
-
-     ```bash
-     npm run test
-     
-     # or run with watch mode (recommended for development - reruns tests on file changes)
-     npm run test:watch
-     
-     # or run with coverage report (recommended for CI/CD - generates a coverage report)
-     npm run test:coverage
-     ```
-   - This command runs the unit tests defined in the `src/tests` directory using Jest.
-
-2. **Frontend Unit & Integration Tests:**
-   - Navigate to the `frontend` directory.
-   - Run the tests using the following command:
-
-     ```bash
-     npm run test
-     
-     # or run with watch mode (recommended for development - reruns tests on file changes)
-     npm run test:watch
-     
-     # or run with coverage report (recommended for CI/CD - generates a coverage report)
-     npm run test:coverage
-     ```
-   - This command runs the unit tests defined in the `__tests__` directory using Jest and React Testing Library.
-
-3. **Frontend E2E Tests:**
-   - For end-to-end tests, we use Cypress and Selenium WebDriver. 
-   - To run the Selenium E2E tests, navigate to the `frontend` directory and run:
-
-     ```bash
-     npm run test:selenium
-     ```
-     
-    - To run the Cypress E2E tests, navigate to the `frontend` directory and run:
-  
-      ```bash
-      npm run cypress:run
-      
-      # to open the Cypress Test Runner in interactive mode, run:
-      npm run cypress:open
-      ```
-      
-    - This command runs the end-to-end tests defined in the `cypress/integration` directory using Cypress.
-
-These tests cover various aspects of the application, including:
-- **Unit Tests:** Individual components and functions to ensure they behave as expected.
-- **Integration Tests:** Multiple components working together to ensure they interact correctly.
-- **End-to-End Tests:** Simulating user interactions to ensure the entire application flow works as intended.
-
-## OpenAPI Specification
-
-An OpenAPI specification file (`openapi.yaml`) is included in the root directory. You can use Swagger UI or Postman to explore and test the API endpoints.
-
-> [!TIP]
-> Note: It may not be the latest and most updated version of the API specification, so please refer to the [Swagger API Documentation](#swagger-api-documentation) for the most up-to-date information.
-
-## JSDoc & TypeDoc
-
-We use **JSDoc** and **TypeDoc** to generate developer-friendly documentation for the project.
-
-### JSDoc (for JavaScript)
-
-1. Install:
-
-   ```bash
-   npm install --save-dev jsdoc
-   ```
-
-2. Configure `jsdoc.json`:
-
-   ```json
-   {
-     "source": {
-       "include": ["backend", "frontend"],
-       "includePattern": ".js$"
-     },
-     "opts": {
-       "destination": "docs",
-       "recurse": true
-     }
-   }
-   ```
-
-3. Run:
-
-   ```bash
-   npx jsdoc -c jsdoc.json
-   ```
-
-Open `docs/index.html` to view.
-
-### TypeDoc (for TypeScript)
-
-1. Install:
-
-   ```bash
-   npm install --save-dev typedoc
-   ```
-
-2. Generate backend docs:
-
-   ```bash
-   npm run typedoc:backend
-   ```
-
-3. Generate frontend docs:
-
-   ```bash
-   npm run typedoc:frontend
-   ```
-
-The generated HTML will be in `docs-backend/` and `docs-frontend/`. Open the respective `index.html` files to view.
-
-For more details, see [jsdoc.app](https://jsdoc.app) and [typedoc.org](https://typedoc.org).
-
-## Containerization
-
-The application is containerized using Docker to ensure consistent, portable, and reproducible builds across different environments.
-
-* **Backend and Frontend Dockerfiles:**
-  The `backend/Dockerfile` and `frontend/Dockerfile` define how to build the container images for their respective services. They include steps to install dependencies, build the code, and configure the production servers.
-
-* **GitHub Actions Integration:**
-  As part of the CI/CD pipeline, the workflow automatically builds these Docker images after testing and linting have succeeded. It uses the `docker/build-push-action@v5` to build the images and then push them to GitHub Container Registry (GHCR).
-
-* **Image Scanning:**
-  Once the images are built and published, they are scanned for vulnerabilities using Trivy in the pipeline to catch any security issues before deployment.
-
-* **docker-compose Usage (Local):**
-  For local development or quick testing, a `docker-compose.yml` file is included. This file defines both the backend and frontend containers, along with their dependencies, allowing you to spin up the entire stack with a single command:
-
-  ```bash
-  docker-compose up --build
-  ```
-
-* **Deployment:**
-  In production, the images are pulled directly from GHCR and deployed to AWS infrastructure or Vercel, enabling a consistent artifact to run from local to production.
-
-This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
-
 ## MCP Server
 
 Bring EstateWise data, graphs, analytics, and utilities to MCP‑compatible clients (IDEs/assistants) via the `mcp/` package.
@@ -1252,6 +1108,584 @@ flowchart LR
 
 > [!IMPORTANT]
 > **For details and examples, see [agentic-ai/README.md](agentic-ai/README.md).**
+
+## API Architecture Overview
+
+EstateWise provides three complementary API protocols, each optimized for different use cases:
+
+```mermaid
+flowchart TB
+    subgraph "Client Applications"
+        WebApp[Next.js Web App]
+        Mobile[Mobile Apps]
+        Services[Microservices]
+        Scripts[Python/Go Scripts]
+    end
+
+    subgraph "API Gateway Layer"
+        REST[REST API<br/>/api/*<br/>JSON/HTTP]
+        TRPC[tRPC API<br/>/trpc/*<br/>Type-safe RPC]
+        GRPC[gRPC Server<br/>:50051<br/>Binary RPC]
+    end
+
+    subgraph "Shared Backend Services"
+        Auth[Authentication]
+        BL[Business Logic]
+        Cache[Redis Cache]
+        DB[(Databases)]
+    end
+
+    WebApp -->|Primary| TRPC
+    WebApp -->|Fallback| REST
+    Mobile -->|iOS/Android| REST
+    Services -->|High Performance| GRPC
+    Scripts -->|Multi-language| GRPC
+
+    REST --> Auth
+    TRPC --> Auth
+    GRPC --> Auth
+
+    Auth --> BL
+    BL --> Cache
+    Cache --> DB
+
+    style REST fill:#85EA2D,color:#000
+    style TRPC fill:#2596BE,color:#fff
+    style GRPC fill:#4285F4,color:#fff
+```
+
+### When to Use Each API
+
+| API | Best For | Protocol | Type Safety | Languages |
+|-----|----------|----------|-------------|-----------|
+| **REST** | Web standards, wide compatibility | JSON/HTTP/1.1 | OpenAPI/Swagger | Any |
+| **tRPC** | TypeScript apps, React/Next.js | JSON/HTTP | End-to-end TS | TypeScript |
+| **gRPC** | Microservices, high performance | Protobuf/HTTP/2 | Code generation | 10+ languages |
+
+### tRPC API
+
+EstateWise includes a **tRPC** (TypeScript Remote Procedure Call) API as an optional, type-safe alternative to the REST API. This provides end-to-end type safety between backend and frontend, automatic API client generation, and improved developer experience.
+
+#### tRPC Features
+
+- **End-to-End Type Safety**: Full TypeScript support from backend to frontend with automatic type inference
+- **No Code Generation**: Unlike traditional API clients, tRPC infers types directly from your router
+- **RPC-like DX**: Call backend functions as if they were local TypeScript functions
+- **Built-in Validation**: Input/output validation using Zod schemas
+- **Batching & Caching**: Automatic request batching and built-in caching support
+- **WebSocket Support**: Real-time subscriptions (when configured)
+- **Non-Breaking**: Runs alongside existing REST API at `/trpc` endpoint
+
+#### tRPC Router Structure
+
+The tRPC API is organized into logical routers:
+
+```typescript
+// Main app router combining all sub-routers
+appRouter = {
+  properties: propertiesRouter,  // Property CRUD and search
+  analytics: analyticsRouter,    // Market trends, predictions, metrics
+  // Additional routers can be added here
+}
+```
+
+**Properties Router** (`/trpc/properties.*`):
+- `list` - Get paginated properties with filters (type, price, bedrooms)
+- `byId` - Get single property by ID
+- `search` - Full-text search across properties
+- `create` - Create new property (protected)
+- `stats` - Get aggregate statistics
+
+**Analytics Router** (`/trpc/analytics.*`):
+- `marketTrends` - Historical price/volume data for a location
+- `pricePrediction` - AI-powered price estimates
+- `neighborhoodInsights` - Demographics, schools, amenities
+- `investmentMetrics` - ROI, cap rate, cash flow calculations
+
+#### tRPC Architecture
+
+```mermaid
+flowchart TB
+    subgraph "Frontend (Next.js/React)"
+        Client[tRPC Client]
+        Types[TypeScript Types<br/>Auto-inferred]
+        ReactHooks[React Query Hooks]
+    end
+
+    subgraph "tRPC Layer (/trpc)"
+        Router[App Router]
+        Props[Properties Router]
+        Analytics[Analytics Router]
+        Context[Context & Auth]
+        Validation[Zod Validation]
+    end
+
+    subgraph "Backend Services"
+        MongoDB[(MongoDB)]
+        Pinecone[(Pinecone)]
+        Gemini[Google Gemini]
+        Neo4j[(Neo4j)]
+    end
+
+    Client -->|Type-safe RPC| Router
+    ReactHooks -->|useQuery/useMutation| Router
+    Types -.->|Generated from| Router
+
+    Router --> Props
+    Router --> Analytics
+
+    Props --> Context
+    Analytics --> Context
+    Context --> Validation
+
+    Props --> MongoDB
+    Props --> Pinecone
+    Analytics --> Gemini
+    Analytics --> Neo4j
+
+    style Client fill:#2596BE,color:#fff
+    style Router fill:#2596BE,color:#fff
+    style Types fill:#007ACC,color:#fff
+```
+
+#### tRPC Request Flow
+
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant T as tRPC Endpoint
+    participant V as Zod Validator
+    participant P as Procedure
+    participant DB as Database
+
+    C->>T: HTTP Request to /trpc/properties.list
+    T->>V: Validate Input Schema
+    V-->>T: Validation Result
+
+    alt Valid Input
+        T->>P: Execute Procedure
+        P->>DB: Query Data
+        DB-->>P: Return Results
+        P-->>T: Type-safe Response
+        T-->>C: JSON with TypeScript Types
+    else Invalid Input
+        V-->>T: Validation Error
+        T-->>C: Type-safe Error Response
+    end
+```
+
+#### tRPC Type Safety
+
+One of tRPC's main benefits is compile-time type safety:
+
+```typescript
+// ❌ TypeScript Error - 'apartament' is not a valid type
+trpc.properties.list.query({ type: 'apartament' });
+
+// ❌ TypeScript Error - 'bedroom' doesn't exist
+trpc.properties.list.query({ bedroom: 3 });
+
+// ✅ Correct - TypeScript knows all valid parameters
+trpc.properties.list.query({
+  type: 'apartment',
+  bedrooms: 3,
+  maxPrice: 750000,
+});
+```
+
+**Environment Setup**:
+
+The tRPC server requires no additional configuration beyond the standard backend `.env`. It automatically runs at `/trpc` when the backend starts.
+
+**Testing the tRPC API**:
+
+```bash
+# Query properties
+curl -G "http://localhost:3001/trpc/properties.list" \
+  --data-urlencode 'input={"limit":5}'
+
+# Get property statistics
+curl "http://localhost:3001/trpc/properties.stats"
+
+# Get market trends
+curl -G "http://localhost:3001/trpc/analytics.marketTrends" \
+  --data-urlencode 'input={"location":"Austin, TX","period":"month"}'
+```
+
+### gRPC Services
+
+EstateWise also provides **gRPC** (Google Remote Procedure Call) services for high-performance, language-agnostic communication between services. This is particularly useful for microservices architectures and cross-language integrations.
+
+#### Protocol Buffers
+
+All gRPC services are defined using Protocol Buffers (protobuf), providing:
+- **Strongly typed contracts** between services
+- **Language-agnostic** service definitions
+- **Efficient binary serialization** (smaller payloads than JSON)
+- **Automatic client/server code generation** for multiple languages
+
+#### Service Definitions
+
+Our gRPC services are organized in the `grpc/` directory:
+
+```protobuf
+// grpc/protos/properties.proto
+service PropertyService {
+  rpc GetProperty(GetPropertyRequest) returns (Property);
+  rpc ListProperties(ListPropertiesRequest) returns (PropertiesResponse);
+  rpc SearchProperties(SearchRequest) returns (stream Property);
+  rpc CreateProperty(CreatePropertyRequest) returns (Property);
+}
+
+// grpc/protos/analytics.proto
+service AnalyticsService {
+  rpc GetMarketTrends(MarketTrendsRequest) returns (MarketTrendsResponse);
+  rpc PredictPrice(PricePredictionRequest) returns (PricePrediction);
+  rpc StreamPriceUpdates(StreamRequest) returns (stream PriceUpdate);
+}
+```
+
+#### gRPC Architecture
+
+```mermaid
+flowchart TB
+    subgraph "Client Applications"
+        JSClient[JavaScript Client]
+        PyClient[Python Client]
+        GoClient[Go Client]
+        JavaClient[Java Client]
+    end
+
+    subgraph "gRPC Server (Port 50051)"
+        Proto[Proto Definitions]
+        PropertySvc[Property Service]
+        AnalyticsSvc[Analytics Service]
+        Stream[Streaming Handler]
+    end
+
+    subgraph "Protocol Layer"
+        PB[Protocol Buffers<br/>Binary Serialization]
+        HTTP2[HTTP/2 Transport]
+        TLS[TLS Security]
+    end
+
+    subgraph "Backend Services"
+        MongoDB[(MongoDB)]
+        Pinecone[(Pinecone)]
+        Neo4j[(Neo4j)]
+        Redis[(Redis)]
+    end
+
+    JSClient -->|grpc-js| PB
+    PyClient -->|grpcio| PB
+    GoClient -->|grpc-go| PB
+    JavaClient -->|grpc-java| PB
+
+    PB --> HTTP2
+    HTTP2 --> TLS
+    TLS --> Proto
+
+    Proto --> PropertySvc
+    Proto --> AnalyticsSvc
+    PropertySvc --> Stream
+    AnalyticsSvc --> Stream
+
+    PropertySvc --> MongoDB
+    PropertySvc --> Pinecone
+    AnalyticsSvc --> Neo4j
+    AnalyticsSvc --> Redis
+
+    style Proto fill:#4285F4,color:#fff
+    style PB fill:#4285F4,color:#fff
+    style HTTP2 fill:#1a73e8,color:#fff
+```
+
+#### gRPC Communication Flow
+
+```mermaid
+sequenceDiagram
+    participant C as gRPC Client
+    participant S as gRPC Server
+    participant P as Proto Parser
+    participant H as Service Handler
+    participant DB as Database
+
+    Note over C,S: Unary RPC Example
+    C->>S: Binary Request (Protocol Buffers)
+    S->>P: Deserialize Proto Message
+    P->>H: Call Service Method
+    H->>DB: Query Data
+    DB-->>H: Return Results
+    H->>P: Create Response Message
+    P->>S: Serialize to Proto
+    S-->>C: Binary Response
+
+    Note over C,S: Server Streaming Example
+    C->>S: SearchProperties Request
+    S->>H: Start Stream Handler
+    loop Stream Results
+        H->>DB: Fetch Batch
+        DB-->>H: Property Data
+        H->>P: Serialize Each Property
+        P-->>C: Stream Property Message
+    end
+    H-->>C: End Stream
+```
+
+#### gRPC vs REST vs tRPC Comparison
+
+```mermaid
+graph LR
+    subgraph "REST API"
+        REST[JSON over HTTP/1.1]
+        REST1[Manual Type Definitions]
+        REST2[Text-based Protocol]
+        REST3[Request/Response Only]
+    end
+
+    subgraph "tRPC"
+        TRPC[JSON over HTTP]
+        TRPC1[Auto Type Inference]
+        TRPC2[TypeScript-First]
+        TRPC3[Request/Response + Subscriptions]
+    end
+
+    subgraph "gRPC"
+        GRPC[Protobuf over HTTP/2]
+        GRPC1[Code Generation]
+        GRPC2[Binary Protocol]
+        GRPC3[Unary + Streaming]
+    end
+
+    style REST fill:#85EA2D,color:#000
+    style TRPC fill:#2596BE,color:#fff
+    style GRPC fill:#4285F4,color:#fff
+```
+
+#### gRPC Performance Benefits
+
+- **Binary Protocol**: 20-30% smaller payloads compared to JSON
+- **HTTP/2**: Multiplexing, server push, header compression
+- **Streaming**: Bidirectional streaming for real-time updates
+- **Code Generation**: Type-safe clients in 10+ languages
+- **Load Balancing**: Built-in support for client-side load balancing
+
+**Running the gRPC Server**:
+
+```bash
+# Install dependencies
+cd grpc
+npm install
+
+# Generate TypeScript types from proto files
+npm run proto:generate
+
+# Start gRPC server (runs on port 50051)
+npm run server
+```
+
+**Environment Variables**:
+
+```env
+GRPC_SERVER_PORT=50051
+GRPC_SERVER_HOST=0.0.0.0
+GRPC_USE_TLS=false  # Set to true for production
+GRPC_CERT_PATH=/path/to/server.crt
+GRPC_KEY_PATH=/path/to/server.key
+```
+
+**Testing with grpcurl**:
+
+```bash
+# List available services
+grpcurl -plaintext localhost:50051 list
+
+# Get property by ID
+grpcurl -plaintext -d '{"id": "123"}' \
+  localhost:50051 properties.PropertyService/GetProperty
+
+# Stream property search
+grpcurl -plaintext -d '{"query": "3 bedrooms"}' \
+  localhost:50051 properties.PropertyService/SearchProperties
+```
+
+**Language Support**:
+
+The gRPC services can be consumed by clients written in:
+- JavaScript/TypeScript (Node.js)
+- Python
+- Go
+- Java
+- C#/.NET
+- Ruby
+- PHP
+- And many more...
+
+This makes EstateWise's data and services accessible to a wide range of applications and microservices, regardless of their technology stack.
+
+## Travis CI
+
+Travis CI complements the existing GitHub Actions workflows by running the Node 20 pipeline defined in `.travis.yml`. Each build caches npm dependencies and executes backend and frontend jobs in isolation.
+
+- **Backend stage:** Installs dependencies with `npm --prefix backend ci`, then runs the TypeScript build and Jest suite.
+- **Frontend stage:** Installs dependencies with `npm --prefix frontend ci`, performs linting, builds the Next.js app, and runs Jest.
+- **Secrets:** Configure the same environment variables used locally (database URIs, Pinecone, Google AI keys, etc.) through the Travis project settings.
+
+> [!NOTE]
+> **More details:** See [`TRAVIS_CI.md`](TRAVIS_CI.md) for enablement steps, local parity commands, and maintenance tips.
+
+## Testing
+
+The application includes unit tests for both the backend and frontend components. These tests ensure that the application functions correctly and that any changes made do not break existing functionality.
+
+### Running Tests
+
+To run the tests, follow these steps:
+
+1. **Backend Unit & Integration Tests:**
+  - Navigate to the `backend` directory.
+  - Run the tests using the following command:
+
+    ```bash
+    npm run test
+    
+    # or run with watch mode (recommended for development - reruns tests on file changes)
+    npm run test:watch
+    
+    # or run with coverage report (recommended for CI/CD - generates a coverage report)
+    npm run test:coverage
+    ```
+  - This command runs the unit tests defined in the `src/tests` directory using Jest.
+
+2. **Frontend Unit & Integration Tests:**
+  - Navigate to the `frontend` directory.
+  - Run the tests using the following command:
+
+    ```bash
+    npm run test
+    
+    # or run with watch mode (recommended for development - reruns tests on file changes)
+    npm run test:watch
+    
+    # or run with coverage report (recommended for CI/CD - generates a coverage report)
+    npm run test:coverage
+    ```
+  - This command runs the unit tests defined in the `__tests__` directory using Jest and React Testing Library.
+
+3. **Frontend E2E Tests:**
+  - For end-to-end tests, we use Cypress and Selenium WebDriver.
+  - To run the Selenium E2E tests, navigate to the `frontend` directory and run:
+
+    ```bash
+    npm run test:selenium
+    ```
+
+  - To run the Cypress E2E tests, navigate to the `frontend` directory and run:
+
+    ```bash
+    npm run cypress:run
+    
+    # to open the Cypress Test Runner in interactive mode, run:
+    npm run cypress:open
+    ```
+
+  - This command runs the end-to-end tests defined in the `cypress/integration` directory using Cypress.
+
+These tests cover various aspects of the application, including:
+- **Unit Tests:** Individual components and functions to ensure they behave as expected.
+- **Integration Tests:** Multiple components working together to ensure they interact correctly.
+- **End-to-End Tests:** Simulating user interactions to ensure the entire application flow works as intended.
+
+## OpenAPI Specification
+
+An OpenAPI specification file (`openapi.yaml`) is included in the root directory. You can use Swagger UI or Postman to explore and test the API endpoints.
+
+> [!TIP]
+> Note: It may not be the latest and most updated version of the API specification, so please refer to the [Swagger API Documentation](#swagger-api-documentation) for the most up-to-date information.
+
+## JSDoc & TypeDoc
+
+We use **JSDoc** and **TypeDoc** to generate developer-friendly documentation for the project.
+
+### JSDoc (for JavaScript)
+
+1. Install:
+
+   ```bash
+   npm install --save-dev jsdoc
+   ```
+
+2. Configure `jsdoc.json`:
+
+   ```json
+   {
+     "source": {
+       "include": ["backend", "frontend"],
+       "includePattern": ".js$"
+     },
+     "opts": {
+       "destination": "docs",
+       "recurse": true
+     }
+   }
+   ```
+
+3. Run:
+
+   ```bash
+   npx jsdoc -c jsdoc.json
+   ```
+
+Open `docs/index.html` to view.
+
+### TypeDoc (for TypeScript)
+
+1. Install:
+
+   ```bash
+   npm install --save-dev typedoc
+   ```
+
+2. Generate backend docs:
+
+   ```bash
+   npm run typedoc:backend
+   ```
+
+3. Generate frontend docs:
+
+   ```bash
+   npm run typedoc:frontend
+   ```
+
+The generated HTML will be in `docs-backend/` and `docs-frontend/`. Open the respective `index.html` files to view.
+
+For more details, see [jsdoc.app](https://jsdoc.app) and [typedoc.org](https://typedoc.org).
+
+## Containerization
+
+The application is containerized using Docker to ensure consistent, portable, and reproducible builds across different environments.
+
+* **Backend and Frontend Dockerfiles:**
+  The `backend/Dockerfile` and `frontend/Dockerfile` define how to build the container images for their respective services. They include steps to install dependencies, build the code, and configure the production servers.
+
+* **GitHub Actions Integration:**
+  As part of the CI/CD pipeline, the workflow automatically builds these Docker images after testing and linting have succeeded. It uses the `docker/build-push-action@v5` to build the images and then push them to GitHub Container Registry (GHCR).
+
+* **Image Scanning:**
+  Once the images are built and published, they are scanned for vulnerabilities using Trivy in the pipeline to catch any security issues before deployment.
+
+* **docker-compose Usage (Local):**
+  For local development or quick testing, a `docker-compose.yml` file is included. This file defines both the backend and frontend containers, along with their dependencies, allowing you to spin up the entire stack with a single command:
+
+  ```bash
+  docker-compose up --build
+  ```
+
+* **Deployment:**
+  In production, the images are pulled directly from GHCR and deployed to AWS infrastructure or Vercel, enabling a consistent artifact to run from local to production.
+
+This approach ensures faster onboarding for developers, simplifies deployments, and minimizes environment drift.
 
 ## VS Code Extension
 
