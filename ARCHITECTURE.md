@@ -1,612 +1,1132 @@
 # EstateWise Architecture
 
-This document describes the end‑to‑end architecture for EstateWise, spanning frontend UI, backend services, data and graph pipelines, MCP tooling, the agentic orchestration CLI, IDE extension, and CI/CD.
+This document describes the comprehensive end-to-end architecture for EstateWise, spanning frontend UI, backend services, API protocols (REST, tRPC, gRPC), data and graph pipelines, AI/ML systems, MCP tooling, agentic orchestration, IDE extensions, and CI/CD infrastructure.
 
 ## System Overview
 
-The high-level architecture is as follows:
+EstateWise is a full-stack, monorepo AI/ML chatbot and data analytics platform built for real estate in Chapel Hill, NC and surrounding areas. The architecture employs a microservices-oriented design with multiple API protocols, distributed data stores, and sophisticated AI orchestration.
+
+```mermaid
+flowchart TB
+  subgraph "Client Layer"
+    Web[Web Browser]
+    Mobile[Mobile Apps]
+    VSCode[VS Code Extension]
+    CLI[CLI Tools]
+    Services[External Services]
+  end
+
+  subgraph "API Gateway Layer"
+    REST[REST API<br/>Express.js]
+    TRPC[tRPC Server<br/>Type-safe RPC]
+    GRPC[gRPC Server<br/>Binary Protocol]
+  end
+
+  subgraph "Business Logic Layer"
+    Auth[Authentication Service]
+    Chat[Chat Service<br/>MoE + RAG]
+    Property[Property Service]
+    Analytics[Analytics Service]
+    Graph[Graph Service]
+    Market[Market Pulse Service]
+  end
+
+  subgraph "AI/ML Layer"
+    Gemini[Google Gemini API]
+    MoE[Mixture of Experts]
+    RAG[RAG Pipeline]
+    Clustering[k-Means Clustering]
+    Embeddings[Vector Embeddings]
+  end
+
+  subgraph "Data Layer"
+    MongoDB[(MongoDB Atlas<br/>Users & Conversations)]
+    Pinecone[(Pinecone<br/>Vector Index)]
+    Neo4j[(Neo4j Aura<br/>Graph Database)]
+    Redis[(Redis<br/>Cache & Sessions)]
+  end
+
+  subgraph "Tooling & Orchestration"
+    MCP[MCP Server<br/>stdio tools]
+    Agentic[Agentic AI<br/>3 runtimes]
+    Monitoring[Prometheus<br/>Grafana]
+  end
+
+  Web --> REST
+  Web --> TRPC
+  Mobile --> REST
+  Services --> GRPC
+  CLI --> GRPC
+  VSCode --> Web
+
+  REST --> Auth
+  TRPC --> Auth
+  GRPC --> Auth
+
+  Auth --> Chat
+  Auth --> Property
+  Auth --> Analytics
+  Auth --> Graph
+  Auth --> Market
+
+  Chat --> MoE
+  Chat --> RAG
+  Property --> Embeddings
+  Analytics --> Clustering
+
+  MoE --> Gemini
+  RAG --> Pinecone
+  Property --> MongoDB
+  Property --> Pinecone
+  Graph --> Neo4j
+  Auth --> Redis
+
+  Agentic --> MCP
+  MCP --> REST
+
+  Monitoring --> REST
+  Monitoring --> TRPC
+  Monitoring --> GRPC
+
+  style REST fill:#85EA2D,color:#000
+  style TRPC fill:#2596BE,color:#fff
+  style GRPC fill:#4285F4,color:#fff
+```
+
+## Repository Structure
+
+```
+EstateWise-Chapel-Hill-Chatbot/
+├── backend/                    # Express + TypeScript API server
+│   ├── src/
+│   │   ├── controllers/       # Request handlers
+│   │   ├── models/           # MongoDB schemas
+│   │   ├── routes/           # API routes
+│   │   ├── services/         # Business logic
+│   │   ├── middleware/       # Auth, logging, errors
+│   │   ├── trpc/            # tRPC implementation
+│   │   │   ├── routers/     # tRPC routers
+│   │   │   └── trpc.ts      # Context & procedures
+│   │   └── server.ts         # Main entry point
+├── frontend/                  # Next.js + React application
+│   ├── app/                  # Next.js 13+ app directory
+│   ├── components/           # React components
+│   ├── lib/                  # Utilities & API clients
+│   └── public/               # Static assets
+├── grpc/                      # gRPC service implementation
+│   ├── proto/                # Protocol buffer definitions
+│   │   └── market_pulse.proto
+│   ├── src/
+│   │   ├── server.ts         # gRPC server
+│   │   └── services/         # Service implementations
+├── mcp/                       # Model Context Protocol server
+│   ├── src/
+│   │   ├── server.ts         # MCP stdio server
+│   │   └── tools/            # Tool implementations
+├── agentic-ai/                # Multi-agent orchestration
+│   ├── src/
+│   │   ├── agents/           # Agent implementations
+│   │   ├── orchestrator/     # Default runtime
+│   │   ├── lang/             # LangGraph runtime
+│   │   └── index.ts          # CLI entry
+│   └── crewai/               # Python CrewAI runtime
+├── extension/                 # VS Code extension
+├── terraform/                 # Infrastructure as Code
+├── aws/                      # AWS deployment configs
+├── azure/                    # Azure deployment configs
+├── gcp/                      # GCP deployment configs
+├── kubernetes/               # K8s manifests
+└── hashicorp/                # Consul/Nomad configs
+```
+
+## API Protocols
+
+EstateWise implements three complementary API protocols to serve different use cases:
+
+### REST API (Primary)
+- **Protocol**: JSON over HTTP/1.1
+- **Use Cases**: Public API, mobile apps, third-party integrations
+- **Documentation**: OpenAPI/Swagger at `/api-docs`
+- **Authentication**: JWT tokens in Authorization header
+
+### tRPC (TypeScript-first)
+- **Protocol**: JSON over HTTP with type inference
+- **Use Cases**: Web frontend, internal TypeScript services
+- **Benefits**: End-to-end type safety, auto-completion, no code generation
+- **Endpoint**: `/trpc/*`
+
+### gRPC (High-performance)
+- **Protocol**: Protocol Buffers over HTTP/2
+- **Use Cases**: Service-to-service, streaming, cross-language clients
+- **Port**: 50051
+- **Services**: MarketPulseService with unary and streaming RPCs
+
+## Core Services Architecture
+
+### Authentication Service
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant API
+  participant Auth
+  participant JWT
+  participant MongoDB
+  participant Redis
+
+  Client->>API: POST /api/auth/login
+  API->>Auth: Validate credentials
+  Auth->>MongoDB: Check user
+  MongoDB-->>Auth: User data
+  Auth->>JWT: Generate token
+  JWT-->>Auth: Signed token
+  Auth->>Redis: Store session
+  Auth-->>API: Token + user
+  API-->>Client: Set-Cookie JWT
+```
+
+### Chat Service (AI Pipeline)
 
 ```mermaid
 flowchart LR
-  subgraph Users
-    U[Web User]
-    Dev[Developer]
-  end
-  subgraph Frontend
-    FE[Next.js / React]
-    Map[/Map page/]
-    Insights[/Insights page/]
-    Chat[/Chat page/]
-  end
-  subgraph Backend
-    API[Express + TypeScript]
-    GraphAPI[/Graph routes/]
-    PropAPI[/Property routes/]
-    AuthAPI[/Auth/Conversations/Chat/]
-  end
-  subgraph Data
-    Mongo[(MongoDB Atlas)]
-    Pinecone[(Pinecone Index)]
-    Neo4j[(Neo4j Graph)]
-  end
-  subgraph AI
-    Gemini[Google Gemini]
-  end
-  subgraph Tooling
-    MCP[MCP Server]
-    Agentic[Agentic AI Orchestrator]
-    VSX[VS Code Extension]
+  subgraph "Chat Processing"
+    Input[User Message]
+    Decision[Decision Agent]
+    RAG{Use RAG?}
+    Pinecone[Query Pinecone]
+    MoE[Mixture of Experts]
+    Experts[5 Specialized Experts]
+    Merger[Response Merger]
+    Output[Final Response]
   end
 
-  U --> FE --> API
-  FE -->|/api/graph/*| GraphAPI
-  FE -->|/api/properties/*| PropAPI
-  API --> Mongo
-  API --> Pinecone
-  API --> Neo4j
-  API --> Gemini
-  Dev --> Agentic -->|stdio| MCP --> API
-  VSX --> FE
-  FE --> Map
-  FE --> Insights
-  FE --> Chat
+  Input --> Decision
+  Decision --> RAG
+  RAG -->|Yes| Pinecone
+  RAG -->|No| MoE
+  Pinecone --> MoE
+  MoE --> Experts
+  Experts --> Merger
+  Merger --> Output
 ```
 
-## Repository Topology
+Expert models include:
+- **Data Analyst**: Statistical analysis, trends
+- **Lifestyle Concierge**: Neighborhood, amenities
+- **Financial Advisor**: Mortgage, investment analysis
+- **Neighborhood Expert**: Local insights, schools
+- **Cluster Analyst**: Property grouping, similarities
 
-```
-backend/       # Express + TypeScript API, graph + property endpoints
-frontend/      # Next.js + React app (chat, insights, map)
-mcp/           # Model Context Protocol server exposing project tools over stdio
-agentic-ai/    # Multi-agent CLI orchestrator using MCP
-extension/     # VS Code extension embedding chat
-docs-backend/  # TypeDoc output for backend
-terraform/, aws/, gcp/  # Infra-as-code and cloud configs
-```
-
-## Frontend
-
-- Pages
-  - `pages/chat.tsx`: conversational UI integrated with backend chat API and conversation management.
-  - `pages/insights.tsx`: graph tools, comparators, calculators; includes Find ZPID dialog with address/city/state/ZIP and bed/bath filters.
-  - `pages/map.tsx`: Leaflet map rendering; accepts deep links `?zpids=...` or `?q=...` and caps markers for performance (~200 by default).
-- UI
-  - TailwindCSS + shadcn UI components; Chart.js for visualizations.
-- API Client
-  - `frontend/lib/api.ts`: REST wrappers for conversations, chat, properties, and graph.
-
-### ZPID Lookup UX
-
-```mermaid
-sequenceDiagram
-  participant User
-  participant FE as Insights Modal
-  participant API as /api/properties/lookup
-
-  User->>FE: enter any subset of fields
-  FE->>API: GET /lookup?city=...&state=...&zipcode=...&beds=...&baths=...
-  API-->>FE: { matches: [{zpid, address, stats}] }
-  FE-->>User: show candidates + "Use" action
-```
-
-## Backend (Express + TypeScript)
-
-- Routes
-  - Properties: `/api/properties` (query), `/api/properties/by-ids`, `/api/properties/lookup`.
-  - Graph: `/api/graph/similar/:zpid`, `/api/graph/explain?from&to`, `/api/graph/neighborhood/:name`.
-  - Auth/Conversations/Chat: login/signup, chat completion, and conversation storage.
-- Integrations
-  - MongoDB Atlas for persistence.
-  - Pinecone for semantic search (kNN) and metadata fetch.
-  - Neo4j for property‑ZIP‑neighborhood relationships and explanations.
-  - Google Gemini for LLM‑assisted analysis (agents and chat).
-- Observability
-  - `express-status-monitor` on `/status`.
-  - Prometheus metrics (latency, error rates) and structured logs.
-
-### Property Search Flow
-
-```mermaid
-sequenceDiagram
-  participant FE as Next.js
-  participant API as Express
-  participant PC as Pinecone
-
-  FE->>API: GET /api/properties?q=...&topK=...
-  API->>PC: vector query (kNN)
-  PC-->>API: matches + metadata
-  API-->>FE: listings + chart configs
-```
-
-### Graph API Flow
-
-```mermaid
-sequenceDiagram
-  participant FE as Next.js
-  participant API as Express
-  participant N as Neo4j
-
-  FE->>API: GET /api/graph/similar/:zpid
-  API->>N: Cypher query (SIMILAR/IN_ZIP/IN_NEIGHBORHOOD)
-  N-->>API: related nodes + reasons
-  API-->>FE: results
-```
-
-## Data & Graph Pipelines
-
-### Embedding & Upsert (Pinecone)
+### Property Service
 
 ```mermaid
 flowchart TD
-  Raw[Raw Property Source] --> Clean[Normalize fields]
-  Clean --> Embed[Embedding model]
-  Embed --> Upsert[Upsert batched]
-  Upsert --> Pinecone[(Pinecone Index)]
+  subgraph "Property Operations"
+    Search[Search Request]
+    Vector[Vector Embedding]
+    KNN[k-NN Search]
+    Filter[Apply Filters]
+    Rank[Rank Results]
+    Enrich[Enrich Data]
+  end
+
+  Search --> Vector
+  Vector --> KNN
+  KNN --> Filter
+  Filter --> Rank
+  Rank --> Enrich
+
+  KNN -.-> Pinecone[(Pinecone)]
+  Enrich -.-> MongoDB[(MongoDB)]
+  Enrich -.-> Neo4j[(Neo4j)]
 ```
 
-### Neo4j Ingest (from Pinecone)
+### Graph Service (Neo4j)
+
+```mermaid
+graph LR
+  subgraph "Graph Operations"
+    Property[Property Node]
+    Zip[Zip Node]
+    Hood[Neighborhood Node]
+    Similar[Similar Properties]
+  end
+
+  Property -->|IN_ZIP| Zip
+  Property -->|IN_NEIGHBORHOOD| Hood
+  Property -->|SIMILAR_TO| Similar
+
+  classDef property fill:#f9f,stroke:#333,stroke-width:2px
+  classDef location fill:#9f9,stroke:#333,stroke-width:2px
+  class Property,Similar property
+  class Zip,Hood location
+```
+
+## Data Flow Architecture
+
+### Real-time Data Pipeline
+
+```mermaid
+flowchart LR
+  subgraph "Ingestion"
+    Source[Property Data]
+    Clean[Clean & Validate]
+    Transform[Transform]
+    Embed[Generate Embeddings]
+  end
+
+  subgraph "Storage"
+    Primary[(MongoDB)]
+    Vector[(Pinecone)]
+    Graph[(Neo4j)]
+    Cache[(Redis)]
+  end
+
+  subgraph "Retrieval"
+    Query[User Query]
+    VectorSearch[Vector Search]
+    GraphTraversal[Graph Traversal]
+    Merge[Merge Results]
+  end
+
+  Source --> Clean
+  Clean --> Transform
+  Transform --> Embed
+
+  Transform --> Primary
+  Embed --> Vector
+  Transform --> Graph
+
+  Query --> VectorSearch
+  Query --> GraphTraversal
+  VectorSearch --> Merge
+  GraphTraversal --> Merge
+
+  Vector -.-> VectorSearch
+  Graph -.-> GraphTraversal
+  Primary -.-> Merge
+  Cache -.-> Merge
+```
+
+### RAG Pipeline
 
 ```mermaid
 flowchart TD
-    PineconeList["List IDs by page"] --> FetchMeta["Fetch metadata"]
-    FetchMeta --> ParseAddr["Parse address JSON"]
-    ParseAddr --> UpsertProp["MERGE Property(zpid) SET props"]
-    UpsertProp --> LinkZip["MERGE Zip(code) and (Property)-[:IN_ZIP]->(Zip)"]
-    UpsertProp --> LinkHood["MERGE Neighborhood(name) and link"]
-    LinkZip --> NextPage{More?}
-    LinkHood --> NextPage
-    NextPage -->|yes| PineconeList
-    NextPage -->|no| Done[Complete]
+  Query[User Query] --> Embed[Embed Query]
+  Embed --> Search[Vector Search]
+  Search --> Pinecone[(Pinecone Index)]
+  Pinecone --> TopK[Top-K Results]
+  TopK --> Context[Build Context]
+  Context --> Prompt[Augmented Prompt]
+  Prompt --> LLM[Gemini API]
+  LLM --> Response[Generated Response]
+  Response --> Charts{Generate Charts?}
+  Charts -->|Yes| Viz[Chart.js Visualization]
+  Charts -->|No| Final[Final Output]
+  Viz --> Final
 ```
 
-## Model Context Protocol (MCP) Server
+## AI/ML Architecture
 
-The `mcp/` package exposes graph, property, analytics, finance, and utility tools to any MCP‑compatible client over stdio.
+### Mixture of Experts (MoE)
+
+```mermaid
+flowchart TB
+  Query[User Query] --> Router[Master Router]
+  Router --> Expert1[Data Analyst]
+  Router --> Expert2[Lifestyle Concierge]
+  Router --> Expert3[Financial Advisor]
+  Router --> Expert4[Neighborhood Expert]
+  Router --> Expert5[Cluster Analyst]
+
+  Expert1 --> Weights[Weight Adjustment]
+  Expert2 --> Weights
+  Expert3 --> Weights
+  Expert4 --> Weights
+  Expert5 --> Weights
+
+  Weights --> Merger[Response Merger]
+  Merger --> Output[Synthesized Response]
+
+  Output --> Feedback{User Feedback}
+  Feedback -->|Thumbs Up| Store[Store Weights]
+  Feedback -->|Thumbs Down| Adjust[Adjust Weights]
+  Adjust --> Router
+```
+
+### Chain-of-Thought (CoT) Processing
+
+Each expert uses CoT to break down complex queries:
 
 ```mermaid
 flowchart LR
-  Client[IDE or Assistant MCP Client] -- stdio --> MCP[MCP Server]
-  MCP -->|properties, graph, analytics, map, util, finance| API[Backend API]
-  MCP -->|deep links| FE[Frontend /map]
+  Query[Complex Query] --> Parse[Parse Intent]
+  Parse --> Steps[Identify Steps]
+  Steps --> Execute[Execute Step 1]
+  Execute --> Next[Execute Step 2]
+  Next --> More[Execute Step N]
+  More --> Combine[Combine Results]
+  Combine --> Response[Final Response]
 ```
 
-- Tool categories
-  - Properties: `search`, `searchAdvanced`, `lookup`, `byIds`, `sample`
-  - Graph: `similar`, `explain`, `neighborhood`, `similarityBatch`, `comparePairs`, `pathMatrix`
-  - Analytics: `priceHistogram`, `summarizeSearch`, `groupByZip`, `distributions`
-  - Map: `linkForZpids`, `buildLinkByQuery`
-  - Utilities: `extractZpids`, `zillowLink`, `summarize`, `parseGoal`
-  - Finance: `mortgage`, `affordability`, `schedule`
+## Model Context Protocol (MCP) Architecture
 
-## Agentic AI Orchestrator
-
-The `agentic-ai/` CLI runs a multi‑agent pipeline that spawns the local MCP server and coordinates steps with a shared blackboard and a Coordinator agent.
+The MCP server exposes tools via stdio to any MCP-compatible client:
 
 ```mermaid
-flowchart LR
-  Goal[User Goal] --> Planner
-  Planner --> Coordinator
-  Coordinator -->|parseGoal| Parse
-  Coordinator -->|lookup| Lookup
-  Coordinator -->|search| Search
-  Coordinator -->|summarize| Summarize
-  Coordinator -->|groupByZip| Group
-  Coordinator -->|dedupeRank| Rank
-  Coordinator -->|graph| Graph
-  Coordinator -->|comparePairs| Pairs
-  Coordinator -->|map| Map
-  Coordinator -->|mortgage| Mortgage
-  Coordinator -->|affordability| Afford
-  Coordinator -->|compliance| Compliance
-  Compliance --> Reporter
+flowchart TB
+  subgraph "MCP Tools"
+    Props[Properties Tools<br/>search, lookup, byIds]
+    Graph[Graph Tools<br/>similar, explain, neighborhood]
+    Analytics[Analytics Tools<br/>histogram, summarize, distributions]
+    Finance[Finance Tools<br/>mortgage, affordability, schedule]
+    Utils[Utility Tools<br/>extractZpids, parseGoal, summarize]
+    Map[Map Tools<br/>linkForZpids, buildLinkByQuery]
+  end
+
+  Client[MCP Client] -->|stdio| Server[MCP Server]
+  Server --> Props
+  Server --> Graph
+  Server --> Analytics
+  Server --> Finance
+  Server --> Utils
+  Server --> Map
+
+  Props --> API[Backend API]
+  Graph --> API
+  Analytics --> API
 ```
 
-- Agents
-  - Planner, Coordinator, ZpidFinder, PropertyAnalyst, AnalyticsAnalyst, GraphAnalyst, DedupeRanking, MapAnalyst, FinanceAnalyst, Compliance, Reporter.
-- Blackboard
-  - Aggregates ZPIDs, parsed filters, analytics summaries, map links, finance results, and step state.
-- Orchestrator
-  - Executes tool calls via MCP, retries transient failures once, and normalizes JSON results.
+## Agentic AI Architecture
 
-### Agentic Runtimes (Pipeline Overview)
-
-The project supports three agentic runtimes: the default round‑based Orchestrator, a LangChain + LangGraph ReAct agent, and a CrewAI (Python) sequential crew.
+### Multi-Runtime Support
 
 ```mermaid
-flowchart LR
-  subgraph Entry
+flowchart TB
+  subgraph "Runtime Selection"
     Goal[User Goal]
+    Selector{Select Runtime}
   end
 
-  subgraph Orchestrator
-    PlannerO[Planner]
-    CoordO[Coordinator]
-    ParseO[util.parseGoal]
-    LookupO[properties.lookup]
-    SearchO[properties.search]
-    SummO[analytics.summarizeSearch]
-    GroupO[analytics.groupByZip]
-    RankO[Dedupe/Rank]
-    GraphO[graph.explain/similar]
-    MapO[map.linkForZpids]
-    FinO[finance.mortgage]
-    CompO[Compliance]
-    ReportO[Reporter]
-    PlannerO --> CoordO --> ParseO --> LookupO --> SearchO --> SummO --> GroupO --> RankO --> GraphO --> MapO --> FinO --> CompO --> ReportO
+  subgraph "Orchestrator Runtime"
+    O_Plan[Planner]
+    O_Coord[Coordinator]
+    O_Agents[Specialized Agents]
+    O_Black[Blackboard]
   end
 
-  subgraph LangGraph
-    ReactA[ReAct Agent]
-    ToolsA[[MCP Tools]]
-    PineA[(Pinecone)]
-    NeoA[(Neo4j)]
-    ReactA --> ToolsA
-    ReactA --> PineA
-    ReactA --> NeoA
+  subgraph "LangGraph Runtime"
+    L_React[ReAct Agent]
+    L_Tools[MCP + Direct Tools]
+    L_Memory[Conversation Memory]
   end
 
-  subgraph CrewAI
-    PlanC[Planner]
-    AnalC[Property Analyst]
-    GraphC[Graph Analyst]
-    FinC[Finance Analyst]
-    RepC[Reporter]
-    PlanC --> AnalC --> GraphC --> FinC --> RepC
+  subgraph "CrewAI Runtime"
+    C_Crew[Agent Crew]
+    C_Plan[Planning Agent]
+    C_Exec[Execution Agents]
+    C_Report[Reporter Agent]
   end
 
-  Goal -->|--runtime=orchestrator| PlannerO
-  Goal -->|--runtime=langgraph| ReactA
-  Goal -->|--runtime=crewai| PlanC
+  Goal --> Selector
+  Selector -->|--orchestrator| O_Plan
+  Selector -->|--langgraph| L_React
+  Selector -->|--crewai| C_Crew
+
+  O_Plan --> O_Coord
+  O_Coord --> O_Agents
+  O_Agents --> O_Black
+
+  L_React --> L_Tools
+  L_Tools --> L_Memory
+
+  C_Crew --> C_Plan
+  C_Plan --> C_Exec
+  C_Exec --> C_Report
 ```
 
-### Integration with Overall System
+### Orchestrator Agent Pipeline
 
-The agentic runtimes integrate with the rest of EstateWise via the MCP server and backend API. The diagram shows an end‑to‑end view (agent → tools → API/data) and UI entry points.
+```mermaid
+stateDiagram-v2
+  [*] --> Planner: User Goal
+  Planner --> Coordinator: Execution Plan
+  Coordinator --> ParseGoal: Extract Filters
+  ParseGoal --> PropertyLookup: Find Properties
+  PropertyLookup --> PropertySearch: Expand Search
+  PropertySearch --> Analytics: Analyze Results
+  Analytics --> GraphAnalysis: Graph Relations
+  GraphAnalysis --> Ranking: Dedupe & Rank
+  Ranking --> MapGeneration: Create Map Links
+  MapGeneration --> Finance: Calculate Metrics
+  Finance --> Compliance: Check Compliance
+  Compliance --> Reporter: Generate Report
+  Reporter --> [*]: Final Output
+```
+
+## Frontend Architecture
+
+### Component Hierarchy
+
+```mermaid
+graph TD
+  App[App Root]
+  App --> Layout[Layout]
+  Layout --> Nav[Navigation]
+  Layout --> Router[Router]
+
+  Router --> Landing[Landing Page]
+  Router --> Chat[Chat Page]
+  Router --> Insights[Insights Page]
+  Router --> Map[Map Page]
+  Router --> Viz[Visualizations]
+  Router --> Market[Market Insights]
+
+  Chat --> ChatUI[Chat Interface]
+  ChatUI --> Messages[Message List]
+  ChatUI --> Input[Input Form]
+  ChatUI --> Expert[Expert Views]
+
+  Insights --> Tools[Graph Tools]
+  Insights --> Calc[Calculators]
+  Insights --> ZPID[ZPID Finder]
+
+  Map --> Leaflet[Leaflet Map]
+  Map --> Markers[Property Markers]
+  Map --> Controls[Map Controls]
+```
+
+### State Management
 
 ```mermaid
 flowchart LR
-    subgraph UI;
-        FE[Next.js / React];
-        VSX[VS Code Extension];
-    end;
+  subgraph "Client State"
+    Local[Local Storage]
+    Session[Session Storage]
+    React[React State]
+    Query[React Query Cache]
+  end
 
-    subgraph Agentic;
-        OrchestratorRuntime[Orchestrator CLI];
-        LangGraphRuntime[LangGraph Agent];
-        CrewAIRuntime[CrewAI Runner];
-    end;
+  subgraph "Server State"
+    API[API Responses]
+    SSR[SSR Props]
+    Stream[Streaming Updates]
+  end
 
-subgraph Tooling;
-MCP[MCP Server];
-end;
-
-subgraph Backend;
-API[Express API];
-Auth[/Auth/Chat/Props/Graph/];
-end;
-
-subgraph Data;
-Mongo[(MongoDB Atlas)];
-Pinecone[(Pinecone Index)];
-Neo4j[(Neo4j Graph)];
-end;
-
-FE --> API;
-VSX --> FE;
-OrchestratorRuntime -->|spawn stdio| MCP;
-LangGraphRuntime --> MCP;
-CrewAIRuntime --> API;
-MCP --> API;
-API --> Mongo;
-API --> Pinecone;
-API --> Neo4j;
-FE -->|/map deep links| FE;
+  API --> Query
+  Query --> React
+  React --> Local
+  SSR --> React
+  Stream --> React
 ```
 
-## VS Code Extension
+## Infrastructure & Deployment
 
-Simple WebView wrapper that loads `https://estatewise.vercel.app/chat` inside VS Code. No additional secrets are required; it leverages the hosted frontend.
+### Multi-Cloud Architecture
+
+```mermaid
+flowchart TB
+  subgraph "Source Control"
+    GitHub[GitHub Repository]
+  end
+
+  subgraph "CI/CD"
+    Actions[GitHub Actions]
+    Travis[Travis CI]
+    Jenkins[Jenkins]
+  end
+
+  subgraph "Container Registry"
+    GHCR[GitHub Container Registry]
+    ECR[AWS ECR]
+    ACR[Azure ACR]
+    GAR[Google Artifact Registry]
+  end
+
+  subgraph "Compute Platforms"
+    subgraph "AWS"
+      ECS[ECS Fargate]
+      ALB[Application Load Balancer]
+    end
+
+    subgraph "Azure"
+      ACA[Container Apps]
+      AGW[App Gateway]
+    end
+
+    subgraph "GCP"
+      CloudRun[Cloud Run]
+      GLB[Global Load Balancer]
+    end
+
+    subgraph "Edge"
+      Vercel[Vercel Platform]
+    end
+  end
+
+  subgraph "Orchestration"
+    K8s[Kubernetes]
+    Consul[Consul Mesh]
+    Nomad[Nomad]
+  end
+
+  GitHub --> Actions
+  GitHub --> Travis
+  GitHub --> Jenkins
+
+  Actions --> GHCR
+  Actions --> ECR
+  Actions --> ACR
+  Actions --> GAR
+
+  GHCR --> ECS
+  ECR --> ECS
+  ACR --> ACA
+  GAR --> CloudRun
+
+  Actions --> Vercel
+
+  GHCR --> K8s
+  K8s --> Consul
+  K8s --> Nomad
+```
+
+### Infrastructure as Code
+
+```mermaid
+graph LR
+  subgraph "IaC Tools"
+    TF[Terraform]
+    CF[CloudFormation]
+    Bicep[Azure Bicep]
+    DM[Deployment Manager]
+    Helm[Helm Charts]
+    Kustomize[Kustomize]
+  end
+
+  subgraph "Resources"
+    VPC[Networks]
+    IAM[Identity & Access]
+    Compute[Compute Resources]
+    Storage[Storage]
+    DNS[DNS & CDN]
+    Secrets[Secrets Management]
+  end
+
+  TF --> VPC
+  TF --> IAM
+  CF --> Compute
+  Bicep --> Storage
+  DM --> DNS
+  Helm --> Secrets
+```
+
+## Security Architecture
+
+### Defense in Depth
+
+```mermaid
+flowchart TB
+  subgraph "Network Layer"
+    WAF[Web Application Firewall]
+    DDoS[DDoS Protection]
+    TLS[TLS 1.3]
+  end
+
+  subgraph "Application Layer"
+    CORS[CORS Policy]
+    CSP[Content Security Policy]
+    RateLimit[Rate Limiting]
+    InputVal[Input Validation]
+  end
+
+  subgraph "Authentication Layer"
+    JWT[JWT Tokens]
+    MFA[Multi-Factor Auth]
+    OAuth[OAuth 2.0]
+    Sessions[Session Management]
+  end
+
+  subgraph "Data Layer"
+    Encryption[Encryption at Rest]
+    Transit[Encryption in Transit]
+    Backup[Backup & Recovery]
+    Audit[Audit Logging]
+  end
+
+  WAF --> CORS
+  DDoS --> RateLimit
+  TLS --> InputVal
+
+  CORS --> JWT
+  RateLimit --> MFA
+  InputVal --> OAuth
+
+  JWT --> Encryption
+  Sessions --> Transit
+  OAuth --> Backup
+  MFA --> Audit
+```
+
+### Secret Management
 
 ```mermaid
 flowchart LR
-  VSX[VS Code] --> WebView[Chat WebView]
-  WebView --> FE[estatewise.vercel.app/chat]
+  subgraph "Development"
+    ENV[.env files]
+    Git[.gitignore]
+  end
+
+  subgraph "CI/CD"
+    GHSecrets[GitHub Secrets]
+    EnvVars[Environment Variables]
+  end
+
+  subgraph "Production"
+    Vault[HashiCorp Vault]
+    AWS_SM[AWS Secrets Manager]
+    Azure_KV[Azure Key Vault]
+    GCP_SM[GCP Secret Manager]
+  end
+
+  ENV --> GHSecrets
+  GHSecrets --> Vault
+  GHSecrets --> AWS_SM
+  GHSecrets --> Azure_KV
+  GHSecrets --> GCP_SM
 ```
 
-## Security & Config
+## Monitoring & Observability
 
-- Secrets are never committed. Copy `.env.example` → `.env` per package.
-- Required keys by area
-  - Backend: `MONGO_URI`, Pinecone, Google AI key, optional Neo4j (`NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`).
-  - MCP: `API_BASE_URL`, `FRONTEND_BASE_URL`.
-- Rate limits and error handling middleware on the API; JWT cookies for auth; CORS configured.
+### Metrics Collection
+
+```mermaid
+flowchart LR
+  subgraph "Application Metrics"
+    Express[Express Middleware]
+    Custom[Custom Metrics]
+    Business[Business KPIs]
+  end
+
+  subgraph "System Metrics"
+    CPU[CPU Usage]
+    Memory[Memory Usage]
+    Disk[Disk I/O]
+    Network[Network I/O]
+  end
+
+  subgraph "Collectors"
+    Prometheus[Prometheus]
+    CloudWatch[CloudWatch]
+    AppInsights[Application Insights]
+  end
+
+  subgraph "Visualization"
+    Grafana[Grafana]
+    Dashboards[Custom Dashboards]
+    Alerts[Alert Manager]
+  end
+
+  Express --> Prometheus
+  Custom --> Prometheus
+  Business --> Prometheus
+
+  CPU --> CloudWatch
+  Memory --> CloudWatch
+  Disk --> AppInsights
+  Network --> AppInsights
+
+  Prometheus --> Grafana
+  CloudWatch --> Dashboards
+  AppInsights --> Alerts
+```
+
+### Distributed Tracing
+
+```mermaid
+sequenceDiagram
+  participant Client
+  participant API
+  participant Auth
+  participant Property
+  participant Pinecone
+  participant MongoDB
+
+  Client->>API: Request [trace-id: abc123]
+  API->>Auth: Validate [parent: abc123]
+  Auth->>MongoDB: Query User [parent: abc123]
+  MongoDB-->>Auth: User Data
+  Auth-->>API: Authorized
+  API->>Property: Search [parent: abc123]
+  Property->>Pinecone: Vector Query [parent: abc123]
+  Pinecone-->>Property: Results
+  Property-->>API: Properties
+  API-->>Client: Response [trace-id: abc123]
+```
+
+## Performance Optimization
+
+### Caching Strategy
+
+```mermaid
+flowchart TB
+  subgraph "Cache Layers"
+    Browser[Browser Cache]
+    CDN[CDN Cache]
+    Redis[Redis Cache]
+    App[Application Cache]
+    DB[Database Cache]
+  end
+
+  subgraph "Cache Policies"
+    TTL[TTL Settings]
+    Invalidation[Cache Invalidation]
+    Warming[Cache Warming]
+  end
+
+  Browser --> CDN
+  CDN --> Redis
+  Redis --> App
+  App --> DB
+
+  TTL --> Browser
+  TTL --> CDN
+  TTL --> Redis
+
+  Invalidation --> Redis
+  Invalidation --> App
+
+  Warming --> Redis
+  Warming --> DB
+```
+
+### Load Balancing
+
+```mermaid
+flowchart LR
+  subgraph "Load Distribution"
+    Client[Clients]
+    LB[Load Balancer]
+
+    subgraph "Backend Instances"
+      API1[API Server 1]
+      API2[API Server 2]
+      API3[API Server 3]
+    end
+
+    subgraph "gRPC Services"
+      GRPC1[gRPC Server 1]
+      GRPC2[gRPC Server 2]
+    end
+  end
+
+  Client --> LB
+  LB -->|Round Robin| API1
+  LB -->|Health Check| API2
+  LB -->|Least Connections| API3
+
+  API1 --> GRPC1
+  API2 --> GRPC2
+  API3 --> GRPC1
+```
 
 ## Testing Strategy
 
-- Backend: `backend/tests/` with Jest unit/integration tests.
-- Frontend: `frontend/__tests__/` with Jest; Cypress + Selenium for E2E/UI.
-- MCP/Agentic: CLI flows are testable via scripted goals; tools return text(JSON) for easy parsing.
+### Test Pyramid
 
-## CI/CD & Infrastructure
+```mermaid
+graph TD
+  subgraph "Test Types"
+    E2E[E2E Tests<br/>Cypress, Selenium]
+    Integration[Integration Tests<br/>API, Database]
+    Unit[Unit Tests<br/>Jest, Vitest]
+    Static[Static Analysis<br/>ESLint, TypeScript]
+  end
+
+  subgraph "Coverage"
+    UI[UI: 70%]
+    API[API: 85%]
+    Business[Business Logic: 90%]
+    Utils[Utilities: 95%]
+  end
+
+  E2E --> UI
+  Integration --> API
+  Unit --> Business
+  Static --> Utils
+```
+
+### CI/CD Pipeline
 
 ```mermaid
 flowchart LR
-  Dev --> PR[Pull Request]
-  PR --> CI[GitHub Actions]
-  CI --> Test[Tests + Lint + Type Check]
-  CI --> Build[Docker/Next build]
-  Build --> GHCR[Registry]
-  GHCR --> ECS[AWS ECS Backend]
-  GHCR --> Vercel[Vercel Frontend]
-  ECS --> Atlas[MongoDB Atlas]
-  ECS --> PineconeSvc[Pinecone]
-  CI --> TF[Terraform Apply]
-  TF --> AWS[(AWS Infra)]
+  subgraph "Pipeline Stages"
+    Trigger[Git Push]
+    Lint[Lint & Format]
+    Types[Type Check]
+    Test[Run Tests]
+    Build[Build Images]
+    Scan[Security Scan]
+    Deploy[Deploy]
+    Verify[Smoke Tests]
+  end
+
+  Trigger --> Lint
+  Lint --> Types
+  Types --> Test
+  Test --> Build
+  Build --> Scan
+  Scan --> Deploy
+  Deploy --> Verify
 ```
 
-## Scalability & Resilience
+## Data Models
 
-- Horizontal scale on ECS for stateless API.
-- MongoDB Atlas replica sets and auto‑failover; Pinecone replication; Neo4j constraints.
-- Guardrails: marker caps on map, basic circuit‑breakers, and compliance checks in agentic pipeline.
-
-## Core Data Models
+### Core Entities
 
 ```mermaid
 erDiagram
-  USER ||--o{ CONVERSATION : owns
-  CONVERSATION ||--o{ MESSAGE : includes
-  PROPERTY ||--o{ LISTING : contains
-```
+  USER ||--o{ CONVERSATION : "owns"
+  USER ||--o{ SAVED_PROPERTY : "saves"
+  CONVERSATION ||--o{ MESSAGE : "contains"
+  MESSAGE ||--o{ RATING : "has"
+  PROPERTY ||--o{ LISTING : "has"
+  PROPERTY }o--|| ZIP : "in"
+  PROPERTY }o--|| NEIGHBORHOOD : "in"
+  PROPERTY ||--o{ PROPERTY : "similar_to"
 
-Graph (Neo4j) high‑level entities and relationships:
-
-```mermaid
-classDiagram
-  class Property {
-    zpid
-    streetAddress
-    city
-    state
-    zipcode
-    price, bedrooms, bathrooms
-    livingArea, yearBuilt
+  USER {
+    string id PK
+    string email UK
+    string password_hash
+    string name
+    datetime created_at
+    datetime updated_at
   }
-  class Zip { code }
-  class Neighborhood { name }
-  Property --> Zip : IN_ZIP
-  Property --> Neighborhood : IN_NEIGHBORHOOD
+
+  CONVERSATION {
+    string id PK
+    string user_id FK
+    string title
+    datetime created_at
+    datetime updated_at
+  }
+
+  MESSAGE {
+    string id PK
+    string conversation_id FK
+    string role
+    string content
+    json metadata
+    datetime created_at
+  }
+
+  PROPERTY {
+    string zpid PK
+    float price
+    int bedrooms
+    int bathrooms
+    float living_area
+    int year_built
+    string address
+    float latitude
+    float longitude
+    json features
+  }
+
+  ZIP {
+    string code PK
+    string city
+    string state
+    json demographics
+  }
+
+  NEIGHBORHOOD {
+    string id PK
+    string name
+    json stats
+    json amenities
+  }
 ```
 
-## Authentication
+### Graph Schema (Neo4j)
+
+```cypher
+// Node types
+(:Property {zpid, address, city, state, zipcode, price, bedrooms, bathrooms})
+(:Zip {code})
+(:Neighborhood {name})
+
+// Relationships
+(:Property)-[:IN_ZIP]->(:Zip)
+(:Property)-[:IN_NEIGHBORHOOD]->(:Neighborhood)
+(:Property)-[:SIMILAR_TO {score}]->(:Property)
+```
+
+## Environment Configuration
+
+### Environment Variables Matrix
+
+| Service | Required Variables | Optional Variables |
+|---------|-------------------|-------------------|
+| **Backend** | `MONGO_URI`<br>`JWT_SECRET`<br>`PINECONE_API_KEY`<br>`PINECONE_INDEX`<br>`GOOGLE_AI_API_KEY` | `NEO4J_URI`<br>`NEO4J_USERNAME`<br>`NEO4J_PASSWORD`<br>`REDIS_URL`<br>`SENTRY_DSN` |
+| **Frontend** | `NEXT_PUBLIC_API_BASE_URL` | `NEXT_PUBLIC_GOOGLE_ANALYTICS`<br>`NEXT_PUBLIC_SENTRY_DSN` |
+| **gRPC** | `GRPC_SERVER_PORT`<br>`GRPC_SERVER_HOST` | `GRPC_USE_TLS`<br>`GRPC_CERT_PATH`<br>`GRPC_KEY_PATH` |
+| **MCP** | `API_BASE_URL` | `FRONTEND_BASE_URL`<br>`LOG_LEVEL` |
+| **Agentic** | `OPENAI_API_KEY` (for CrewAI) | `LANGCHAIN_API_KEY`<br>`AGENT_RUNTIME` |
+
+## Performance Targets & SLOs
+
+### Service Level Objectives
+
+| Metric | Target | Critical Threshold |
+|--------|--------|-------------------|
+| **API Latency (P50)** | < 200ms | < 500ms |
+| **API Latency (P95)** | < 800ms | < 2000ms |
+| **API Latency (P99)** | < 1500ms | < 5000ms |
+| **Availability** | 99.9% | 99.5% |
+| **Error Rate** | < 0.1% | < 1% |
+| **Chat Response Time** | < 3s | < 10s |
+| **Map Load Time** | < 2s | < 5s |
+| **Graph Query Time** | < 1.5s | < 3s |
+| **Vector Search Time** | < 500ms | < 1500ms |
+
+### Scalability Targets
+
+- **Concurrent Users**: 10,000+
+- **Requests per Second**: 1,000+
+- **Database Connections**: 100 pooled
+- **Message Queue Throughput**: 10,000 msg/s
+- **Vector Index Size**: 1M+ embeddings
+- **Graph Nodes**: 100K+ properties
+
+## Disaster Recovery
+
+### Backup Strategy
 
 ```mermaid
-sequenceDiagram
-  participant User
-  participant UI as Next.js
-  participant API
-  participant DB as MongoDB
-  User->>UI: submit credentials
-  UI->>API: POST /api/auth/login
-  API->>DB: validate user
-  DB-->>API: match
-  API-->>UI: Set-Cookie JWT
-  UI-->>User: authenticated session
+flowchart TB
+  subgraph "Backup Types"
+    Continuous[Continuous Replication]
+    Daily[Daily Snapshots]
+    Weekly[Weekly Archives]
+    Monthly[Monthly Archives]
+  end
+
+  subgraph "Storage Locations"
+    Primary[Primary Region]
+    Secondary[Secondary Region]
+    Cold[Cold Storage]
+  end
+
+  subgraph "Recovery"
+    RTO[RTO: 4 hours]
+    RPO[RPO: 1 hour]
+    Test[Monthly DR Tests]
+  end
+
+  Continuous --> Primary
+  Daily --> Primary
+  Weekly --> Secondary
+  Monthly --> Cold
+
+  Primary --> RTO
+  Secondary --> RPO
+  Cold --> Test
 ```
 
-Key aspects: bcrypt salted hashes, HttpOnly JWT cookies, and CSRF‑resistant flows via cookie + header patterns.
+### Failover Process
+
+1. **Detection**: Health checks detect primary failure
+2. **Validation**: Confirm failure isn't transient
+3. **DNS Update**: Update DNS to point to secondary
+4. **Cache Warm**: Warm caches in secondary region
+5. **Verification**: Run smoke tests
+6. **Communication**: Notify stakeholders
+
+## Development Workflow
+
+### Git Flow
+
+```mermaid
+gitGraph
+  commit id: "main"
+  branch develop
+  checkout develop
+  commit id: "feature-start"
+  branch feature/new-feature
+  checkout feature/new-feature
+  commit id: "feature-work"
+  commit id: "feature-done"
+  checkout develop
+  merge feature/new-feature
+  branch release/v1.0
+  checkout release/v1.0
+  commit id: "release-prep"
+  checkout main
+  merge release/v1.0 tag: "v1.0.0"
+  checkout develop
+  merge main
+```
+
+### Code Review Process
+
+1. **Branch Creation**: Feature branch from develop
+2. **Development**: Implement feature with tests
+3. **Pre-commit**: Lint, format, type-check
+4. **Pull Request**: Open PR with description
+5. **CI Checks**: Automated tests and scans
+6. **Review**: Code review by 1+ developers
+7. **Approval**: Required approvals obtained
+8. **Merge**: Squash and merge to develop
+
+## Future Roadmap
+
+### Planned Enhancements
+
+- **GraphQL API**: Add GraphQL endpoint for flexible queries
+- **WebSocket Support**: Real-time property updates
+- **Mobile Apps**: Native iOS and Android applications
+- **AI Improvements**:
+  - Fine-tuned property valuation models
+  - Computer vision for property images
+  - Natural language property search
+- **Blockchain Integration**: Property ownership verification
+- **AR/VR Features**: Virtual property tours
+- **International Expansion**: Multi-region support
+
+### Technical Debt
+
+- Migrate from Express to Fastify for better performance
+- Implement event sourcing for audit trail
+- Add distributed tracing (OpenTelemetry)
+- Improve test coverage to 90%+
+- Optimize bundle sizes
+- Implement progressive web app (PWA) features
+
+## Appendix
+
+### Glossary
+
+- **RAG**: Retrieval-Augmented Generation
+- **MoE**: Mixture of Experts
+- **CoT**: Chain-of-Thought
+- **MCP**: Model Context Protocol
+- **ZPID**: Zillow Property ID
+- **kNN**: k-Nearest Neighbors
+- **TTL**: Time To Live
+- **RTO**: Recovery Time Objective
+- **RPO**: Recovery Point Objective
+- **SLO**: Service Level Objective
+
+### References
+
+- [EstateWise API Documentation](https://estatewise-backend.vercel.app/api-docs)
+- [Frontend Repository](https://github.com/hoangsonww/EstateWise-Chapel-Hill-Chatbot)
+- [Technical Documentation](TECH_DOCS.md)
+- [Deployment Guide](DEPLOYMENTS.md)
+- [gRPC & tRPC Documentation](GRPC_TRPC_DOCUMENTATION.md)
 
 ---
 
-This document reflects the current codebase, data flows, and pipelines. Update it alongside major feature changes (graph tools, MCP tools, agent roles, or infra topology).
-
-## Request Lifecycle (End‑to‑End)
-
-```mermaid
-sequenceDiagram
-  autonumber
-  participant U as User
-  participant FE as Next.js
-  participant API as Express API
-  participant PC as Pinecone
-  participant N as Neo4j
-  participant DB as MongoDB
-
-  U->>FE: Interact (Chat/Insights/Map)
-  FE->>API: REST (fetch, JSON)
-  alt Property Search
-    API->>PC: vector query (kNN)
-    PC-->>API: matches + metadata
-    API-->>FE: listings + charts
-  else Graph Query
-    API->>N: Cypher
-    N-->>API: nodes + relations
-    API-->>FE: explained path / similars
-  else Conversations/Chat
-    API->>DB: read/write convo/messages
-    API-->>FE: payload
-  end
-```
-
-## Backend Modules (Detailed View)
-
-```mermaid
-classDiagram
-  class Server_ts { boot(); registerRoutes(); }
-  class Routes {
-    +property.routes.ts
-    +graph.routes.ts
-    +auth.routes.ts
-    +conversation.routes.ts
-    +chat.routes.ts
-    +commute-profile.routes.ts
-  }
-  class Controllers {
-    +property.controller.ts
-    +graph.controller.ts
-  }
-  class GraphLayer {
-    +neo4j.client
-    +graph/services.ts
-    +scripts/ingestNeo4j.ts
-  }
-  class Data {
-    +models/* (Mongo)
-    +pineconeClient.ts
-  }
-  class Middleware { auth, rateLimit, status, errors }
-  Server_ts --> Routes
-  Routes --> Controllers
-  Controllers --> Data
-  Controllers --> GraphLayer
-  Server_ts --> Middleware
-```
-
-### HTTP Surface (Selected)
-
-```mermaid
-flowchart TD
-  A[/GET /api/properties?q, topK/] -->|kNN| Pinecone
-  B[/GET /api/properties/by-ids?ids/] --> Data[(Mongo/Pinecone)]
-  C[/GET /api/properties/lookup?filters/] --> Pinecone
-  D[/GET /api/graph/similar/:zpid/] --> Neo4j
-  E[/GET /api/graph/explain?from&to/] --> Neo4j
-  F[/GET /api/graph/neighborhood/:name/] --> Neo4j
-```
-
-## Agentic Blackboard Updates (Lifecycle)
-
-```mermaid
-sequenceDiagram
-    participant Coord as Coordinator
-    participant MCP as MCP Server
-    participant API as Backend API
-    participant BB as Blackboard
-
-    Coord->>MCP: call util.parseGoal(text)
-    MCP->>API: GET /parse (server maps to backend util)
-    API-->>MCP: JSON
-    MCP-->>Coord: content: text(JSON)
-    Coord->>BB: write parsed filters
-    Coord->>MCP: call properties.lookup
-    MCP->>API: GET /api/properties/lookup
-    API-->>MCP: matches
-    MCP-->>Coord: content: text(JSON)
-    Coord->>BB: merge zpids
-    Coord->>BB: mark step done
-```
-
-## Failure Modes & Fallbacks
-
-```mermaid
-flowchart TD
-  Start[Request] --> CheckNeo4j{Graph tool?}
-  CheckNeo4j -- yes --> NeoTry[Call Neo4j]
-  NeoTry --> OkN{200?}
-  OkN -- no --> DegradeN[Return 503 with helpful message]
-  DegradeN --> End
-  OkN -- yes --> End
-  CheckNeo4j -- no --> Next[Call other services]
-  Next --> End
-```
-
-Guidance:
-- If Neo4j is down: APIs return 503 with a clear error; UI surfaces a tip to run `npm run graph:ingest` or try later.
-- If Pinecone is unavailable: property search endpoints return a 5xx; client side suggests retrying or narrowing filters.
-- MCP tools propagate backend errors as text blocks; orchestrator retries once.
-
-## Observability & Telemetry
-
-```mermaid
-flowchart LR
-  API[Express] --> Metrics[Prometheus]
-  API --> Status[/status monitor/]
-  API --> Logs[Structured logs]
-  Metrics --> Dash[Grafana/Alerts]
-```
-
-Key metrics (examples):
-- http_request_duration_seconds (by route)
-- mongo_connections, pinecone_latency_ms, neo4j_latency_ms
-- cache_hits (if applicable), error_rate
-
-## Security Model
-
-- AuthN: JWT cookies (HttpOnly, Secure in prod). Passwords hashed with bcrypt.
-- AuthZ: route middleware for protected endpoints (conversations, chat).
-- Input validation: route params/query validated server-side.
-- CORS: restricted origins (frontend + extension).
-- Secrets: `.env` per package; never committed.
-- Rate limiting and well-formed error responses.
-
-## Environment & Config Matrix
-
-```mermaid
-classDiagram
-  class Frontend_env {
-    NEXT_PUBLIC_API_BASE_URL
-  }
-  class Backend_env {
-    MONGO_URI
-    GOOGLE_AI_API_KEY
-    PINECONE_API_KEY, PINECONE_INDEX, PINECONE_NAMESPACE
-    NEO4J_URI, NEO4J_USERNAME, NEO4J_PASSWORD, NEO4J_DATABASE
-  }
-  class MCP_env {
-    API_BASE_URL
-    FRONTEND_BASE_URL
-  }
-```
-
-## Performance & SLOs (Targets)
-
-- P50 API latency: < 200ms for property search (warm path); P95 < 800ms.
-- Graph similar/explain: P95 < 1.5s (depends on Neo4j workload).
-- Map load: < 2s with ≤200 markers.
-- Agentic CLI (marketResearch): end-to-end < 15s for typical goals.
-
-## Data Contracts (Examples)
-
-Property listing (excerpt):
-
-```json
-{
-  "id": "1234567",
-  "zpid": 1234567,
-  "price": 625000,
-  "bedrooms": 3,
-  "bathrooms": 2,
-  "livingArea": 1850,
-  "yearBuilt": 1996,
-  "city": "Chapel Hill",
-  "zipcode": "27514"
-}
-```
-
-Graph similar (excerpt):
-
-```json
-{
-  "zpid": 1234567,
-  "results": [
-    { "zpid": 2345678, "reason": "Same zip" }
-  ]
-}
-```
-
-## Environments
-
-- Local: `npm start` (backend), `npm run dev` (frontend), MCP via `npm run dev` in `mcp/`.
-- Dev/Preview: Vercel previews for frontend; ECS test cluster for backend.
-- Prod: Vercel + AWS ECS; MongoDB Atlas; Pinecone; optional Neo4j managed service.
-
-## Deployment Strategies
-
-- Frontend: Vercel immutable deploys.
-- Backend: ECS rolling updates; health checks; blue/green optional.
-- Infra: Terraform for AWS resources; GH Actions for CI.
-
-## Change Management
-
-- Keep `ARCHITECTURE.md`, `README.md`, and package READMEs in sync with feature additions (routes, tools, agents).
-- Document new env vars and update `.env.example` files.
+*This architecture document is maintained alongside the codebase. Last updated: January 2025*
