@@ -260,7 +260,7 @@ export default function MarketPulsePage() {
             </div>
           </div>
         </header>
-        <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-6 py-8">
+        <main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-6 sm:py-8">
           <Card className="transition-opacity duration-1000 ease-out">
             <CardHeader className="space-y-2">
               <CardTitle className="flex items-center gap-2 text-xl">
@@ -271,7 +271,7 @@ export default function MarketPulsePage() {
                 dataset when an exact match is unavailable.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-4 md:flex-row md:items-start">
+            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-start">
               <Field
                 label="Metro or market"
                 hint="Examples: Austin, TX • Charlotte, NC • Phoenix, AZ"
@@ -285,7 +285,7 @@ export default function MarketPulsePage() {
                   }}
                 />
               </Field>
-              <div className="flex items-center gap-2 md:mt-6">
+              <div className="flex items-center gap-2 sm:mt-6">
                 <Button
                   onClick={handleScan}
                   disabled={marketSnapshotQuery.isFetching}
@@ -402,7 +402,7 @@ export default function MarketPulsePage() {
                         pressure.
                       </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-3 md:grid-cols-2">
+                    <CardContent className="grid gap-3 sm:grid-cols-2">
                       {scoreItems.map((item, index) => (
                         <div
                           key={item.key}
@@ -411,13 +411,13 @@ export default function MarketPulsePage() {
                           <div className="flex items-center justify-between gap-2">
                             <span className="flex items-center gap-2 text-sm font-medium">
                               <span
-                                className={`flex h-8 w-8 items-center justify-center rounded-full ${item.accentClass}`}
+                                className={`flex h-8 w-8 items-center justify-center rounded-full flex-shrink-0 ${item.accentClass}`}
                               >
                                 <item.icon className="h-4 w-4" />
                               </span>
-                              {item.label}
+                              <span className="break-words">{item.label}</span>
                             </span>
-                            <span className="text-sm font-semibold">
+                            <span className="text-sm font-semibold flex-shrink-0">
                               {item.value}
                             </span>
                           </div>
@@ -432,7 +432,7 @@ export default function MarketPulsePage() {
                               }}
                             />
                           </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
+                          <p className="mt-2 text-xs sm:text-sm text-muted-foreground line-clamp-3">
                             {item.description}
                           </p>
                         </div>
@@ -449,8 +449,8 @@ export default function MarketPulsePage() {
                         <CardDescription>{absorptionSummary}</CardDescription>
                       ) : null}
                     </CardHeader>
-                    <CardContent>
-                      <div className="flex h-40 items-end gap-3">
+                    <CardContent className="overflow-hidden">
+                      <div className="flex items-end gap-[1px]">
                         {snapshot.timeline.map(
                           (point: TimelinePoint, index: number) => {
                             const barHeight = Math.max(
@@ -462,15 +462,15 @@ export default function MarketPulsePage() {
                             return (
                               <div
                                 key={point.month}
-                                className="flex-1 text-xs text-muted-foreground"
+                                className="flex-1 min-w-0 text-muted-foreground"
                               >
-                                <div className="flex flex-col items-center gap-1">
-                                  <span className="text-xs font-semibold text-foreground">
+                                <div className="flex flex-col items-center">
+                                  <span className="text-[10px] sm:text-xs font-semibold text-foreground">
                                     {point.demandIndex}
                                   </span>
-                                  <div className="relative flex h-28 w-full items-end overflow-hidden rounded-md bg-primary/10">
+                                  <div className="relative h-16 sm:h-24 w-full overflow-hidden rounded-sm bg-primary/10">
                                     <div
-                                      className="absolute bottom-0 left-0 right-0 rounded-md bg-primary transition-all duration-[2000ms] ease-out"
+                                      className="absolute bottom-0 left-0 right-0 bg-primary transition-all duration-[2000ms] ease-out"
                                       style={{
                                         height: mounted
                                           ? `${barHeight}%`
@@ -480,11 +480,13 @@ export default function MarketPulsePage() {
                                       }}
                                     />
                                   </div>
-                                  <span>{point.month}</span>
+                                  <span className="text-[9px] sm:text-[11px] mt-0.5 text-center font-medium">
+                                    {point.month}
+                                  </span>
+                                  <span className="text-[9px] sm:text-[10px] text-center">
+                                    Abs: {point.absorptionRate}%
+                                  </span>
                                 </div>
-                                <span className="mt-1 block text-[10px]">
-                                  Absorption {point.absorptionRate}%
-                                </span>
                               </div>
                             );
                           },
@@ -508,7 +510,7 @@ export default function MarketPulsePage() {
                 <>
                   <Card className="transition-opacity duration-1000 ease-out">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                      <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                         <TrendingUp className="h-4 w-4 text-primary" />{" "}
                         Opportunity radar
                       </CardTitle>
@@ -518,8 +520,8 @@ export default function MarketPulsePage() {
                         {snapshot.opportunities.map(
                           (item: string, index: number) => (
                             <li key={index} className="flex gap-3">
-                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary" />
-                              <span>{item}</span>
+                              <span className="mt-1 h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
+                              <span className="break-words">{item}</span>
                             </li>
                           ),
                         )}
@@ -529,7 +531,7 @@ export default function MarketPulsePage() {
 
                   <Card className="transition-opacity duration-1000 ease-out">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                      <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                         <AlertTriangle className="h-4 w-4 text-amber-500" />{" "}
                         Risk watchlist
                       </CardTitle>
@@ -538,8 +540,8 @@ export default function MarketPulsePage() {
                       <ul className="space-y-2 text-sm text-muted-foreground">
                         {snapshot.risks.map((item: string, index: number) => (
                           <li key={index} className="flex gap-3">
-                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500" />
-                            <span>{item}</span>
+                            <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-500 flex-shrink-0" />
+                            <span className="break-words">{item}</span>
                           </li>
                         ))}
                       </ul>
@@ -548,7 +550,7 @@ export default function MarketPulsePage() {
 
                   <Card className="transition-opacity duration-1000 ease-out">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                      <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                         <ShieldAlert className="h-4 w-4 text-emerald-500" />{" "}
                         Next best actions
                       </CardTitle>
@@ -564,17 +566,19 @@ export default function MarketPulsePage() {
                                 key={index}
                                 className="space-y-1 rounded-md border border-dashed border-border p-3"
                               >
-                                <div className="flex items-center justify-between text-xs uppercase tracking-wide">
-                                  <span className="font-semibold text-foreground">
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 text-xs uppercase tracking-wide">
+                                  <span className="font-semibold text-foreground break-words">
                                     {action.label}
                                   </span>
                                   <span
-                                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${ACTION_IMPACT_BADGE[impactKey]}`}
+                                    className={`rounded-full px-2 py-0.5 text-[10px] font-semibold inline-block ${ACTION_IMPACT_BADGE[impactKey]}`}
                                   >
                                     {action.impact} impact
                                   </span>
                                 </div>
-                                <p>{action.description}</p>
+                                <p className="break-words">
+                                  {action.description}
+                                </p>
                               </li>
                             );
                           },
@@ -585,7 +589,7 @@ export default function MarketPulsePage() {
 
                   <Card className="transition-opacity duration-1000 ease-out">
                     <CardHeader>
-                      <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                      <CardTitle className="flex items-center gap-2 text-lg font-semibold">
                         <Users className="h-4 w-4 text-primary" /> Hot ZIP
                         pockets
                       </CardTitle>
@@ -599,14 +603,16 @@ export default function MarketPulsePage() {
                               key={zip.name}
                               className="rounded-md border p-3"
                             >
-                              <div className="flex items-center justify-between text-sm text-foreground">
-                                <span className="font-medium">{zip.name}</span>
-                                <span>
+                              <div className="flex items-center justify-between gap-2 text-sm text-foreground">
+                                <span className="font-medium break-words">
+                                  {zip.name}
+                                </span>
+                                <span className="flex-shrink-0">
                                   {zip.yoy > 0 ? "+" : ""}
                                   {zip.yoy.toFixed(1)}% YoY
                                 </span>
                               </div>
-                              <div className="mt-1 flex flex-wrap gap-3 text-xs">
+                              <div className="mt-1 flex flex-col sm:flex-row sm:gap-3 text-sm">
                                 <span>{prettyMoney(zip.medianPrice)}</span>
                                 <span>
                                   Rent yield {zip.rentYield.toFixed(1)}%
